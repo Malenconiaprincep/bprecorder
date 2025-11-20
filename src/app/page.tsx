@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import BPChart from "@/components/BPChart";
-import { UploadCloud, Save, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { UploadCloud, Save, Loader2, RefreshCw, AlertCircle, LogOut, User, ChevronDown } from "lucide-react";
 import clsx from "clsx";
+import { signout } from "./login/actions";
+import { createClient } from "@/utils/supabase/client";
 
 interface Record {
   id: number;
@@ -23,10 +25,17 @@ export default function Home() {
     pulse: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [userPhone, setUserPhone] = useState<string | null>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const fetchRecords = useCallback(async () => {
     try {
       const res = await fetch("/api/records");
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       const data = await res.json();
       if (Array.isArray(data)) {
         setRecords(data);
@@ -38,6 +47,26 @@ export default function Home() {
 
   useEffect(() => {
     fetchRecords();
+
+    // Fetch current user info
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        // Extract phone from email (remove @suffix)
+        const phone = user.email?.split('@')[0];
+        setUserPhone(phone || '用户');
+      }
+    });
+
+    // Click outside listener to close menu
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+
   }, [fetchRecords]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -56,6 +85,12 @@ export default function Home() {
         method: "POST",
         body: formData,
       });
+
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+
       const data = await res.json();
 
       if (data.error) {
@@ -84,8 +119,8 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            ...analyzedData,
-            recorded_at: new Date().toISOString()
+          ...analyzedData,
+          recorded_at: new Date().toISOString()
         }),
       });
 
@@ -93,7 +128,8 @@ export default function Home() {
         setAnalyzedData(null);
         fetchRecords();
       } else {
-        alert("保存失败");
+        const data = await res.json();
+        alert("保存失败: " + (data.error || 'Unknown error'));
       }
     } catch (e) {
       alert("保存出错");
@@ -103,15 +139,45 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        <header className="flex items-center justify-between pb-6 border-b">
-          <h1 className="text-3xl font-bold text-gray-800">血压每日记录</h1>
-          <button 
-            onClick={fetchRecords} 
-            className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-            title="刷新数据"
-          >
-            <RefreshCw size={20} />
-          </button>
+        <header className="flex items-center justify-between pb-6 border-b relative">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">血压每日记录</h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={fetchRecords}
+              className="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-100"
+              title="刷新数据"
+            >
+              <RefreshCw size={20} />
+            </button>
+
+            {userPhone && (
+              <div className="relative" ref={menuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-white px-3 py-2 rounded-full border hover:bg-gray-50 transition-colors"
+                >
+                  <User size={16} className="text-gray-500" />
+                  <span className="max-w-[100px] truncate">{userPhone}</span>
+                  <ChevronDown size={14} className={clsx("text-gray-400 transition-transform", isUserMenuOpen && "rotate-180")} />
+                </button>
+
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-4 py-2 border-b border-gray-50 text-xs text-gray-400">
+                      账号设置
+                    </div>
+                    <button
+                      onClick={() => signout()}
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      退出登录
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </header>
 
         {/* Upload Section */}
@@ -209,40 +275,40 @@ export default function Home() {
         {/* Charts & Stats */}
         <div className="grid grid-cols-1 gap-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-             {records.length > 0 ? (
-                <BPChart records={records} />
-             ) : (
-                <div className="text-center py-12 text-gray-400">暂无记录，请上传第一张照片</div>
-             )}
+            {records.length > 0 ? (
+              <BPChart records={records} />
+            ) : (
+              <div className="text-center py-12 text-gray-400">暂无记录，请上传第一张照片</div>
+            )}
           </div>
-          
+
           {/* Recent List */}
           {records.length > 0 && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                  <h3 className="text-lg font-semibold mb-4">最近记录</h3>
-                  <div className="overflow-x-auto">
-                      <table className="w-full text-left">
-                          <thead className="text-gray-500 border-b">
-                              <tr>
-                                  <th className="pb-3 font-medium">时间</th>
-                                  <th className="pb-3 font-medium">收缩压</th>
-                                  <th className="pb-3 font-medium">舒张压</th>
-                                  <th className="pb-3 font-medium">脉搏</th>
-                              </tr>
-                          </thead>
-                          <tbody className="text-gray-700">
-                              {records.slice(0, 5).map((r) => (
-                                  <tr key={r.id} className="border-b last:border-0">
-                                      <td className="py-3">{new Date(r.recorded_at).toLocaleString()}</td>
-                                      <td className="py-3 font-medium">{r.systolic}</td>
-                                      <td className="py-3 font-medium">{r.diastolic}</td>
-                                      <td className="py-3">{r.pulse}</td>
-                                  </tr>
-                              ))}
-                          </tbody>
-                      </table>
-                  </div>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold mb-4">最近记录</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="text-gray-500 border-b">
+                    <tr>
+                      <th className="pb-3 font-medium">时间</th>
+                      <th className="pb-3 font-medium">收缩压</th>
+                      <th className="pb-3 font-medium">舒张压</th>
+                      <th className="pb-3 font-medium">脉搏</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-700">
+                    {records.slice(0, 5).map((r) => (
+                      <tr key={r.id} className="border-b last:border-0">
+                        <td className="py-3">{new Date(r.recorded_at).toLocaleString()}</td>
+                        <td className="py-3 font-medium">{r.systolic}</td>
+                        <td className="py-3 font-medium">{r.diastolic}</td>
+                        <td className="py-3">{r.pulse}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
+            </div>
           )}
         </div>
       </div>

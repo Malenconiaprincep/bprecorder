@@ -50,17 +50,12 @@ __turbopack_context__.s([
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$workspace$2f$bprecorder$2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$module$2f$index$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/workspace/bprecorder/node_modules/@supabase/supabase-js/dist/module/index.js [app-route] (ecmascript) <locals>");
 ;
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = ("TURBOPACK compile-time value", "https://vaeklnwhlogbvrwtthbe.supabase.co");
+const supabaseKey = ("TURBOPACK compile-time value", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhZWtsbndobG9nYnZyd3R0aGJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2MDY3MTksImV4cCI6MjA3OTE4MjcxOX0.oLH3iiEhhPJydhXKdjJwDPTpqcUak44OOkFA9D8K15o");
 // Helper to create client safely
 const createSupabaseClient = ()=>{
-    if (!supabaseUrl || !supabaseKey) {
-        console.warn('Missing Supabase environment variables. Using fallback for build/dev.');
-        // Return a dummy client or one with empty strings if it allows, 
-        // but createClient throws on empty URL.
-        // We use a dummy valid URL to pass build-time initialization.
-        return (0, __TURBOPACK__imported__module__$5b$project$5d2f$workspace$2f$bprecorder$2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$module$2f$index$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__$3c$locals$3e$__["createClient"])('https://placeholder.supabase.co', 'placeholder');
-    }
+    if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+    ;
     return (0, __TURBOPACK__imported__module__$5b$project$5d2f$workspace$2f$bprecorder$2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$module$2f$index$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__$3c$locals$3e$__["createClient"])(supabaseUrl, supabaseKey);
 };
 const supabase = createSupabaseClient();

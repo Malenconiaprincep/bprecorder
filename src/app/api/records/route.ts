@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(req: NextRequest) {
   try {
+    const supabase = await createClient();
+
+    // RLS will automatically filter records for the logged-in user
     const { data, error } = await supabase
       .from('records')
       .select('*')
@@ -14,7 +17,6 @@ export async function GET(req: NextRequest) {
       throw error;
     }
 
-    // Reverse for chart display (chronological)
     return NextResponse.json((data || []).reverse());
   } catch (error) {
     console.error('Error fetching records:', error);
@@ -24,6 +26,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+
+    // Check auth
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const { systolic, diastolic, pulse, recorded_at } = body;
 
@@ -34,11 +44,12 @@ export async function POST(req: NextRequest) {
     const { data, error } = await supabase
       .from('records')
       .insert([
-        { 
-          systolic, 
-          diastolic, 
-          pulse, 
-          recorded_at: recorded_at || new Date().toISOString() 
+        {
+          systolic,
+          diastolic,
+          pulse,
+          recorded_at: recorded_at || new Date().toISOString(),
+          user_id: user.id
         }
       ])
       .select();

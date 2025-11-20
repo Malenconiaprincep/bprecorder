@@ -1,102 +1,81 @@
-[00:00:16.229] Server  LOG     
-[00:00:16.230] Server  LOG        We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
-[00:00:16.231] Server  LOG        The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
-
-[00:00:16.232] Server  LOG        	- target was set to ES2017 (For top-level `await`. Note: Next.js only polyfills for the esmodules target.)
-[00:00:16.232] Server  LOG        	- include was updated to add '.next/dev/types/**/*.ts'
-[00:00:16.232] Server  LOG     
-[00:00:16.233] Server  LOG        The following mandatory changes were made to your tsconfig.json:
-
-[00:00:16.233] Server  LOG        	- jsx was set to react-jsx (next.js uses the React automatic runtime)
-[00:00:16.233] Server  LOG     
-[00:00:16.329] Server  LOG      ✓ Ready in 16s
-[00:00:18.916] Server  ERROR    ⨯ ./workspace/bprecorder/src/app/globals.css
-Error evaluating Node.js code
-Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
-    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
-    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
-    [at <anonymous>]
-    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
-    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
-
-Import trace:
-  Client Component Browser:
-    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
-    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
-
-
-[00:00:20.018] Browser ERROR   uncaughtError: Error: ./workspace/bprecorder/src/app/globals.css
-Error evaluating Node.js code
-Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
-    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
-    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
-    [at <anonymous>]
-    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
-    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
-
-Import trace:
-  Client Component Browser:
-    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
-    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
-
-
-[00:00:20.184] Browser ERROR   ./workspace/bprecorder/src/app/globals.css
-Error evaluating Node.js code
-Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
-    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
-    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
-    [at <anonymous>]
-    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
-    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
-
-Import trace:
-  Client Component Browser:
-    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
-    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
-[00:00:20.895] Browser ERROR   ./workspace/bprecorder/src/app/globals.css
-Error evaluating Node.js code
-Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
-    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
-    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
-    [at <anonymous>]
-    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
-    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
-
-Import trace:
-  Client Component Browser:
-    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
-    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
-[00:01:13.630] Browser ERROR   ./workspace/bprecorder/src/app/globals.css
-Error evaluating Node.js code
-Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
-    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
-    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
-    [at <anonymous>]
-    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
-    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
-
-Import trace:
-  Client Component Browser:
-    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
-    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
-[00:01:14.731] Browser ERROR   ./workspace/bprecorder/src/app/globals.css
-Error evaluating Node.js code
-Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
-    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
-    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
-    [at <anonymous>]
-    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
-    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
-
-Import trace:
-  Client Component Browser:
-    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
-    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
-[00:01:15.889] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:01:16.401] Server  WARN    Missing Supabase environment variables
-[00:01:16.502] Server  ERROR    ⨯ Error: supabaseUrl is required.
-[00:01:16.900] Browser ERROR   Failed to fetch records {}
-[00:03:54.681] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:03:54.785] Server  WARN    Missing Supabase environment variables. Using fallback for build/dev.
-[00:03:55.097] Server  ERROR   Supabase fetch error: {}
-[00:03:55.098] Server  ERROR   Error fetching records: {}
+[00:00:00.706] Server  LOG      ✓ Ready in 478ms
+[00:00:03.869] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:03.994] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:15.942] Server  LOG     Received file: 微信图片_20251120112736_136_213.jpg, size: 156638, type: image/jpeg
+[00:00:15.944] Server  LOG     Calling Gemini API...
+[00:00:17.381] Server  ERROR   Error processing image full details: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[00:00:44.872] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:47.951] Server  LOG     Received file: 微信图片_20251120112736_136_213.jpg, size: 156638, type: image/jpeg
+[00:00:47.952] Server  LOG     Calling Gemini API...
+[00:00:48.847] Server  ERROR   Error processing image full details: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent: [404 Not Found] models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[00:02:12.074] Server  LOG      ✓ Compiled in 161ms
+[00:02:41.339] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:44.068] Server  LOG     Received file: 微信图片_20251120112736_136_213.jpg, size: 156638, type: image/jpeg
+[00:02:44.071] Server  LOG     Calling Gemini API (New SDK)...
+[00:02:45.097] Server  ERROR   Error processing image full details: ApiError: {"error":{"code":404,"message":"models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.","status":"NOT_FOUND"}}
+[00:03:28.231] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:03:33.517] Server  LOG     Received file: 微信图片_20251120112736_136_213.jpg, size: 156638, type: image/jpeg
+[00:03:33.518] Server  LOG     Calling Gemini API (New SDK)...
+[00:03:34.526] Server  ERROR   Error processing image full details: ApiError: {"error":{"code":429,"message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-exp\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash-exp\nPlease retry in 34.445247614s.","status":"RESOURCE_EXHAUSTED","details":[{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerMinutePerProjectPerModel-FreeTier","quotaDimensions":{"model":"gemini-2.0-flash-exp","location":"global"}},{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_input_token_count","quotaId":"GenerateContentInputTokensPerModelPerMinute-FreeTier","quotaDimensions":{"model":"gemini-2.0-flash-exp","location":"global"}}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"34s"}]}}
+[00:04:36.521] Server  LOG        Reload env: .env.local
+[00:04:40.460] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:04:44.401] Server  LOG     Received file: 微信图片_20251120112736_136_213.jpg, size: 156638, type: image/jpeg
+[00:04:44.403] Server  LOG     Calling Gemini API (New SDK)...
+[00:04:46.604] Server  ERROR   Error processing image full details: ApiError: {"error":{"code":429,"message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-exp\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash-exp\nPlease retry in 22.389519864s.","status":"RESOURCE_EXHAUSTED","details":[{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerMinutePerProjectPerModel-FreeTier","quotaDimensions":{"location":"global","model":"gemini-2.0-flash-exp"}},{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_input_token_count","quotaId":"GenerateContentInputTokensPerModelPerMinute-FreeTier","quotaDimensions":{"location":"global","model":"gemini-2.0-flash-exp"}}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"22s"}]}}
+[00:08:10.227] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:08:12.594] Server  LOG     Received file: 微信图片_20251120112736_136_213.jpg, size: 156638, type: image/jpeg
+[00:08:12.595] Server  LOG     Calling Gemini API (New SDK)...
+[00:08:13.639] Server  ERROR   Error processing image full details: ApiError: {"error":{"code":429,"message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash-exp\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-exp\nPlease retry in 55.327984811s.","status":"RESOURCE_EXHAUSTED","details":[{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_input_token_count","quotaId":"GenerateContentInputTokensPerModelPerMinute-FreeTier","quotaDimensions":{"location":"global","model":"gemini-2.0-flash-exp"}},{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerMinutePerProjectPerModel-FreeTier","quotaDimensions":{"model":"gemini-2.0-flash-exp","location":"global"}}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"55s"}]}}
+[00:15:36.627] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:15:39.312] Server  LOG     Received file: 微信图片_20251120112736_136_213.jpg, size: 156638, type: image/jpeg
+[00:15:39.313] Server  LOG     Calling Gemini API (New SDK)...
+[00:15:40.601] Server  ERROR   Error processing image full details: ApiError: {"error":{"code":429,"message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash-exp\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-exp\nPlease retry in 28.359140643s.","status":"RESOURCE_EXHAUSTED","details":[{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_input_token_count","quotaId":"GenerateContentInputTokensPerModelPerMinute-FreeTier","quotaDimensions":{"location":"global","model":"gemini-2.0-flash-exp"}},{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerMinutePerProjectPerModel-FreeTier","quotaDimensions":{"location":"global","model":"gemini-2.0-flash-exp"}}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"28s"}]}}
+[00:25:16.534] Server  LOG        Reload env: .env.local
+[00:25:20.212] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:25:22.651] Server  LOG     Received file: 微信图片_20251120112736_136_213.jpg, size: 156638, type: image/jpeg
+[00:25:22.652] Server  LOG     Calling Alibaba Qwen-VL API...
+[00:25:24.400] Server  LOG     Qwen response text: "{\"systolic\": 104, \"diastolic\": 63, \"pulse\": 70}"
+[00:28:48.785] Server  LOG      ✓ Compiled in 713ms
+[00:29:13.491] Server  WARN     ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+[00:29:13.613] Server  LOG      ✓ Compiled in 90ms
+[00:29:43.962] Server  LOG      ✓ Compiled in 42ms
+[00:30:23.331] Server  LOG      ✓ Compiled in 400ms
+[02:13:30.910] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[02:13:34.745] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[02:13:46.837] Server  WARN    Error: Route "/login" used `cookies().get`. `cookies()` returns a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+[02:13:46.999] Server  WARN    Error: Route "/login" used `cookies().get`. `cookies()` returns a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+[02:13:47.169] Server  ERROR   TypeError: cookieStore.get is not a function
+[02:13:47.183] Server  WARN    Error: Route "/login" used `cookies().get`. `cookies()` returns a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+[02:13:47.197] Server  WARN    Error: Route "/login" used `cookies().get`. `cookies()` returns a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+[02:13:47.356] Server  ERROR    ⨯ TypeError: cookieStore.get is not a function
+[02:13:47.372] Server  ERROR   TypeError: cookieStore.get is not a function
+[02:13:47.383] Server  ERROR    ⨯ "unhandledRejection:" TypeError: cookieStore.get is not a function
+[02:13:47.396] Server  ERROR    ⨯ "unhandledRejection: " TypeError: cookieStore.get is not a function
+[02:13:47.407] Server  ERROR   TypeError: cookieStore.get is not a function
+[02:13:47.423] Server  ERROR    ⨯ "unhandledRejection:" TypeError: cookieStore.get is not a function
+[02:13:47.434] Server  ERROR    ⨯ "unhandledRejection: " TypeError: cookieStore.get is not a function
+[02:14:47.439] Server  WARN    Error: Route "/login" used `cookies().get`. `cookies()` returns a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+[02:14:47.633] Server  WARN    Error: Route "/login" used `cookies().get`. `cookies()` returns a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+[02:14:47.772] Server  ERROR   TypeError: cookieStore.get is not a function
+[02:14:47.796] Server  WARN    Error: Route "/login" used `cookies().get`. `cookies()` returns a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+[02:14:47.821] Server  WARN    Error: Route "/login" used `cookies().get`. `cookies()` returns a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+[02:14:47.972] Server  ERROR    ⨯ TypeError: cookieStore.get is not a function
+[02:14:47.988] Server  ERROR   TypeError: cookieStore.get is not a function
+[02:14:48.001] Server  ERROR    ⨯ "unhandledRejection:" TypeError: cookieStore.get is not a function
+[02:14:48.011] Server  ERROR    ⨯ "unhandledRejection: " TypeError: cookieStore.get is not a function
+[02:14:48.024] Server  ERROR   TypeError: cookieStore.get is not a function
+[02:14:48.035] Server  ERROR    ⨯ "unhandledRejection:" TypeError: cookieStore.get is not a function
+[02:14:48.044] Server  ERROR    ⨯ "unhandledRejection: " TypeError: cookieStore.get is not a function
+[02:15:32.747] Server  LOG      ✓ Compiled in 46ms
+[02:16:11.414] Server  LOG      ✓ Compiled in 221ms
+[02:17:01.081] Server  LOG      ✓ Compiled in 129ms
+[02:18:26.339] Server  LOG      ✓ Compiled in 179ms
+[02:21:51.349] Server  LOG      ✓ Compiled in 308ms
+[02:26:09.981] Server  LOG      ✓ Compiled in 203ms
+[02:26:16.697] Server  LOG      ✓ Compiled in 81ms
+[02:28:11.758] Server  LOG      ✓ Compiled in 172ms
+[02:28:20.867] Server  LOG      ✓ Compiled in 74ms
+[02:29:04.891] Server  LOG      ✓ Compiled in 111ms
+[02:29:08.418] Server  LOG      ✓ Compiled in 61ms
+[02:30:22.942] Server  LOG      ✓ Compiled in 331ms
+[02:30:29.332] Server  LOG      ✓ Compiled in 141ms

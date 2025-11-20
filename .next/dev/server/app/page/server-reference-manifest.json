@@ -1,4 +1,20 @@
 {
-  "node": {},
+  "node": {
+    "00053e54ff0addf88eb58cc8934a1425c8ec6f073e": {
+      "workers": {
+        "app/page": {
+          "moduleId": "[project]/workspace/bprecorder/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/workspace/bprecorder/src/app/login/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "signout",
+          "filename": "workspace/bprecorder/src/app/login/actions.ts"
+        }
+      },
+      "layer": {
+        "app/page": "action-browser"
+      },
+      "exportedName": "signout",
+      "filename": "workspace/bprecorder/src/app/login/actions.ts"
+    }
+  },
   "edge": {}
 }
