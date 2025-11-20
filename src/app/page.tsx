@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import BPChart from "@/components/BPChart";
-import { UploadCloud, Save, Loader2, RefreshCw, AlertCircle, LogOut, User, ChevronDown } from "lucide-react";
+import { UploadCloud, Save, Loader2, RefreshCw, AlertCircle, LogOut, User, ChevronDown, LogIn } from "lucide-react";
 import clsx from "clsx";
 import { signout } from "./login/actions";
 import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 interface Record {
   id: number;
@@ -17,6 +18,7 @@ interface Record {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [records, setRecords] = useState<Record[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzedData, setAnalyzedData] = useState<{
@@ -29,11 +31,19 @@ export default function Home() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Check user session utility
+  const checkAuth = useCallback(async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    return !!user;
+  }, []);
+
   const fetchRecords = useCallback(async () => {
     try {
       const res = await fetch("/api/records");
       if (res.status === 401) {
-        window.location.href = '/login';
+        // 401 means guest, just set empty records, don't redirect yet
+        setRecords([]);
         return;
       }
       const data = await res.json();
@@ -55,6 +65,8 @@ export default function Home() {
         // Extract phone from email (remove @suffix)
         const phone = user.email?.split('@')[0];
         setUserPhone(phone || '用户');
+      } else {
+        setUserPhone(null);
       }
     });
 
@@ -70,6 +82,16 @@ export default function Home() {
   }, [fetchRecords]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    // Check auth first
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      // Redirect to login if not authenticated
+      router.push('/login');
+      return;
+    }
+
     const file = acceptedFiles[0];
     if (!file) return;
 
@@ -87,7 +109,7 @@ export default function Home() {
       });
 
       if (res.status === 401) {
-        window.location.href = '/login';
+        router.push('/login');
         return;
       }
 
@@ -103,13 +125,22 @@ export default function Home() {
     } finally {
       setAnalyzing(false);
     }
-  }, []);
+  }, [router]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { "image/*": [] },
     maxFiles: 1,
+    noClick: !userPhone, // Disable click if not logged in
+    noKeyboard: !userPhone,
+    noDrag: !userPhone
   });
+
+  const handleUploadClick = () => {
+    if (!userPhone) {
+      router.push('/login');
+    }
+  };
 
   const handleSave = async () => {
     if (!analyzedData) return;
@@ -142,40 +173,51 @@ export default function Home() {
         <header className="flex items-center justify-between pb-6 border-b relative">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">血压每日记录</h1>
           <div className="flex items-center gap-3">
-            <button
-              onClick={fetchRecords}
-              className="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-100"
-              title="刷新数据"
-            >
-              <RefreshCw size={20} />
-            </button>
 
-            {userPhone && (
-              <div className="relative" ref={menuRef}>
+
+            {userPhone ? (
+              <>
                 <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-white px-3 py-2 rounded-full border hover:bg-gray-50 transition-colors"
+                  onClick={fetchRecords}
+                  className="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-100"
+                  title="刷新数据"
                 >
-                  <User size={16} className="text-gray-500" />
-                  <span className="max-w-[100px] truncate">{userPhone}</span>
-                  <ChevronDown size={14} className={clsx("text-gray-400 transition-transform", isUserMenuOpen && "rotate-180")} />
+                  <RefreshCw size={20} />
                 </button>
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-white px-3 py-2 rounded-full border hover:bg-gray-50 transition-colors"
+                  >
+                    <User size={16} className="text-gray-500" />
+                    <span className="max-w-[100px] truncate">{userPhone}</span>
+                    <ChevronDown size={14} className={clsx("text-gray-400 transition-transform", isUserMenuOpen && "rotate-180")} />
+                  </button>
 
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-                    <div className="px-4 py-2 border-b border-gray-50 text-xs text-gray-400">
-                      账号设置
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                      <div className="px-4 py-2 border-b border-gray-50 text-xs text-gray-400">
+                        账号设置
+                      </div>
+                      <button
+                        onClick={() => signout()}
+                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                      >
+                        <LogOut size={16} />
+                        退出登录
+                      </button>
                     </div>
-                    <button
-                      onClick={() => signout()}
-                      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
-                    >
-                      <LogOut size={16} />
-                      退出登录
-                    </button>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => router.push('/login')}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                <LogIn size={16} />
+                登录 / 注册
+              </button>
             )}
           </div>
         </header>
@@ -183,9 +225,10 @@ export default function Home() {
         {/* Upload Section */}
         <div
           {...getRootProps()}
+          onClick={handleUploadClick}
           className={clsx(
-            "border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer bg-white shadow-sm",
-            isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400",
+            "border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer bg-white shadow-sm group",
+            isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400",
             analyzing && "opacity-50 pointer-events-none"
           )}
         >
@@ -198,12 +241,19 @@ export default function Home() {
               </>
             ) : (
               <>
-                <UploadCloud className="text-blue-500" size={48} />
+                <div className="p-4 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
+                  <UploadCloud className="text-blue-500" size={32} />
+                </div>
                 <div>
                   <p className="text-lg font-medium text-gray-700">
                     {isDragActive ? "释放文件以上传" : "点击或拖拽血压计照片到这里"}
                   </p>
                   <p className="text-sm text-gray-500 mt-2">支持 JPG, PNG 格式</p>
+                  {!userPhone && (
+                    <p className="text-xs text-blue-600 mt-2 font-medium">
+                      需登录后使用 AI 识别功能
+                    </p>
+                  )}
                 </div>
               </>
             )}
@@ -278,7 +328,9 @@ export default function Home() {
             {records.length > 0 ? (
               <BPChart records={records} />
             ) : (
-              <div className="text-center py-12 text-gray-400">暂无记录，请上传第一张照片</div>
+              <div className="text-center py-12 text-gray-400">
+                {userPhone ? "暂无记录，请上传第一张照片" : "登录后查看您的历史血压趋势"}
+              </div>
             )}
           </div>
 

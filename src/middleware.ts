@@ -20,12 +20,8 @@ export async function middleware(request: NextRequest) {
   )
   const { data: { user } } = await supabase.auth.getUser()
 
-  // If no user and trying to access home page, redirect to login
-  if (!user && request.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  // If user is logged in and trying to access login, redirect to home
+  // Relaxed rule: Only redirect if accessing /login while logged in
+  // We allow guests to visit '/' (Home)
   if (user && request.nextUrl.pathname === '/login') {
     return NextResponse.redirect(new URL('/', request.url))
   }
