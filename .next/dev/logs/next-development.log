@@ -1,0 +1,98 @@
+[00:00:16.229] Server  LOG     
+[00:00:16.230] Server  LOG        We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+[00:00:16.231] Server  LOG        The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+[00:00:16.232] Server  LOG        	- target was set to ES2017 (For top-level `await`. Note: Next.js only polyfills for the esmodules target.)
+[00:00:16.232] Server  LOG        	- include was updated to add '.next/dev/types/**/*.ts'
+[00:00:16.232] Server  LOG     
+[00:00:16.233] Server  LOG        The following mandatory changes were made to your tsconfig.json:
+
+[00:00:16.233] Server  LOG        	- jsx was set to react-jsx (next.js uses the React automatic runtime)
+[00:00:16.233] Server  LOG     
+[00:00:16.329] Server  LOG      ✓ Ready in 16s
+[00:00:18.916] Server  ERROR    ⨯ ./workspace/bprecorder/src/app/globals.css
+Error evaluating Node.js code
+Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
+    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
+    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
+    [at <anonymous>]
+    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
+    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
+
+Import trace:
+  Client Component Browser:
+    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
+    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
+
+
+[00:00:20.018] Browser ERROR   uncaughtError: Error: ./workspace/bprecorder/src/app/globals.css
+Error evaluating Node.js code
+Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
+    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
+    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
+    [at <anonymous>]
+    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
+    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
+
+Import trace:
+  Client Component Browser:
+    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
+    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
+
+
+[00:00:20.184] Browser ERROR   ./workspace/bprecorder/src/app/globals.css
+Error evaluating Node.js code
+Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
+    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
+    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
+    [at <anonymous>]
+    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
+    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
+
+Import trace:
+  Client Component Browser:
+    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
+    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
+[00:00:20.895] Browser ERROR   ./workspace/bprecorder/src/app/globals.css
+Error evaluating Node.js code
+Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
+    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
+    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
+    [at <anonymous>]
+    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
+    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
+
+Import trace:
+  Client Component Browser:
+    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
+    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
+[00:01:13.630] Browser ERROR   ./workspace/bprecorder/src/app/globals.css
+Error evaluating Node.js code
+Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
+    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
+    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
+    [at <anonymous>]
+    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
+    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
+
+Import trace:
+  Client Component Browser:
+    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
+    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
+[00:01:14.731] Browser ERROR   ./workspace/bprecorder/src/app/globals.css
+Error evaluating Node.js code
+Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
+    [at at (/Users/user/workspace/bprecorder/node_modules/tailwindcss/dist/lib.js:38:1629)]
+    [at <anonymous> (turbopack:///[turbopack-node]/transforms/postcss.ts:56:14)]
+    [at <anonymous>]
+    [at Module.init (turbopack:///[turbopack-node]/transforms/postcss.ts:43:33)]
+    [at run (turbopack:///[turbopack-node]/ipc/evaluate.ts:77:20)]
+
+Import trace:
+  Client Component Browser:
+    ./workspace/bprecorder/src/app/globals.css [Client Component Browser]
+    ./workspace/bprecorder/src/app/layout.tsx [Server Component]
+[00:01:15.889] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:01:16.401] Server  WARN    Missing Supabase environment variables
+[00:01:16.502] Server  ERROR    ⨯ Error: supabaseUrl is required.
+[00:01:16.900] Browser ERROR   Failed to fetch records {}
