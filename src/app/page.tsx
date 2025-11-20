@@ -31,18 +31,10 @@ export default function Home() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Check user session utility
-  const checkAuth = useCallback(async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    return !!user;
-  }, []);
-
   const fetchRecords = useCallback(async () => {
     try {
       const res = await fetch("/api/records");
       if (res.status === 401) {
-        // 401 means guest, just set empty records, don't redirect yet
         setRecords([]);
         return;
       }
@@ -58,11 +50,9 @@ export default function Home() {
   useEffect(() => {
     fetchRecords();
 
-    // Fetch current user info
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        // Extract phone from email (remove @suffix)
         const phone = user.email?.split('@')[0];
         setUserPhone(phone || '用户');
       } else {
@@ -70,7 +60,6 @@ export default function Home() {
       }
     });
 
-    // Click outside listener to close menu
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
@@ -82,12 +71,10 @@ export default function Home() {
   }, [fetchRecords]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    // Check auth first
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      // Redirect to login if not authenticated
       router.push('/login');
       return;
     }
@@ -131,9 +118,7 @@ export default function Home() {
     onDrop,
     accept: { "image/*": [] },
     maxFiles: 1,
-    noClick: !userPhone, // Disable click if not logged in
-    noKeyboard: !userPhone,
-    noDrag: !userPhone
+    disabled: !userPhone
   });
 
   const handleUploadClick = () => {
@@ -173,8 +158,6 @@ export default function Home() {
         <header className="flex items-center justify-between pb-6 border-b relative">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">血压每日记录</h1>
           <div className="flex items-center gap-3">
-
-
             {userPhone ? (
               <>
                 <button
@@ -223,42 +206,58 @@ export default function Home() {
         </header>
 
         {/* Upload Section */}
-        <div
-          {...getRootProps()}
-          onClick={handleUploadClick}
-          className={clsx(
-            "border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer bg-white shadow-sm group",
-            isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400",
-            analyzing && "opacity-50 pointer-events-none"
-          )}
-        >
-          <input {...getInputProps()} />
-          <div className="flex flex-col items-center justify-center gap-4">
-            {analyzing ? (
-              <>
-                <Loader2 className="animate-spin text-blue-600" size={48} />
-                <p className="text-lg font-medium text-gray-600">AI 正在识别血压读数...</p>
-              </>
-            ) : (
-              <>
-                <div className="p-4 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
-                  <UploadCloud className="text-blue-500" size={32} />
-                </div>
-                <div>
-                  <p className="text-lg font-medium text-gray-700">
-                    {isDragActive ? "释放文件以上传" : "点击或拖拽血压计照片到这里"}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">支持 JPG, PNG 格式</p>
-                  {!userPhone && (
-                    <p className="text-xs text-blue-600 mt-2 font-medium">
-                      需登录后使用 AI 识别功能
-                    </p>
-                  )}
-                </div>
-              </>
+        {userPhone ? (
+          <div
+            {...getRootProps()}
+            className={clsx(
+              "border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer bg-white shadow-sm group",
+              isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400",
+              analyzing && "opacity-50 pointer-events-none"
             )}
+          >
+            <input {...getInputProps()} />
+            <div className="flex flex-col items-center justify-center gap-4">
+              {analyzing ? (
+                <>
+                  <Loader2 className="animate-spin text-blue-600" size={48} />
+                  <p className="text-lg font-medium text-gray-600">AI 正在识别血压读数...</p>
+                </>
+              ) : (
+                <>
+                  <div className="p-4 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
+                    <UploadCloud className="text-blue-500" size={32} />
+                  </div>
+                  <div>
+                    <p className="text-lg font-medium text-gray-700">
+                      {isDragActive ? "释放文件以上传" : "点击或拖拽血压计照片到这里"}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">支持 JPG, PNG 格式</p>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div
+            onClick={handleUploadClick}
+            className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center transition-all cursor-pointer bg-white shadow-sm group hover:border-blue-400"
+          >
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="p-4 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
+                <UploadCloud className="text-blue-500" size={32} />
+              </div>
+              <div>
+                <p className="text-lg font-medium text-gray-700">
+                  点击或拖拽血压计照片到这里
+                </p>
+                <p className="text-sm text-gray-500 mt-2">支持 JPG, PNG 格式</p>
+                <p className="text-xs text-blue-600 mt-2 font-medium">
+                  需登录后使用 AI 识别功能
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (

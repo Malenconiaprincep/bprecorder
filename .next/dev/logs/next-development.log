@@ -85,3 +85,13 @@
 [02:35:43.042] Server  LOG      ✓ Compiled in 106ms
 [02:36:53.961] Server  LOG      ✓ Compiled in 240ms
 [02:36:56.195] Server  LOG      ✓ Compiled in 61ms
+[02:41:15.082] Server  ERROR    ⨯ ReferenceError: useDropzone is not defined
+[02:41:15.275] Server  ERROR    ⨯ ReferenceError: useDropzone is not defined
+[02:41:15.591] Server  ERROR    ⨯ ReferenceError: useDropzone is not defined
+[02:41:15.775] Server  ERROR    ⨯ ReferenceError: useDropzone is not defined
+[02:41:16.298] Server  ERROR    ⨯ ReferenceError: useDropzone is not defined
+[02:41:16.438] Server  ERROR    ⨯ ReferenceError: useDropzone is not defined
+[02:41:16.680] Browser ERROR   uncaughtError: ReferenceError: useDropzone is not defined
+[02:41:21.303] Server  LOG      ✓ Compiled in 67ms
+[02:42:27.541] Server  LOG      ✓ Compiled in 244ms
+[02:42:33.787] Server  LOG      ✓ Compiled in 132ms
