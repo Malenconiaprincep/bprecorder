@@ -96,3 +96,7 @@ Import trace:
 [00:01:16.401] Server  WARN    Missing Supabase environment variables
 [00:01:16.502] Server  ERROR    ⨯ Error: supabaseUrl is required.
 [00:01:16.900] Browser ERROR   Failed to fetch records {}
+[00:03:54.681] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:03:54.785] Server  WARN    Missing Supabase environment variables. Using fallback for build/dev.
+[00:03:55.097] Server  ERROR   Supabase fetch error: {}
+[00:03:55.098] Server  ERROR   Error fetching records: {}
