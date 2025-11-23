@@ -12,6 +12,8 @@ export async function POST(req: NextRequest) {
     const openai = new OpenAI({
       apiKey: apiKey,
       baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      timeout: 60000, // 60秒超时
+      maxRetries: 2, // 最多重试2次
     });
 
     const formData = await req.formData();
@@ -55,6 +57,7 @@ export async function POST(req: NextRequest) {
           ],
         },
       ],
+      max_tokens: 500, // 限制输出长度，加快响应
     });
 
     const text = response.choices[0]?.message?.content;

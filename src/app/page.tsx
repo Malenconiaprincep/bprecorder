@@ -90,10 +90,17 @@ export default function Home() {
     formData.append("file", file);
 
     try {
+      // 使用 AbortController 实现超时控制（90秒）
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
+
       const res = await fetch("/api/analyze", {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (res.status === 401) {
         router.push('/login');
@@ -107,8 +114,12 @@ export default function Home() {
       } else {
         setAnalyzedData(data);
       }
-    } catch (e) {
-      setError("识别失败，请重试");
+    } catch (e: any) {
+      if (e.name === 'AbortError') {
+        setError("请求超时，请重试。如果问题持续，请尝试使用更小的图片。");
+      } else {
+        setError("识别失败，请重试");
+      }
     } finally {
       setAnalyzing(false);
     }
