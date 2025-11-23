@@ -1,6 +1,0 @@
-{
-  "/api/analyze/route": "app/api/analyze/route.js",
-  "/api/records/route": "app/api/records/route.js",
-  "/login/page": "app/login/page.js",
-  "/page": "app/page.js"
-}
