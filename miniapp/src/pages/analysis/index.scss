@@ -1,0 +1,201 @@
+.analysis-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #e8f4ff 0%, #f0f6ff 100%);
+  padding-bottom: 120px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 60px 24px 24px;
+}
+
+.back-btn {
+  font-size: 48px;
+  color: #1e293b;
+  width: 60px;
+}
+
+.header-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.header-placeholder {
+  width: 60px;
+}
+
+/* 时间切换 */
+.time-tabs {
+  display: flex;
+  margin: 0 24px 24px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 8px;
+}
+
+.time-tab {
+  flex: 1;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-size: 28px;
+  color: #64748b;
+}
+
+.time-tab.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 图表卡片 */
+.chart-card {
+  margin: 0 24px 24px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.legend-dot.systolic {
+  background: #3b82f6;
+}
+
+.legend-dot.diastolic {
+  background: #10b981;
+}
+
+.legend-text {
+  font-size: 24px;
+  color: #64748b;
+}
+
+.chart-area {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-placeholder {
+  text-align: center;
+}
+
+.chart-text {
+  font-size: 28px;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.chart-hint {
+  font-size: 24px;
+  color: #cbd5e1;
+}
+
+/* 平均血压卡片 */
+.avg-card {
+  margin: 0 24px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.avg-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 16px;
+}
+
+.avg-content {
+  text-align: center;
+}
+
+.avg-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+}
+
+.avg-number {
+  font-size: 56px;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.avg-unit {
+  font-size: 28px;
+  color: #94a3b8;
+}
+
+.avg-label {
+  font-size: 24px;
+  color: #94a3b8;
+  margin-top: 8px;
+}
+
+/* 底部 TabBar */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 24px 24px 0 0;
+}
+
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 24px;
+}
+
+.tab-icon {
+  font-size: 40px;
+  margin-bottom: 4px;
+}
+
+.tab-label {
+  font-size: 22px;
+  color: #94a3b8;
+}
+
+.tab-item.active .tab-label {
+  color: #3b82f6;
+  font-weight: 600;
+}
+

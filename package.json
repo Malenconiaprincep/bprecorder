@@ -7,7 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "mini:install": "cd miniapp && npm install",
+    "mini:dev": "cd miniapp && npm run dev:weapp",
+    "mini:web": "cd miniapp && npm run dev:h5"
   },
   "keywords": [],
   "author": "",
