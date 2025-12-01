@@ -82,8 +82,9 @@ export async function OPTIONS(request: NextRequest) {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
     },
   })
 }
@@ -108,24 +109,25 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
   console.log('[wx-login] POST request received at', new Date().toISOString())
+  console.log('[wx-login] Request method:', request.method)
+  console.log('[wx-login] Request URL:', request.url)
   
   try {
-    // 检查请求方法
-    if (request.method !== 'POST') {
-      console.error('[wx-login] Invalid method:', request.method)
+    let body
+    try {
+      body = await request.json()
+    } catch (jsonError) {
+      console.error('[wx-login] Failed to parse JSON:', jsonError)
       return NextResponse.json({ 
         success: false, 
-        error: `Method ${request.method} not allowed. Use POST.` 
+        error: '请求体必须是有效的 JSON 格式' 
       }, { 
-        status: 405,
+        status: 400,
         headers: {
           'Access-Control-Allow-Origin': '*',
-          'Allow': 'POST, OPTIONS, GET',
         },
       })
     }
-    
-    const body = await request.json()
     const { code, nickName, avatarUrl } = body
     console.log('[wx-login] Request body:', { 
       code: code ? 'present' : 'missing', 
