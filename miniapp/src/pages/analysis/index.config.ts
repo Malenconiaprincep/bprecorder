@@ -1,5 +1,6 @@
 export default definePageConfig({
   navigationBarTitleText: '分析',
-  navigationStyle: 'custom'
+  navigationBarBackgroundColor: '#e8f4ff',
+  navigationBarTextStyle: 'black'
 })
 

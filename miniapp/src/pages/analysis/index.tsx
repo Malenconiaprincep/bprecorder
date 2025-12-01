@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { View, Text } from '@tarojs/components'
-import Taro, { useLoad } from '@tarojs/taro'
+import { useLoad } from '@tarojs/taro'
 import { getRecords, BPRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import './index.scss'
@@ -42,19 +42,8 @@ export default function AnalysisPage() {
 
   const avg = getAverage()
 
-  const goToHome = () => {
-    Taro.switchTab({ url: '/pages/index/index' })
-  }
-
   return (
     <View className='analysis-page'>
-      {/* 头部 */}
-      <View className='header'>
-        <Text className='back-btn' onClick={goToHome}>‹</Text>
-        <Text className='header-title'>分析跑页</Text>
-        <View className='header-placeholder' />
-      </View>
-
       {/* 时间范围切换 */}
       <View className='time-tabs'>
         <View 
@@ -102,22 +91,6 @@ export default function AnalysisPage() {
             <Text className='avg-unit'>mmHg</Text>
           </View>
           <Text className='avg-label'>收缩压 / 舒张压 (心率)</Text>
-        </View>
-      </View>
-
-      {/* 底部 TabBar */}
-      <View className='tab-bar'>
-        <View className='tab-item' onClick={goToHome}>
-          <Text className='tab-icon'>🏠</Text>
-          <Text className='tab-label'>首页</Text>
-        </View>
-        <View className='tab-item active'>
-          <Text className='tab-icon'>📊</Text>
-          <Text className='tab-label'>分析</Text>
-        </View>
-        <View className='tab-item'>
-          <Text className='tab-icon'>⚙️</Text>
-          <Text className='tab-label'>设置</Text>
         </View>
       </View>
     </View>
