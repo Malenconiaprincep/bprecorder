@@ -4,6 +4,19 @@ const nextConfig = {
   experimental: {
     // 注意：在生产环境（如 Vercel）中，超时时间由平台控制
     // Vercel Hobby 计划：10秒，Pro 计划：60秒
+    outputFileTracingExcludes: {
+      '*': ['./miniapp/**/*'],
+    },
+  },
+  // 排除 miniapp 目录，避免被打包
+  webpack: (config, { isServer }) => {
+    // 排除 miniapp 目录
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: ['**/node_modules/**', '**/miniapp/**'],
+    };
+    
+    return config;
   },
 };
 

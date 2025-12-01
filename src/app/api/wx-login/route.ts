@@ -6,8 +6,17 @@ import * as crypto from 'crypto'
 const WX_APPID = process.env.WX_APPID || ''
 const WX_SECRET = process.env.WX_SECRET || ''
 
-// JWT 密钥 - 请在环境变量中配置
-const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key'
+// JWT 密钥 - 必须在环境变量中配置，且必须是足够长且随机的字符串
+// 建议使用至少 32 个字符的随机字符串
+// 生成方法：node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+const JWT_SECRET = process.env.JWT_SECRET
+
+if (!JWT_SECRET || JWT_SECRET.length < 32) {
+  console.error('⚠️  JWT_SECRET 未配置或长度不足！请设置至少 32 个字符的随机字符串')
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET 必须在生产环境中配置')
+  }
+}
 
 // Supabase 配置
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -15,6 +24,10 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 // 简单的 JWT 生成函数
 function generateToken(payload: object, expiresIn: number = 7 * 24 * 60 * 60): string {
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET 未配置，无法生成 Token')
+  }
+  
   const header = { alg: 'HS256', typ: 'JWT' }
   const now = Math.floor(Date.now() / 1000)
   const fullPayload = { ...payload, iat: now, exp: now + expiresIn }
@@ -33,6 +46,11 @@ function generateToken(payload: object, expiresIn: number = 7 * 24 * 60 * 60): s
 // 验证 JWT
 export function verifyToken(token: string): { valid: boolean; payload?: any } {
   try {
+    if (!JWT_SECRET) {
+      console.error('JWT_SECRET 未配置，无法验证 Token')
+      return { valid: false }
+    }
+    
     const [header, payload, signature] = token.split('.')
     
     const expectedSignature = crypto
@@ -89,20 +107,29 @@ export async function POST(request: NextRequest) {
 
     // 在 Supabase 中查找或创建用户
     let userId = openid
+    let dbUserId: number | null = null
     
     if (supabaseUrl && supabaseServiceKey) {
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
       
-      // 查找用户
-      const { data: existingUser } = await supabase
+      // 查找用户（使用 maybeSingle 避免用户不存在时报错）
+      const { data: existingUser, error: queryError } = await supabase
         .from('wx_users')
         .select('*')
         .eq('openid', openid)
-        .single()
+        .maybeSingle()
 
-      if (!existingUser) {
+      if (queryError) {
+        console.error('Failed to query user:', queryError)
+      }
+
+      if (existingUser) {
+        // 用户已存在，使用数据库中的用户ID
+        dbUserId = existingUser.id || null
+        userId = existingUser.id?.toString() || openid
+      } else {
         // 创建新用户
-        const { data: newUser, error } = await supabase
+        const { data: newUser, error: createError } = await supabase
           .from('wx_users')
           .insert({
             openid,
@@ -111,20 +138,26 @@ export async function POST(request: NextRequest) {
           .select()
           .single()
 
-        if (error) {
-          console.error('Failed to create user:', error)
+        if (createError) {
+          console.error('Failed to create user:', createError)
           // 即使创建失败也继续，因为 openid 本身就可以作为用户标识
+        } else if (newUser) {
+          // 成功创建用户，获取数据库返回的用户ID
+          dbUserId = newUser.id || null
+          userId = newUser.id?.toString() || openid
         }
       }
     }
 
-    // 生成 JWT Token
+    // 生成 JWT Token（使用数据库用户ID作为 sub，如果存在的话）
     const token = generateToken({
       openid,
-      sub: openid
+      userId: dbUserId,
+      sub: dbUserId?.toString() || openid
     })
 
     const userInfo = {
+      id: dbUserId,
       openid,
       // 可以在这里添加更多用户信息
     }

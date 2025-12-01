@@ -44,10 +44,42 @@ cp .env.example .env.local
 编辑 `.env.local`，填入你的 Key：
 
 ```env
+# AI 识别
 GEMINI_API_KEY=你的_Gemini_API_Key
+
+# Supabase 数据库
 NEXT_PUBLIC_SUPABASE_URL=你的_Supabase_Project_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY=你的_Supabase_Anon_Key
+SUPABASE_SERVICE_ROLE_KEY=你的_Supabase_Service_Role_Key
+
+# 微信小程序登录
+WX_APPID=你的微信小程序_AppID
+WX_SECRET=你的微信小程序_Secret
+
+# JWT 密钥（用于签名和验证 Token）
+# ⚠️ 重要：必须是至少 32 个字符的随机字符串，不能使用默认值！
+# 生成方法：node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+JWT_SECRET=生成的随机密钥（至少32个字符）
 ```
+
+**生成 JWT_SECRET 的方法：**
+
+```bash
+# 方法1：使用 Node.js 生成（推荐）
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# 方法2：使用 OpenSSL 生成
+openssl rand -hex 32
+
+# 方法3：使用在线工具（不推荐，安全性较低）
+# 访问 https://generate-secret.vercel.app/32
+```
+
+**⚠️ 安全提示：**
+- `JWT_SECRET` 必须足够长（至少 32 个字符）且随机
+- 不要使用常见的字符串（如 "secret"、"password" 等）
+- 不要将密钥提交到代码仓库
+- 生产环境必须配置，否则应用无法启动
 
 ### 4. 启动开发服务器
 
@@ -63,7 +95,7 @@ npm run dev
 
 1. 将代码推送到 GitHub。
 2. 在 Vercel 导入项目。
-3. 在 Vercel 项目设置中添加上述 3 个环境变量。
+3. 在 Vercel 项目设置中添加所有必需的环境变量（包括 `JWT_SECRET`、`WX_APPID`、`WX_SECRET` 等）。
 4. 点击 Deploy。
 
 ## 技术栈
