@@ -2,9 +2,15 @@ import Taro from '@tarojs/taro'
 
 // 存储 key
 const USER_INFO_KEY = 'bp_user_info'
+const WX_USER_INFO_KEY = 'bp_wx_user_info'
 
 export interface UserInfo {
   openid: string
+  nickName?: string
+  avatarUrl?: string
+}
+
+export interface WxUserInfo {
   nickName?: string
   avatarUrl?: string
 }
@@ -70,11 +76,35 @@ export function getUserInfo(): UserInfo | null {
 }
 
 /**
+ * 保存微信用户信息（头像、昵称）
+ */
+export function saveWxUserInfo(wxUserInfo: WxUserInfo) {
+  try {
+    Taro.setStorageSync(WX_USER_INFO_KEY, JSON.stringify(wxUserInfo))
+  } catch (e) {
+    console.error('saveWxUserInfo error:', e)
+  }
+}
+
+/**
+ * 获取微信用户信息
+ */
+export function getWxUserInfo(): WxUserInfo | null {
+  try {
+    const str = Taro.getStorageSync(WX_USER_INFO_KEY)
+    return str ? JSON.parse(str) : null
+  } catch (e) {
+    return null
+  }
+}
+
+/**
  * 退出登录
  */
 export function logout() {
   try {
     Taro.removeStorageSync(USER_INFO_KEY)
+    Taro.removeStorageSync(WX_USER_INFO_KEY)
   } catch (e) {
     console.error('logout error:', e)
   }

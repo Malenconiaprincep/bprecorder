@@ -1,14 +1,73 @@
-import React from 'react'
-import { View, Text, Image } from '@tarojs/components'
-import Taro from '@tarojs/taro'
-import { getUserInfo, logout } from '../../lib/auth'
+import React, { useState } from 'react'
+import { View, Text, Image, Button, Input } from '@tarojs/components'
+import Taro, { useLoad } from '@tarojs/taro'
+import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo } from '../../lib/auth'
 import './index.scss'
 
 export default function Profile() {
-  const userInfo = getUserInfo()
+  const [wxUser, setWxUser] = useState<WxUserInfo | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [tempAvatar, setTempAvatar] = useState('')
+  const [tempNickname, setTempNickname] = useState('')
+
+  // 判断是否已登录（有头像和昵称才算完成登录）
+  const isLoggedIn = !!(wxUser?.avatarUrl && wxUser?.nickName)
+
+  useLoad(() => {
+    // 加载已保存的微信用户信息
+    const savedWxUser = getWxUserInfo()
+    if (savedWxUser) {
+      setWxUser(savedWxUser)
+    }
+  })
+
+  // 点击登录，显示弹窗
+  const onClickLogin = () => {
+    setTempAvatar(wxUser?.avatarUrl || '')
+    setTempNickname(wxUser?.nickName || '')
+    setShowModal(true)
+  }
+
+  // 选择头像
+  const onChooseAvatar = (e: any) => {
+    const avatarUrl = e.detail.avatarUrl
+    setTempAvatar(avatarUrl)
+  }
+
+  // 输入昵称
+  const onInputNickname = (e: any) => {
+    setTempNickname(e.detail.value)
+  }
+
+  // 确认保存
+  const onConfirm = () => {
+    if (!tempAvatar) {
+      Taro.showToast({ title: '请选择头像', icon: 'none' })
+      return
+    }
+    if (!tempNickname) {
+      Taro.showToast({ title: '请输入昵称', icon: 'none' })
+      return
+    }
+    
+    const newWxUser: WxUserInfo = {
+      avatarUrl: tempAvatar,
+      nickName: tempNickname
+    }
+    setWxUser(newWxUser)
+    saveWxUserInfo(newWxUser)
+    setShowModal(false)
+    Taro.showToast({ title: '登录成功', icon: 'success' })
+  }
+
+  // 取消
+  const onCancel = () => {
+    setShowModal(false)
+  }
 
   const handleLogout = () => {
     logout()
+    setWxUser(null)
     Taro.showToast({ title: '已退出登录', icon: 'success' })
   }
 
@@ -22,33 +81,80 @@ export default function Profile() {
   return (
     <View className='page'>
       {/* 用户信息卡片 */}
-      <View className='user-card'>
-        <View className='avatar'>
-          <Text className='avatar-text'>👤</Text>
-        </View>
+      <View className='user-card' onClick={!isLoggedIn ? onClickLogin : undefined}>
+        {wxUser?.avatarUrl ? (
+          <Image className='avatar-img-display' src={wxUser.avatarUrl} mode='aspectFill' onClick={isLoggedIn ? onClickLogin : undefined} />
+        ) : (
+          <View className='avatar'>
+            <Text className='avatar-text'>👤</Text>
+          </View>
+        )}
         <View className='user-info'>
-          <Text className='user-name'>{userInfo?.openid ? '用户' + userInfo.openid.slice(-4) : '未登录'}</Text>
-          <Text className='user-desc'>记录健康，关爱自己</Text>
+          <Text className='user-name'>{wxUser?.nickName || '点击登录'}</Text>
+          <Text className='user-desc'>
+            {isLoggedIn ? '记录健康，关爱自己' : '点击完成微信授权登录'}
+          </Text>
         </View>
       </View>
 
-      {/* 统计卡片 */}
-      <View className='stats-card'>
-        <View className='stat-item'>
-          <Text className='stat-value'>0</Text>
-          <Text className='stat-label'>记录天数</Text>
+      {/* 登录弹窗 */}
+      {showModal && (
+        <View className='modal-mask' onClick={onCancel}>
+          <View className='modal-content' onClick={(e) => e.stopPropagation()}>
+            <Text className='modal-title'>完善个人信息</Text>
+            
+            {/* 头像选择 */}
+            <Button className='avatar-picker' openType='chooseAvatar' onChooseAvatar={onChooseAvatar}>
+              {tempAvatar ? (
+                <Image className='avatar-preview' src={tempAvatar} mode='aspectFill' />
+              ) : (
+                <View className='avatar-placeholder'>
+                  <Text className='avatar-placeholder-text'>点击选择头像</Text>
+                </View>
+              )}
+            </Button>
+
+            {/* 昵称输入 */}
+            <Input
+              className='nickname-field'
+              type='nickname'
+              placeholder='点击输入昵称'
+              value={tempNickname}
+              onInput={onInputNickname}
+            />
+
+            {/* 按钮 */}
+            <View className='modal-buttons'>
+              <View className='modal-btn cancel' onClick={onCancel}>
+                <Text>取消</Text>
+              </View>
+              <View className='modal-btn confirm' onClick={onConfirm}>
+                <Text>确认</Text>
+              </View>
+            </View>
+          </View>
         </View>
-        <View className='stat-divider' />
-        <View className='stat-item'>
-          <Text className='stat-value'>0</Text>
-          <Text className='stat-label'>总记录数</Text>
+      )}
+
+      {/* 统计卡片 - 只有登录后显示 */}
+      {isLoggedIn && (
+        <View className='stats-card'>
+          <View className='stat-item'>
+            <Text className='stat-value'>0</Text>
+            <Text className='stat-label'>记录天数</Text>
+          </View>
+          <View className='stat-divider' />
+          <View className='stat-item'>
+            <Text className='stat-value'>0</Text>
+            <Text className='stat-label'>总记录数</Text>
+          </View>
+          <View className='stat-divider' />
+          <View className='stat-item'>
+            <Text className='stat-value'>0</Text>
+            <Text className='stat-label'>连续打卡</Text>
+          </View>
         </View>
-        <View className='stat-divider' />
-        <View className='stat-item'>
-          <Text className='stat-value'>0</Text>
-          <Text className='stat-label'>连续打卡</Text>
-        </View>
-      </View>
+      )}
 
       {/* 菜单列表 */}
       <View className='menu-card'>
@@ -61,10 +167,12 @@ export default function Profile() {
         ))}
       </View>
 
-      {/* 退出登录 */}
-      <View className='logout-btn' onClick={handleLogout}>
-        <Text className='logout-text'>退出登录</Text>
-      </View>
+      {/* 退出登录 - 只有登录后显示 */}
+      {isLoggedIn && (
+        <View className='logout-btn' onClick={handleLogout}>
+          <Text className='logout-text'>退出登录</Text>
+        </View>
+      )}
     </View>
   )
 }
