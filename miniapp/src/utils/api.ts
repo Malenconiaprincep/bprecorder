@@ -1,2 +1,2 @@
-export const API_BASE_URL = 'http://localhost:3000' // 请替换为你的实际 API 地址
+export const API_BASE_URL = 'https://bprecorder.aikee.xyz' // API 地址
 

@@ -211,3 +211,140 @@
   font-weight: 600;
   color: #1e293b;
 }
+
+/* 识别中遮罩 */
+.analyze-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.analyze-content {
+  background: #ffffff;
+  padding: 60rpx 80rpx;
+  border-radius: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.analyze-text {
+  font-size: 32rpx;
+  color: #1e293b;
+}
+
+/* 结果弹窗 */
+.result-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.result-modal {
+  width: 600rpx;
+  background: #ffffff;
+  border-radius: 32rpx;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40rpx;
+  border-bottom: 1rpx solid #e2e8f0;
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.modal-close {
+  font-size: 48rpx;
+  color: #94a3b8;
+  line-height: 1;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-body {
+  padding: 40rpx;
+}
+
+.result-values {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+}
+
+.result-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.result-item.pulse {
+  margin-left: 40rpx;
+}
+
+.result-number {
+  font-size: 64rpx;
+  font-weight: bold;
+  color: #1e293b;
+  margin-bottom: 8rpx;
+}
+
+.result-label {
+  font-size: 24rpx;
+  color: #64748b;
+}
+
+.result-separator {
+  font-size: 48rpx;
+  color: #cbd5e1;
+  margin: 0 20rpx;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 24rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.cancel-btn {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  color: #ffffff;
+}

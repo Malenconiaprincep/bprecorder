@@ -49,7 +49,7 @@
     "disableSWC": true
   },
   "compileType": "miniprogram",
-  "libVersion": "trial",
+  "libVersion": "3.12.0",
   "srcMiniprogramRoot": "dist/",
   "packOptions": {
     "ignore": [],
