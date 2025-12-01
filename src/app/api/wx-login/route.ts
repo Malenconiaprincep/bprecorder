@@ -11,11 +11,17 @@ const WX_SECRET = process.env.WX_SECRET || ''
 // 生成方法：node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 const JWT_SECRET = process.env.JWT_SECRET
 
-if (!JWT_SECRET || JWT_SECRET.length < 32) {
-  console.error('⚠️  JWT_SECRET 未配置或长度不足！请设置至少 32 个字符的随机字符串')
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET 必须在生产环境中配置')
+// 延迟检查 JWT_SECRET，避免在模块加载时抛出错误
+function getJWTSecret(): string {
+  if (!JWT_SECRET || JWT_SECRET.length < 32) {
+    console.error('⚠️  JWT_SECRET 未配置或长度不足！请设置至少 32 个字符的随机字符串')
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET 必须在生产环境中配置')
+    }
+    // 开发环境返回一个临时密钥（仅用于测试）
+    return 'dev-temp-secret-key-please-configure-jwt-secret-in-production'
   }
+  return JWT_SECRET
 }
 
 // Supabase 配置
@@ -24,9 +30,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 // 简单的 JWT 生成函数
 function generateToken(payload: object, expiresIn: number = 7 * 24 * 60 * 60): string {
-  if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET 未配置，无法生成 Token')
-  }
+  const secret = getJWTSecret()
   
   const header = { alg: 'HS256', typ: 'JWT' }
   const now = Math.floor(Date.now() / 1000)
@@ -36,7 +40,7 @@ function generateToken(payload: object, expiresIn: number = 7 * 24 * 60 * 60): s
   const base64Payload = Buffer.from(JSON.stringify(fullPayload)).toString('base64url')
   
   const signature = crypto
-    .createHmac('sha256', JWT_SECRET)
+    .createHmac('sha256', secret)
     .update(`${base64Header}.${base64Payload}`)
     .digest('base64url')
   
@@ -46,15 +50,12 @@ function generateToken(payload: object, expiresIn: number = 7 * 24 * 60 * 60): s
 // 验证 JWT
 export function verifyToken(token: string): { valid: boolean; payload?: any } {
   try {
-    if (!JWT_SECRET) {
-      console.error('JWT_SECRET 未配置，无法验证 Token')
-      return { valid: false }
-    }
+    const secret = getJWTSecret()
     
     const [header, payload, signature] = token.split('.')
     
     const expectedSignature = crypto
-      .createHmac('sha256', JWT_SECRET)
+      .createHmac('sha256', secret)
       .update(`${header}.${payload}`)
       .digest('base64url')
     
@@ -87,12 +88,50 @@ export async function OPTIONS(request: NextRequest) {
   })
 }
 
+// 导出 runtime 配置，确保在 Vercel 上正确运行
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+// 添加 GET 方法用于测试（可选，用于调试）
+export async function GET(request: NextRequest) {
+  return NextResponse.json({ 
+    message: 'wx-login API is working',
+    method: 'GET',
+    timestamp: new Date().toISOString()
+  }, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+  })
+}
+
 export async function POST(request: NextRequest) {
-  console.log('wx-login POST request received')
+  const startTime = Date.now()
+  console.log('[wx-login] POST request received at', new Date().toISOString())
+  
   try {
+    // 检查请求方法
+    if (request.method !== 'POST') {
+      console.error('[wx-login] Invalid method:', request.method)
+      return NextResponse.json({ 
+        success: false, 
+        error: `Method ${request.method} not allowed. Use POST.` 
+      }, { 
+        status: 405,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Allow': 'POST, OPTIONS, GET',
+        },
+      })
+    }
+    
     const body = await request.json()
     const { code, nickName, avatarUrl } = body
-    console.log('Request body:', { code: code ? 'present' : 'missing', nickName, avatarUrl })
+    console.log('[wx-login] Request body:', { 
+      code: code ? 'present' : 'missing', 
+      nickName: nickName ? 'present' : 'missing', 
+      avatarUrl: avatarUrl ? 'present' : 'missing' 
+    })
     
     if (!code) {
       return NextResponse.json({ success: false, error: '缺少 code 参数' }, { 
@@ -242,6 +281,9 @@ export async function POST(request: NextRequest) {
       avatarUrl: finalAvatarUrl
     }
 
+    const duration = Date.now() - startTime
+    console.log('[wx-login] Success, duration:', duration, 'ms')
+    
     return NextResponse.json({
       success: true,
       token,
@@ -249,14 +291,20 @@ export async function POST(request: NextRequest) {
     }, {
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
     })
 
-  } catch (error) {
-    console.error('wx-login error:', error)
-    return NextResponse.json({ success: false, error: '服务器错误' }, { 
+  } catch (error: any) {
+    const duration = Date.now() - startTime
+    console.error('[wx-login] Error after', duration, 'ms:', error)
+    console.error('[wx-login] Error stack:', error?.stack)
+    return NextResponse.json({ 
+      success: false, 
+      error: '服务器错误',
+      message: error?.message || String(error)
+    }, { 
       status: 500,
       headers: {
         'Access-Control-Allow-Origin': '*',
