@@ -2,13 +2,10 @@ import React, { useState } from 'react'
 import { View, Text, Image } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
 import { getRecords, BPRecord } from '../../lib/supabase'
-import { wxLogin, logout, getUserInfo, UserInfo } from '../../lib/auth'
+import { wxLogin, getUserInfo, UserInfo } from '../../lib/auth'
 import './index.scss'
 
 // 图标
-import iconHome from '../../assets/icons/home.png'
-import iconAnalyse from '../../assets/icons/analyse.png'
-import iconWode from '../../assets/icons/wode.png'
 import iconCamera from '../../assets/icons/xiangji.png'
 import iconEdit from '../../assets/icons/jianpanshuru.png'
 
@@ -68,11 +65,6 @@ export default function Index() {
       {/* 顶部蓝色弧形背景 */}
       <View className='bg-curve' />
 
-      {/* 头部 */}
-      <View className='header'>
-        <Text className='title'>首页</Text>
-      </View>
-
       {/* 今日血压卡片 */}
       <View className='bp-card'>
         <View className='card-header'>
@@ -124,22 +116,6 @@ export default function Index() {
         <View className='action-btn white' onClick={goToInput}>
           <Image className='action-icon' src={iconEdit} mode='aspectFit' />
           <Text className='action-text-dark'>手动输入</Text>
-        </View>
-      </View>
-
-      {/* 底部导航 */}
-      <View className='tabbar'>
-        <View className='tab active'>
-          <Image className='tab-icon' src={iconHome} mode='aspectFit' />
-          <Text className='tab-text active'>首页</Text>
-        </View>
-        <View className='tab'>
-          <Image className='tab-icon' src={iconAnalyse} mode='aspectFit' />
-          <Text className='tab-text'>分析</Text>
-        </View>
-        <View className='tab'>
-          <Image className='tab-icon' src={iconWode} mode='aspectFit' />
-          <Text className='tab-text'>设置</Text>
         </View>
       </View>
     </View>

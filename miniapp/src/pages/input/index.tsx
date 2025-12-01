@@ -48,19 +48,8 @@ export default function InputPage() {
     }
   }
 
-  const goBack = () => {
-    Taro.navigateBack()
-  }
-
   return (
     <View className='input-page'>
-      {/* 头部 */}
-      <View className='header'>
-        <Text className='back-btn' onClick={goBack}>‹</Text>
-        <Text className='header-title'>手动记录</Text>
-        <View className='header-placeholder' />
-      </View>
-
       {/* 输入表单 */}
       <View className='form-container'>
         <View className='input-group'>
