@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { View, Text, Image, Button, Input } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
-import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo } from '../../lib/auth'
+import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend } from '../../lib/auth'
 import './index.scss'
 
 export default function Profile() {
@@ -40,7 +40,7 @@ export default function Profile() {
   }
 
   // 确认保存
-  const onConfirm = () => {
+  const onConfirm = async () => {
     if (!tempAvatar) {
       Taro.showToast({ title: '请选择头像', icon: 'none' })
       return
@@ -50,14 +50,31 @@ export default function Profile() {
       return
     }
     
-    const newWxUser: WxUserInfo = {
-      avatarUrl: tempAvatar,
-      nickName: tempNickname
+    // 显示加载提示
+    Taro.showLoading({ title: '登录中...' })
+    
+    try {
+      // 调用后端接口，一次性获取 openid 并保存头像和昵称
+      const result = await wxLoginWithBackend(tempNickname, tempAvatar)
+      
+      if (result.success) {
+        const newWxUser: WxUserInfo = {
+          avatarUrl: tempAvatar,
+          nickName: tempNickname
+        }
+        setWxUser(newWxUser)
+        saveWxUserInfo(newWxUser)
+        setShowModal(false)
+        Taro.showToast({ title: '登录成功', icon: 'success' })
+      } else {
+        Taro.showToast({ title: result.error || '登录失败', icon: 'none' })
+      }
+    } catch (e: any) {
+      console.error('Login error:', e)
+      Taro.showToast({ title: '登录失败，请重试', icon: 'none' })
+    } finally {
+      Taro.hideLoading()
     }
-    setWxUser(newWxUser)
-    saveWxUserInfo(newWxUser)
-    setShowModal(false)
-    Taro.showToast({ title: '登录成功', icon: 'success' })
   }
 
   // 取消

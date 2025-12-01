@@ -75,17 +75,42 @@ export function verifyToken(token: string): { valid: boolean; payload?: any } {
   }
 }
 
+// 处理 CORS 预检请求
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  })
+}
+
 export async function POST(request: NextRequest) {
+  console.log('wx-login POST request received')
   try {
-    const { code } = await request.json()
+    const body = await request.json()
+    const { code, nickName, avatarUrl } = body
+    console.log('Request body:', { code: code ? 'present' : 'missing', nickName, avatarUrl })
     
     if (!code) {
-      return NextResponse.json({ success: false, error: '缺少 code 参数' }, { status: 400 })
+      return NextResponse.json({ success: false, error: '缺少 code 参数' }, { 
+        status: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+      })
     }
 
     if (!WX_APPID || !WX_SECRET) {
       console.error('Missing WX_APPID or WX_SECRET')
-      return NextResponse.json({ success: false, error: '服务器配置错误' }, { status: 500 })
+      return NextResponse.json({ success: false, error: '服务器配置错误' }, { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+      })
     }
 
     // 调用微信 code2Session 接口
@@ -96,13 +121,23 @@ export async function POST(request: NextRequest) {
 
     if (wxData.errcode) {
       console.error('WeChat API error:', wxData)
-      return NextResponse.json({ success: false, error: '微信登录失败: ' + wxData.errmsg }, { status: 400 })
+      return NextResponse.json({ success: false, error: '微信登录失败: ' + wxData.errmsg }, { 
+        status: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+      })
     }
 
     const { openid, session_key } = wxData
 
     if (!openid) {
-      return NextResponse.json({ success: false, error: '获取 openid 失败' }, { status: 400 })
+      return NextResponse.json({ success: false, error: '获取 openid 失败' }, { 
+        status: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+      })
     }
 
     // 在 Supabase 中查找或创建用户
@@ -124,17 +159,43 @@ export async function POST(request: NextRequest) {
       }
 
       if (existingUser) {
-        // 用户已存在，使用数据库中的用户ID
+        // 用户已存在，更新用户信息（如果有提供头像和昵称）
         dbUserId = existingUser.id || null
         userId = existingUser.id?.toString() || openid
+        
+        // 如果提供了头像或昵称，更新用户信息
+        if (nickName || avatarUrl) {
+          const updateData: { nickname?: string; avatar_url?: string } = {}
+          if (nickName) updateData.nickname = nickName
+          if (avatarUrl) updateData.avatar_url = avatarUrl
+          
+          const { error: updateError } = await supabase
+            .from('wx_users')
+            .update(updateData)
+            .eq('id', dbUserId)
+          
+          if (updateError) {
+            console.error('Failed to update user:', updateError)
+          }
+        }
       } else {
         // 创建新用户
+        const insertData: {
+          openid: string
+          created_at: string
+          nickname?: string
+          avatar_url?: string
+        } = {
+          openid,
+          created_at: new Date().toISOString()
+        }
+        
+        if (nickName) insertData.nickname = nickName
+        if (avatarUrl) insertData.avatar_url = avatarUrl
+        
         const { data: newUser, error: createError } = await supabase
           .from('wx_users')
-          .insert({
-            openid,
-            created_at: new Date().toISOString()
-          })
+          .insert(insertData)
           .select()
           .single()
 
@@ -156,21 +217,51 @@ export async function POST(request: NextRequest) {
       sub: dbUserId?.toString() || openid
     })
 
+    // 获取最新的用户信息（包含头像和昵称）
+    let finalNickName = nickName
+    let finalAvatarUrl = avatarUrl
+    
+    if (supabaseUrl && supabaseServiceKey && dbUserId) {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      const { data: latestUser } = await supabase
+        .from('wx_users')
+        .select('nickname, avatar_url')
+        .eq('id', dbUserId)
+        .single()
+      
+      if (latestUser) {
+        finalNickName = latestUser.nickname || nickName
+        finalAvatarUrl = latestUser.avatar_url || avatarUrl
+      }
+    }
+
     const userInfo = {
       id: dbUserId,
       openid,
-      // 可以在这里添加更多用户信息
+      nickName: finalNickName,
+      avatarUrl: finalAvatarUrl
     }
 
     return NextResponse.json({
       success: true,
       token,
       userInfo
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
     })
 
   } catch (error) {
     console.error('wx-login error:', error)
-    return NextResponse.json({ success: false, error: '服务器错误' }, { status: 500 })
+    return NextResponse.json({ success: false, error: '服务器错误' }, { 
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
   }
 }
 

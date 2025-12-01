@@ -1,8 +1,10 @@
 import Taro from '@tarojs/taro'
+import { API_BASE_URL } from '../utils/api'
 
 // 存储 key
 const USER_INFO_KEY = 'bp_user_info'
 const WX_USER_INFO_KEY = 'bp_wx_user_info'
+const TOKEN_KEY = 'bp_token'
 
 export interface UserInfo {
   openid: string
@@ -105,6 +107,7 @@ export function logout() {
   try {
     Taro.removeStorageSync(USER_INFO_KEY)
     Taro.removeStorageSync(WX_USER_INFO_KEY)
+    Taro.removeStorageSync(TOKEN_KEY)
   } catch (e) {
     console.error('logout error:', e)
   }
@@ -115,4 +118,87 @@ export function logout() {
  */
 export function isLoggedIn(): boolean {
   return !!getUserInfo()
+}
+
+/**
+ * 调用后端微信登录接口（一次性获取 openid、保存头像和昵称）
+ */
+export async function wxLoginWithBackend(nickName?: string, avatarUrl?: string): Promise<{ success: boolean; userInfo?: UserInfo; token?: string; error?: string }> {
+  try {
+    // 获取微信登录 code
+    const loginRes = await Taro.login()
+    const code = loginRes.code
+    
+    if (!code) {
+      return { success: false, error: '获取微信登录 code 失败' }
+    }
+
+    // 调用后端接口
+    const response = await Taro.request({
+      url: `${API_BASE_URL}/api/wx-login`,
+      method: 'POST',
+      header: {
+        'Content-Type': 'application/json'
+      },
+      data: {
+        code,
+        nickName,
+        avatarUrl
+      }
+    })
+
+    if (response.statusCode === 200 && response.data.success) {
+      const { token, userInfo } = response.data
+      
+      // 保存 token
+      if (token) {
+        Taro.setStorageSync(TOKEN_KEY, token)
+      }
+      
+      // 保存用户信息
+      if (userInfo) {
+        const fullUserInfo: UserInfo = {
+          openid: userInfo.openid,
+          nickName: userInfo.nickName,
+          avatarUrl: userInfo.avatarUrl
+        }
+        Taro.setStorageSync(USER_INFO_KEY, JSON.stringify(fullUserInfo))
+        
+        // 同时保存微信用户信息（用于兼容现有代码）
+        if (userInfo.nickName || userInfo.avatarUrl) {
+          saveWxUserInfo({
+            nickName: userInfo.nickName,
+            avatarUrl: userInfo.avatarUrl
+          })
+        }
+      }
+      
+      return {
+        success: true,
+        userInfo: userInfo ? {
+          openid: userInfo.openid,
+          nickName: userInfo.nickName,
+          avatarUrl: userInfo.avatarUrl
+        } : undefined,
+        token
+      }
+    } else {
+      const errorMsg = response.data?.error || '登录失败'
+      return { success: false, error: errorMsg }
+    }
+  } catch (e: any) {
+    console.error('wxLoginWithBackend error:', e)
+    return { success: false, error: e.message || '登录出错' }
+  }
+}
+
+/**
+ * 获取存储的 token
+ */
+export function getToken(): string | null {
+  try {
+    return Taro.getStorageSync(TOKEN_KEY) || null
+  } catch (e) {
+    return null
+  }
 }
