@@ -129,18 +129,19 @@
 }
 
 .trend-title {
-  font-size: 32rpx;
+  font-size: 36rpx;
   font-weight: 600;
   color: #1e293b;
   display: block;
-  margin-bottom: 30rpx;
+  margin-bottom: 40rpx;
 }
 
 .trend-bars {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  height: 160rpx;
+  height: 240rpx;
+  padding: 0 10rpx;
 }
 
 .bar-item {
@@ -151,15 +152,15 @@
 }
 
 .bar {
-  width: 32rpx;
-  min-height: 20rpx;
+  width: 48rpx;
+  min-height: 40rpx;
   background: linear-gradient(180deg, #5bb8f5 0%, #4aa8e8 100%);
-  border-radius: 16rpx 16rpx 8rpx 8rpx;
-  margin-bottom: 16rpx;
+  border-radius: 24rpx 24rpx 12rpx 12rpx;
+  margin-bottom: 20rpx;
 }
 
 .bar-label {
-  font-size: 22rpx;
+  font-size: 26rpx;
   color: #94a3b8;
 }
 

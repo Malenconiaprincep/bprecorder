@@ -12,7 +12,9 @@ export default defineAppConfig({
     navigationBarBackgroundColor: '#f0f6ff',
     navigationBarTitleText: '血压记录',
     navigationBarTextStyle: 'black',
-    backgroundColor: '#f0f6ff'
+    backgroundColor: '#f0f6ff',
+    enablePullDownRefresh: false,
+    disableScroll: false
   },
   tabBar: {
     color: '#94a3b8',

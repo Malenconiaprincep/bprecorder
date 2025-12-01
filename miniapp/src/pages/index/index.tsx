@@ -96,11 +96,11 @@ export default function Index() {
 
       {/* 趋势卡片 */}
       <View className='trend-card'>
-        <Text className='trend-title'>今日趋势</Text>
+        <Text className='trend-title'>本周趋势</Text>
         <View className='trend-bars'>
           {['一', '二', '三', '四', '五', '六', '日'].map((day, i) => (
             <View key={i} className='bar-item'>
-              <View className='bar' style={{ height: records[i] ? `${records[i].systolic / 3}rpx` : '20rpx' }} />
+              <View className='bar' style={{ height: records[i] ? `${records[i].systolic}rpx` : '40rpx' }} />
               <Text className='bar-label'>周{day}</Text>
             </View>
           ))}
