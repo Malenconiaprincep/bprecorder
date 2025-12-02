@@ -1,7 +1,8 @@
 .analysis-page {
-  height: 100vh;
+  min-height: 100vh;
   background: linear-gradient(180deg, #e8f4ff 0%, #f0f6ff 100%);
   padding: 20rpx 30rpx;
+  padding-bottom: 180rpx;
   box-sizing: border-box;
 }
 
@@ -86,10 +87,18 @@
   color: #64748b;
 }
 
+.chart-hint {
+  font-size: 22rpx;
+  color: #94a3b8;
+  text-align: center;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
 /* 图表包装 */
 .chart-wrapper {
   display: flex;
-  height: 360rpx;
+  min-height: 320rpx;
 }
 
 /* Y轴 */
@@ -115,6 +124,8 @@
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.3) 100%);
   border-radius: 16rpx;
   overflow: visible;
+  /* 固定宽高比，确保线条角度计算准确 */
+  aspect-ratio: 1.8;
 }
 
 /* 网格线 */
@@ -126,6 +137,16 @@
   background: #e2e8f0;
 }
 
+/* 连接线层 */
+.lines-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
 /* 数据层 */
 .data-layer {
   position: absolute;
@@ -133,6 +154,7 @@
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 2;
 }
 
 /* 数据点 */
@@ -148,6 +170,14 @@
   border-radius: 50%;
   border: 4rpx solid #ffffff;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+}
+
+/* 30天模式下点更小 */
+.month-mode .point-inner {
+  width: 12rpx;
+  height: 12rpx;
+  border: 2rpx solid #ffffff;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 }
 
 .data-point.systolic .point-inner {
@@ -177,20 +207,120 @@
   bottom: -32rpx;
 }
 
+/* 选中状态 */
+.data-point.selected .point-inner {
+  width: 28rpx;
+  height: 28rpx;
+  box-shadow: 0 0 0 8rpx rgba(59, 130, 246, 0.2);
+}
+
+/* 提示气泡 */
+.tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.tooltip-content {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  padding: 20rpx 28rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.25);
+  text-align: center;
+  min-width: 160rpx;
+}
+
+.tooltip-date {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.7);
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.tooltip-values {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8rpx;
+}
+
+.tooltip-bp {
+  display: flex;
+  align-items: baseline;
+}
+
+.sys-value {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #fb923c;
+}
+
+.slash {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 4rpx;
+}
+
+.dia-value {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #60a5fa;
+}
+
+.tooltip-unit {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.tooltip-count {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 6rpx;
+  display: block;
+}
+
+.tooltip-arrow {
+  width: 0;
+  height: 0;
+  border-left: 12rpx solid transparent;
+  border-right: 12rpx solid transparent;
+  border-top: 12rpx solid #334155;
+  margin: 0 auto;
+}
+
 /* 连接线 */
 .line {
   position: absolute;
   height: 4rpx;
-  transform-origin: left center;
+  transform-origin: 0 50%;
   border-radius: 2rpx;
 }
 
+/* 30天模式下线条更细 */
+.month-mode .line {
+  height: 3rpx;
+}
+
 .line.systolic {
-  background: linear-gradient(90deg, rgba(249, 115, 22, 0.8) 0%, rgba(234, 88, 12, 0.6) 100%);
+  background: #f97316;
 }
 
 .line.diastolic {
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.8) 0%, rgba(37, 99, 235, 0.6) 100%);
+  background: #3b82f6;
+}
+
+/* 30天模式下线条更粗更平滑 */
+.month-mode .line {
+  height: 5rpx;
+}
+
+.month-mode .line.systolic {
+  background: #f97316;
+}
+
+.month-mode .line.diastolic {
+  background: #3b82f6;
 }
 
 /* 空状态 */
@@ -349,7 +479,4 @@
   color: #dc2626;
 }
 
-/* 底部占位 */
-.bottom-spacer {
-  height: 180rpx;
-}
+/* 底部占位 - 已通过 padding-bottom 实现 */

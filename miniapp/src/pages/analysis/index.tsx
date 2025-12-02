@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import { View, Text, ScrollView } from '@tarojs/components'
+import { useState, useMemo } from 'react'
+import { View, Text } from '@tarojs/components'
 import { useLoad } from '@tarojs/taro'
 import { getRecords, BPRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
@@ -21,15 +21,36 @@ const formatDateDisplay = (dateStr: string, type: 'week' | 'month') => {
   }
 }
 
+// 测试数据
+import { USE_TEST_DATA, getTestData } from '../../utils/testData'
+
+// 选中点的类型
+interface SelectedPoint {
+  date: string
+  label: string
+  systolic: number
+  diastolic: number
+  count: number
+  xPercent: number
+  yPercent: number
+}
+
 export default function AnalysisPage() {
   const [records, setRecords] = useState<BPRecord[]>([])
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week')
+  const [selectedPoint, setSelectedPoint] = useState<SelectedPoint | null>(null)
 
   useLoad(() => {
     fetchRecords()
   })
 
   const fetchRecords = async () => {
+    // 使用测试数据
+    if (USE_TEST_DATA) {
+      setRecords(getTestData())
+      return
+    }
+
     const userInfo = getUserInfo()
     if (!userInfo) return
 
@@ -65,7 +86,7 @@ export default function AnalysisPage() {
 
     // 计算每天平均值
     const dailyAvg: { date: string; label: string; systolic: number | null; diastolic: number | null; count: number }[] = []
-    
+
     dateList.forEach(dateStr => {
       const dayRecords = groupedByDate[dateStr] || []
       if (dayRecords.length > 0) {
@@ -147,19 +168,49 @@ export default function AnalysisPage() {
     return { label: '高血压', color: 'high' }
   }
 
+  // 计算平滑趋势线（用于30天视图）- 只保留有数据的点
+  const smoothTrendLine = useMemo(() => {
+    if (timeRange !== 'month') return []
+
+    // 获取所有有数据的点
+    const validPoints = chartData
+      .map((d, i) => ({ ...d, index: i }))
+      .filter(d => d.systolic !== null)
+
+    if (validPoints.length < 2) return validPoints
+
+    // 简单平滑：对每个点取前后点的加权平均
+    const smoothed = validPoints.map((point, i) => {
+      if (i === 0 || i === validPoints.length - 1) {
+        return point
+      }
+
+      const prev = validPoints[i - 1]
+      const next = validPoints[i + 1]
+
+      return {
+        ...point,
+        systolic: Math.round((prev.systolic! * 0.25 + point.systolic! * 0.5 + next.systolic! * 0.25)),
+        diastolic: Math.round((prev.diastolic! * 0.25 + point.diastolic! * 0.5 + next.diastolic! * 0.25))
+      }
+    })
+
+    return smoothed
+  }, [chartData, timeRange])
+
   return (
-    <ScrollView className='analysis-page' scrollY enhanced showScrollbar={false}>
+    <View className='analysis-page'>
       {/* 时间范围切换 */}
       <View className='time-tabs'>
         <View
           className={`time-tab ${timeRange === 'week' ? 'active' : ''}`}
-          onClick={() => setTimeRange('week')}
+          onClick={() => { setTimeRange('week'); setSelectedPoint(null) }}
         >
           <Text>近7天</Text>
         </View>
         <View
           className={`time-tab ${timeRange === 'month' ? 'active' : ''}`}
-          onClick={() => setTimeRange('month')}
+          onClick={() => { setTimeRange('month'); setSelectedPoint(null) }}
         >
           <Text>近30天</Text>
         </View>
@@ -180,9 +231,12 @@ export default function AnalysisPage() {
             </View>
           </View>
         </View>
+        {timeRange === 'month' && (
+          <Text className='chart-hint'>显示平滑趋势线（每日波动已平滑处理）</Text>
+        )}
 
         {chartData.some(d => d.systolic !== null) ? (
-          <View className='chart-wrapper'>
+          <View className={`chart-wrapper ${timeRange === 'month' ? 'month-mode' : ''}`}>
             {/* Y轴 */}
             <View className='y-axis'>
               {yAxisTicks.map(tick => (
@@ -191,7 +245,10 @@ export default function AnalysisPage() {
             </View>
 
             {/* 图表区域 */}
-            <View className='chart-area'>
+            <View
+              className={`chart-area ${timeRange === 'month' ? 'month-mode' : ''}`}
+              onClick={() => setSelectedPoint(null)}
+            >
               {/* 网格线 */}
               {yAxisTicks.map(tick => (
                 <View
@@ -201,84 +258,157 @@ export default function AnalysisPage() {
                 />
               ))}
 
-              {/* 数据点和连接线 */}
+              {/* 连接线层 */}
+              <View className='lines-layer'>
+                {(() => {
+                  const aspectRatio = 1.8
+                  const totalPoints = timeRange === 'week' ? 6 : 29
+
+                  // 30天模式使用平滑趋势线，7天模式使用原始数据
+                  const dataToRender = timeRange === 'month'
+                    ? smoothTrendLine.map(d => ({ point: d, index: d.index }))
+                    : chartData
+                      .map((point, index) => ({ point, index }))
+                      .filter(({ point }) => point.systolic !== null)
+
+                  return dataToRender.map(({ point, index }, i) => {
+                    if (i >= dataToRender.length - 1) return null
+
+                    const nextItem = dataToRender[i + 1]
+                    const x1 = (index / totalPoints) * 100
+                    const x2 = (nextItem.index / totalPoints) * 100
+                    const sysY1 = getYPercent(point.systolic!)
+                    const sysY2 = getYPercent(nextItem.point.systolic!)
+                    const diaY1 = getYPercent(point.diastolic!)
+                    const diaY2 = getYPercent(nextItem.point.diastolic!)
+
+                    // 计算角度（考虑宽高比）
+                    const dx = (x2 - x1) * aspectRatio
+                    const sysAngle = Math.atan2(sysY2 - sysY1, dx) * (180 / Math.PI)
+                    const diaAngle = Math.atan2(diaY2 - diaY1, dx) * (180 / Math.PI)
+
+                    return (
+                      <View key={`line-${index}`}>
+                        {/* 收缩压连接线 */}
+                        <View
+                          className='line systolic'
+                          style={{
+                            left: `${x1}%`,
+                            top: `${sysY1}%`,
+                            width: `${Math.sqrt((x2 - x1) ** 2 + ((sysY2 - sysY1) / aspectRatio) ** 2)}%`,
+                            transform: `rotate(${sysAngle}deg)`
+                          }}
+                        />
+                        {/* 舒张压连接线 */}
+                        <View
+                          className='line diastolic'
+                          style={{
+                            left: `${x1}%`,
+                            top: `${diaY1}%`,
+                            width: `${Math.sqrt((x2 - x1) ** 2 + ((diaY2 - diaY1) / aspectRatio) ** 2)}%`,
+                            transform: `rotate(${diaAngle}deg)`
+                          }}
+                        />
+                      </View>
+                    )
+                  })
+                })()}
+              </View>
+
+              {/* 数据点层 */}
               <View className='data-layer'>
-                {chartData.map((point, index) => {
-                  if (point.systolic === null) return null
-                  
-                  const xPercent = timeRange === 'week' 
-                    ? (index / 6) * 100 
-                    : (index / 29) * 100
-                  const sysY = getYPercent(point.systolic)
-                  const diaY = getYPercent(point.diastolic!)
+                {(() => {
+                  const totalPoints = timeRange === 'week' ? 6 : 29
 
-                  // 找到下一个有数据的点来画线
-                  let nextIndex = -1
-                  for (let i = index + 1; i < chartData.length; i++) {
-                    if (chartData[i].systolic !== null) {
-                      nextIndex = i
-                      break
+                  // 30天模式使用平滑趋势线的点，7天模式使用原始数据点
+                  const pointsToRender = timeRange === 'month'
+                    ? smoothTrendLine
+                    : chartData
+                      .map((d, i) => ({ ...d, index: i }))
+                      .filter(d => d.systolic !== null)
+
+                  return pointsToRender.map((point) => {
+                    const xPercent = (point.index / totalPoints) * 100
+                    const sysY = getYPercent(point.systolic!)
+                    const diaY = getYPercent(point.diastolic!)
+                    const isSelected = selectedPoint?.date === point.date
+
+                    // 点击处理
+                    const handlePointClick = (e: any) => {
+                      e.stopPropagation()
+                      if (isSelected) {
+                        setSelectedPoint(null)
+                      } else {
+                        // 获取原始数据（30天模式下显示原始平均值，不是平滑后的）
+                        const originalData = chartData.find(d => d.date === point.date)
+                        setSelectedPoint({
+                          date: point.date,
+                          label: point.label,
+                          systolic: originalData?.systolic || point.systolic!,
+                          diastolic: originalData?.diastolic || point.diastolic!,
+                          count: originalData?.count || 1,
+                          xPercent,
+                          yPercent: sysY
+                        })
+                      }
                     }
-                  }
 
-                  return (
-                    <View key={point.date}>
-                      {/* 收缩压点 */}
-                      <View
-                        className='data-point systolic'
-                        style={{ left: `${xPercent}%`, top: `${sysY}%` }}
-                      >
-                        <View className='point-inner' />
-                        {timeRange === 'week' && (
-                          <Text className='point-value'>{point.systolic}</Text>
-                        )}
+                    return (
+                      <View key={point.date}>
+                        {/* 收缩压点 */}
+                        <View
+                          className={`data-point systolic ${isSelected ? 'selected' : ''}`}
+                          style={{ left: `${xPercent}%`, top: `${sysY}%` }}
+                          onClick={handlePointClick}
+                        >
+                          <View className='point-inner' />
+                          {timeRange === 'week' && (
+                            <Text className='point-value'>{point.systolic}</Text>
+                          )}
+                        </View>
+
+                        {/* 舒张压点 */}
+                        <View
+                          className={`data-point diastolic ${isSelected ? 'selected' : ''}`}
+                          style={{ left: `${xPercent}%`, top: `${diaY}%` }}
+                          onClick={handlePointClick}
+                        >
+                          <View className='point-inner' />
+                          {timeRange === 'week' && (
+                            <Text className='point-value'>{point.diastolic}</Text>
+                          )}
+                        </View>
                       </View>
+                    )
+                  })
+                })()}
 
-                      {/* 舒张压点 */}
-                      <View
-                        className='data-point diastolic'
-                        style={{ left: `${xPercent}%`, top: `${diaY}%` }}
-                      >
-                        <View className='point-inner' />
-                        {timeRange === 'week' && (
-                          <Text className='point-value'>{point.diastolic}</Text>
-                        )}
+                {/* 选中点的提示气泡 */}
+                {selectedPoint && (
+                  <View
+                    className='tooltip'
+                    style={{
+                      left: `${Math.min(Math.max(selectedPoint.xPercent, 15), 85)}%`,
+                      top: `${Math.max(selectedPoint.yPercent - 5, 5)}%`
+                    }}
+                  >
+                    <View className='tooltip-content'>
+                      <Text className='tooltip-date'>{selectedPoint.label}</Text>
+                      <View className='tooltip-values'>
+                        <Text className='tooltip-bp'>
+                          <Text className='sys-value'>{selectedPoint.systolic}</Text>
+                          <Text className='slash'>/</Text>
+                          <Text className='dia-value'>{selectedPoint.diastolic}</Text>
+                        </Text>
+                        <Text className='tooltip-unit'>mmHg</Text>
                       </View>
-
-                      {/* 连接线（到下一个点） */}
-                      {nextIndex !== -1 && (
-                        <>
-                          {/* 收缩压连接线 */}
-                          <View
-                            className='line systolic'
-                            style={{
-                              left: `${xPercent}%`,
-                              top: `${sysY}%`,
-                              width: `${((nextIndex - index) / (timeRange === 'week' ? 6 : 29)) * 100}%`,
-                              transform: `rotate(${Math.atan2(
-                                (getYPercent(chartData[nextIndex].systolic!) - sysY),
-                                ((nextIndex - index) / (timeRange === 'week' ? 6 : 29)) * 100
-                              ) * (180 / Math.PI)}deg)`
-                            }}
-                          />
-                          {/* 舒张压连接线 */}
-                          <View
-                            className='line diastolic'
-                            style={{
-                              left: `${xPercent}%`,
-                              top: `${diaY}%`,
-                              width: `${((nextIndex - index) / (timeRange === 'week' ? 6 : 29)) * 100}%`,
-                              transform: `rotate(${Math.atan2(
-                                (getYPercent(chartData[nextIndex].diastolic!) - diaY),
-                                ((nextIndex - index) / (timeRange === 'week' ? 6 : 29)) * 100
-                              ) * (180 / Math.PI)}deg)`
-                            }}
-                          />
-                        </>
+                      {selectedPoint.count > 1 && (
+                        <Text className='tooltip-count'>当日{selectedPoint.count}次平均</Text>
                       )}
                     </View>
-                  )
-                })}
+                    <View className='tooltip-arrow' />
+                  </View>
+                )}
               </View>
             </View>
           </View>
@@ -293,22 +423,29 @@ export default function AnalysisPage() {
         {/* X轴标签 */}
         {chartData.some(d => d.systolic !== null) && (
           <View className='x-axis'>
-            {chartData.map((point, index) => {
-              // 月视图只显示部分标签
-              if (timeRange === 'month' && index % 5 !== 0 && index !== 29) return null
-              
-              return (
+            {timeRange === 'week' ? (
+              // 7天模式：显示所有天
+              chartData.map((point, index) => (
                 <Text
                   key={point.date}
                   className={`x-label ${point.count > 0 ? 'has-data' : ''}`}
-                  style={{
-                    left: `${(index / (timeRange === 'week' ? 6 : 29)) * 100}%`
-                  }}
+                  style={{ left: `${(index / 6) * 100}%` }}
                 >
                   {point.label}
                 </Text>
-              )
-            })}
+              ))
+            ) : (
+              // 30天模式：显示4个标签（开始、10天、20天、结束）
+              [0, 10, 20, 29].map(index => (
+                <Text
+                  key={chartData[index]?.date || index}
+                  className='x-label'
+                  style={{ left: `${(index / 29) * 100}%` }}
+                >
+                  {chartData[index]?.label || ''}
+                </Text>
+              ))
+            )}
           </View>
         )}
       </View>
@@ -360,8 +497,6 @@ export default function AnalysisPage() {
         </View>
       )}
 
-      {/* 底部占位 */}
-      <View className='bottom-spacer' />
-    </ScrollView>
+    </View>
   )
 }

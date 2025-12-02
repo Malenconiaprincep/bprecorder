@@ -58,6 +58,9 @@ const formatDateLabel = (isoString: string) => {
   return `${month}月${day}日 ${weekDays[date.getDay()]}`
 }
 
+// 测试数据
+import { USE_TEST_DATA, getTestData } from '../../utils/testData'
+
 export default function Index() {
   const [records, setRecords] = useState<BPRecord[]>([])
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
@@ -122,6 +125,12 @@ export default function Index() {
   })
 
   const initPage = async () => {
+    // 测试模式直接加载测试数据
+    if (USE_TEST_DATA) {
+      setRecords(getTestData())
+      return
+    }
+
     const storedUser = getUserInfo()
     if (storedUser) {
       setUserInfo(storedUser)
@@ -147,6 +156,12 @@ export default function Index() {
   }
 
   const fetchRecords = async (userId: string) => {
+    // 使用测试数据
+    if (USE_TEST_DATA) {
+      setRecords(getTestData())
+      return
+    }
+
     try {
       const { data, error } = await getRecords(userId)
       if (!error && data) {
