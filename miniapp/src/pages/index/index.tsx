@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { View, Text, Image, ScrollView } from '@tarojs/components'
-import Taro, { useLoad } from '@tarojs/taro'
+import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { getRecords, BPRecord, addRecord } from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
 import { API_BASE_URL } from '../../utils/api'
@@ -10,15 +10,30 @@ import './index.scss'
 import iconCamera from '../../assets/icons/xiangji.png'
 import iconEdit from '../../assets/icons/jianpanshuru.png'
 
-// 血压状态判断
+// 血压状态判断（按医学标准）
 const getBPStatus = (systolic: number, diastolic: number) => {
-  if (systolic < 120 && diastolic < 80) {
-    return { label: '正常', color: 'normal', emoji: '😊' }
-  } else if (systolic < 140 && diastolic < 90) {
-    return { label: '偏高', color: 'elevated', emoji: '😐' }
-  } else {
-    return { label: '高血压', color: 'high', emoji: '😟' }
+  // 3级高血压（重度）
+  if (systolic >= 180 || diastolic >= 110) {
+    return { label: '3级高血压', color: 'high-3', emoji: '🆘' }
   }
+  // 2级高血压（中/重度）
+  if (systolic >= 160 || diastolic >= 100) {
+    return { label: '2级高血压', color: 'high-2', emoji: '😰' }
+  }
+  // 1级高血压（轻度）
+  if (systolic >= 140 || diastolic >= 90) {
+    return { label: '1级高血压', color: 'high-1', emoji: '😟' }
+  }
+  // 前期高血压
+  if (systolic >= 130) {
+    return { label: '前期高血压', color: 'prehigh', emoji: '😐' }
+  }
+  // 正常血压
+  if (systolic >= 120 || diastolic >= 80) {
+    return { label: '正常', color: 'normal', emoji: '🙂' }
+  }
+  // 理想血压
+  return { label: '理想', color: 'ideal', emoji: '😊' }
 }
 
 // 格式化时间为易读格式
@@ -124,6 +139,16 @@ export default function Index() {
     initPage()
   })
 
+  // 页面每次显示时刷新数据（从输入页返回时）
+  useDidShow(() => {
+    if (USE_TEST_DATA) return
+
+    const storedUser = getUserInfo()
+    if (storedUser) {
+      fetchRecords(storedUser.openid)
+    }
+  })
+
   const initPage = async () => {
     // 测试模式直接加载测试数据
     if (USE_TEST_DATA) {
@@ -179,7 +204,7 @@ export default function Index() {
       callback()
       return
     }
-    
+
     if (!userInfo) {
       Taro.showModal({
         title: '需要登录',

@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { View, Text, Image, Button, Input } from '@tarojs/components'
-import Taro, { useLoad } from '@tarojs/taro'
+import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, getUserInfo, silentLogin } from '../../lib/auth'
+import { getRecords, BPRecord } from '../../lib/supabase'
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import './index.scss'
 
@@ -11,6 +12,7 @@ export default function Profile() {
   const [showModal, setShowModal] = useState(false)
   const [tempAvatar, setTempAvatar] = useState('')
   const [tempNickname, setTempNickname] = useState('')
+  const [records, setRecords] = useState<BPRecord[]>([])
 
   // 判断是否已完善资料（有头像和昵称）
   const isProfileComplete = !!(wxUser?.avatarUrl && wxUser?.nickName)
@@ -19,18 +21,18 @@ export default function Profile() {
 
   // 计算统计数据
   const stats = useMemo(() => {
-    const records = USE_TEST_DATA ? getTestData() : []
+    const data = USE_TEST_DATA ? getTestData() : records
 
-    if (records.length === 0) {
+    if (data.length === 0) {
       return { recordDays: 0, totalRecords: 0, consecutiveDays: 0 }
     }
 
     // 记录天数（去重）
-    const uniqueDays = new Set(records.map(r => r.recorded_at.split('T')[0]))
+    const uniqueDays = new Set(data.map(r => r.recorded_at.split('T')[0]))
     const recordDays = uniqueDays.size
 
     // 总记录数
-    const totalRecords = records.length
+    const totalRecords = data.length
 
     // 计算连续打卡天数
     const sortedDays = Array.from(uniqueDays).sort((a, b) => b.localeCompare(a))
@@ -49,9 +51,31 @@ export default function Profile() {
     }
 
     return { recordDays, totalRecords, consecutiveDays }
-  }, [])
+  }, [records])
+
+  // 获取记录数据
+  const fetchRecords = async (userId: string) => {
+    if (USE_TEST_DATA) {
+      setRecords(getTestData())
+      return
+    }
+
+    try {
+      const { data, error } = await getRecords(userId)
+      if (!error && data) {
+        setRecords(data)
+      }
+    } catch (e) {
+      console.error('Failed to fetch records', e)
+    }
+  }
 
   useLoad(async () => {
+    // 测试模式下直接加载测试数据
+    if (USE_TEST_DATA) {
+      setRecords(getTestData())
+    }
+
     // 加载已保存的微信用户信息
     const savedWxUser = getWxUserInfo()
     if (savedWxUser) {
@@ -62,12 +86,26 @@ export default function Profile() {
     const userInfo = getUserInfo()
     if (userInfo && userInfo.openid && !userInfo.openid.startsWith('wx_')) {
       setOpenid(userInfo.openid)
+      // 获取记录数据
+      await fetchRecords(userInfo.openid)
     } else {
       // 尝试静默登录
       const result = await silentLogin()
       if (result.success && result.userInfo) {
         setOpenid(result.userInfo.openid)
+        // 获取记录数据
+        await fetchRecords(result.userInfo.openid)
       }
+    }
+  })
+
+  // 页面每次显示时刷新数据
+  useDidShow(() => {
+    if (USE_TEST_DATA) return
+    
+    const userInfo = getUserInfo()
+    if (userInfo && userInfo.openid && !userInfo.openid.startsWith('wx_')) {
+      fetchRecords(userInfo.openid)
     }
   })
 
