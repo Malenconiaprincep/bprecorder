@@ -62,16 +62,31 @@ export default function AnalysisPage() {
 
   // 按日期分组并计算每天平均值
   const chartData = useMemo(() => {
-    const days = timeRange === 'week' ? 7 : 30
     const now = new Date()
     now.setHours(23, 59, 59, 999)
 
     // 生成日期列表
     const dateList: string[] = []
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(now)
-      d.setDate(now.getDate() - i)
-      dateList.push(formatDateKey(d))
+    const weekDayLabels = ['一', '二', '三', '四', '五', '六', '日']
+
+    if (timeRange === 'week') {
+      // 周视图：显示本周一到周日
+      const dayOfWeek = now.getDay() || 7 // 周日为7
+      const monday = new Date(now)
+      monday.setDate(now.getDate() - dayOfWeek + 1)
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday)
+        d.setDate(monday.getDate() + i)
+        dateList.push(formatDateKey(d))
+      }
+    } else {
+      // 月视图：显示最近30天
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now)
+        d.setDate(now.getDate() - i)
+        dateList.push(formatDateKey(d))
+      }
     }
 
     // 按日期分组记录
@@ -87,14 +102,17 @@ export default function AnalysisPage() {
     // 计算每天平均值
     const dailyAvg: { date: string; label: string; systolic: number | null; diastolic: number | null; count: number }[] = []
 
-    dateList.forEach(dateStr => {
+    dateList.forEach((dateStr, index) => {
       const dayRecords = groupedByDate[dateStr] || []
+      // 周视图使用固定的周一到周日标签
+      const label = timeRange === 'week' ? weekDayLabels[index] : formatDateDisplay(dateStr, timeRange)
+
       if (dayRecords.length > 0) {
         const avgSys = Math.round(dayRecords.reduce((sum, r) => sum + r.systolic, 0) / dayRecords.length)
         const avgDia = Math.round(dayRecords.reduce((sum, r) => sum + r.diastolic, 0) / dayRecords.length)
         dailyAvg.push({
           date: dateStr,
-          label: formatDateDisplay(dateStr, timeRange),
+          label,
           systolic: avgSys,
           diastolic: avgDia,
           count: dayRecords.length
@@ -102,7 +120,7 @@ export default function AnalysisPage() {
       } else {
         dailyAvg.push({
           date: dateStr,
-          label: formatDateDisplay(dateStr, timeRange),
+          label,
           systolic: null,
           diastolic: null,
           count: 0

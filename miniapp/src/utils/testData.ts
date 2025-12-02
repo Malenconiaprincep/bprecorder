@@ -1,7 +1,7 @@
 import { BPRecord } from '../lib/supabase'
 
 // 是否使用测试数据（开发时设为 true，发布时设为 false）
-export const USE_TEST_DATA = false
+export const USE_TEST_DATA = true
 
 // 固定的测试数据（保证每次加载一致）
 let cachedTestData: BPRecord[] | null = null

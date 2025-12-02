@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { View, Text, Image, Button, Input } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
 import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, getUserInfo, silentLogin } from '../../lib/auth'
+import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import './index.scss'
 
 export default function Profile() {
@@ -13,8 +14,42 @@ export default function Profile() {
 
   // 判断是否已完善资料（有头像和昵称）
   const isProfileComplete = !!(wxUser?.avatarUrl && wxUser?.nickName)
-  // 是否已登录（有真实 openid）
-  const hasOpenid = !!openid
+  // 是否已登录（有真实 openid）- 测试模式下默认显示
+  const hasOpenid = USE_TEST_DATA || !!openid
+
+  // 计算统计数据
+  const stats = useMemo(() => {
+    const records = USE_TEST_DATA ? getTestData() : []
+
+    if (records.length === 0) {
+      return { recordDays: 0, totalRecords: 0, consecutiveDays: 0 }
+    }
+
+    // 记录天数（去重）
+    const uniqueDays = new Set(records.map(r => r.recorded_at.split('T')[0]))
+    const recordDays = uniqueDays.size
+
+    // 总记录数
+    const totalRecords = records.length
+
+    // 计算连续打卡天数
+    const sortedDays = Array.from(uniqueDays).sort((a, b) => b.localeCompare(a))
+    let consecutiveDays = 0
+
+    for (let i = 0; i < sortedDays.length; i++) {
+      const expectedDate = new Date()
+      expectedDate.setDate(expectedDate.getDate() - i)
+      const expectedDateStr = expectedDate.toISOString().split('T')[0]
+
+      if (sortedDays[i] === expectedDateStr) {
+        consecutiveDays++
+      } else {
+        break
+      }
+    }
+
+    return { recordDays, totalRecords, consecutiveDays }
+  }, [])
 
   useLoad(async () => {
     // 加载已保存的微信用户信息
@@ -215,17 +250,17 @@ export default function Profile() {
       {hasOpenid && (
         <View className='stats-card'>
           <View className='stat-item'>
-            <Text className='stat-value'>0</Text>
+            <Text className='stat-value'>{stats.recordDays}</Text>
             <Text className='stat-label'>记录天数</Text>
           </View>
           <View className='stat-divider' />
           <View className='stat-item'>
-            <Text className='stat-value'>0</Text>
+            <Text className='stat-value'>{stats.totalRecords}</Text>
             <Text className='stat-label'>总记录数</Text>
           </View>
           <View className='stat-divider' />
           <View className='stat-item'>
-            <Text className='stat-value'>0</Text>
+            <Text className='stat-value'>{stats.consecutiveDays}</Text>
             <Text className='stat-label'>连续打卡</Text>
           </View>
         </View>
