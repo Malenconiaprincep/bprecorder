@@ -18,51 +18,75 @@ export interface WxUserInfo {
 }
 
 /**
- * 微信小程序登录（简化版）
- * 
- * 注意：真正的微信登录需要后端服务来换取 openid
- * 这里我们使用一个本地生成的唯一 ID 作为临时方案
- * 
- * 后续可以接入：
- * 1. Supabase Edge Function
- * 2. 微信云开发
- * 3. 自建后端
+ * 静默登录 - 只获取 openid，不需要头像昵称
+ * 用户进入小程序时自动调用，不打扰用户
+ */
+export async function silentLogin(): Promise<{ success: boolean; userInfo?: UserInfo; token?: string; error?: string }> {
+  try {
+    // 检查是否已有存储的用户信息（有真实 openid）
+    const existingUser = getUserInfo()
+    if (existingUser && !existingUser.openid.startsWith('wx_')) {
+      // 已有真实 openid，直接返回
+      return { success: true, userInfo: existingUser, token: getToken() || undefined }
+    }
+
+    // 获取微信登录 code
+    const loginRes = await Taro.login()
+    const code = loginRes.code
+
+    if (!code) {
+      console.log('silentLogin: 获取 code 失败')
+      return { success: false, error: '获取微信登录 code 失败' }
+    }
+
+    console.log('silentLogin: 获取到 code，调用后端接口...')
+
+    // 调用后端接口获取 openid（不传头像昵称）
+    const response = await Taro.request({
+      url: `${API_BASE_URL}/api/wx-login`,
+      method: 'POST',
+      header: {
+        'Content-Type': 'application/json'
+      },
+      data: { code }
+    })
+
+    if (response.statusCode === 200 && response.data.success) {
+      const { token, userInfo: respUserInfo } = response.data
+
+      // 保存 token
+      if (token) {
+        Taro.setStorageSync(TOKEN_KEY, token)
+      }
+
+      // 构建用户信息（保留可能已有的头像昵称）
+      const savedWxUser = getWxUserInfo()
+      const fullUserInfo: UserInfo = {
+        openid: respUserInfo.openid,
+        nickName: respUserInfo.nickName || savedWxUser?.nickName,
+        avatarUrl: respUserInfo.avatarUrl || savedWxUser?.avatarUrl
+      }
+      Taro.setStorageSync(USER_INFO_KEY, JSON.stringify(fullUserInfo))
+
+      console.log('silentLogin: 静默登录成功，openid:', respUserInfo.openid)
+      return { success: true, userInfo: fullUserInfo, token }
+    } else {
+      const errorMsg = response.data?.error || '登录失败'
+      console.log('silentLogin: 登录失败 -', errorMsg)
+      return { success: false, error: errorMsg }
+    }
+  } catch (e: any) {
+    console.error('silentLogin error:', e)
+    return { success: false, error: e.message || '登录出错' }
+  }
+}
+
+/**
+ * 微信小程序登录（兼容旧方法，内部调用静默登录）
+ * @deprecated 推荐使用 silentLogin
  */
 export async function wxLogin(): Promise<{ success: boolean; userInfo?: UserInfo; error?: string }> {
-  try {
-    // 检查是否已有存储的用户信息
-    const existingUser = getUserInfo()
-    if (existingUser) {
-      return { success: true, userInfo: existingUser }
-    }
-
-    // 尝试获取微信登录 code（虽然不能换 openid，但可以证明用户确实在微信环境）
-    let wxCode = ''
-    try {
-      const loginRes = await Taro.login()
-      wxCode = loginRes.code || ''
-      console.log('wx.login code:', wxCode)
-    } catch (e) {
-      console.log('wx.login not available (probably not in WeChat env)')
-    }
-
-    // 生成一个本地唯一 ID 作为 user_id
-    // 格式：wx_<时间戳>_<随机数>
-    // 这个 ID 会存储在本地，同一设备每次都是同一个用户
-    const localUserId = `wx_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
-
-    const userInfo: UserInfo = {
-      openid: localUserId,
-    }
-
-    // 存储用户信息
-    Taro.setStorageSync(USER_INFO_KEY, JSON.stringify(userInfo))
-
-    return { success: true, userInfo }
-  } catch (e) {
-    console.error('wxLogin error:', e)
-    return { success: false, error: '登录出错' }
-  }
+  return silentLogin()
 }
 
 /**
@@ -128,7 +152,7 @@ export async function wxLoginWithBackend(nickName?: string, avatarUrl?: string):
     // 获取微信登录 code
     const loginRes = await Taro.login()
     const code = loginRes.code
-    
+
     if (!code) {
       return { success: false, error: '获取微信登录 code 失败' }
     }
@@ -149,12 +173,12 @@ export async function wxLoginWithBackend(nickName?: string, avatarUrl?: string):
 
     if (response.statusCode === 200 && response.data.success) {
       const { token, userInfo } = response.data
-      
+
       // 保存 token
       if (token) {
         Taro.setStorageSync(TOKEN_KEY, token)
       }
-      
+
       // 保存用户信息
       if (userInfo) {
         const fullUserInfo: UserInfo = {
@@ -163,7 +187,7 @@ export async function wxLoginWithBackend(nickName?: string, avatarUrl?: string):
           avatarUrl: userInfo.avatarUrl
         }
         Taro.setStorageSync(USER_INFO_KEY, JSON.stringify(fullUserInfo))
-        
+
         // 同时保存微信用户信息（用于兼容现有代码）
         if (userInfo.nickName || userInfo.avatarUrl) {
           saveWxUserInfo({
@@ -172,7 +196,7 @@ export async function wxLoginWithBackend(nickName?: string, avatarUrl?: string):
           })
         }
       }
-      
+
       return {
         success: true,
         userInfo: userInfo ? {

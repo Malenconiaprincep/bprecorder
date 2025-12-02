@@ -1,28 +1,78 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { View, Text, Image, Button, Input } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
-import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend } from '../../lib/auth'
+import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, getUserInfo, silentLogin } from '../../lib/auth'
 import './index.scss'
 
 export default function Profile() {
   const [wxUser, setWxUser] = useState<WxUserInfo | null>(null)
+  const [openid, setOpenid] = useState<string>('')
   const [showModal, setShowModal] = useState(false)
   const [tempAvatar, setTempAvatar] = useState('')
   const [tempNickname, setTempNickname] = useState('')
 
-  // 判断是否已登录（有头像和昵称才算完成登录）
-  const isLoggedIn = !!(wxUser?.avatarUrl && wxUser?.nickName)
+  // 判断是否已完善资料（有头像和昵称）
+  const isProfileComplete = !!(wxUser?.avatarUrl && wxUser?.nickName)
+  // 是否已登录（有真实 openid）
+  const hasOpenid = !!openid
 
-  useLoad(() => {
+  useLoad(async () => {
     // 加载已保存的微信用户信息
     const savedWxUser = getWxUserInfo()
     if (savedWxUser) {
       setWxUser(savedWxUser)
     }
+
+    // 检查是否已有 openid（静默登录状态）
+    const userInfo = getUserInfo()
+    if (userInfo && userInfo.openid && !userInfo.openid.startsWith('wx_')) {
+      setOpenid(userInfo.openid)
+    } else {
+      // 尝试静默登录
+      const result = await silentLogin()
+      if (result.success && result.userInfo) {
+        setOpenid(result.userInfo.openid)
+      }
+    }
   })
 
-  // 点击登录，显示弹窗
-  const onClickLogin = () => {
+  // 点击登录/完善资料
+  const onClickLogin = async () => {
+    // 如果还没有 openid，先静默登录
+    if (!hasOpenid) {
+      Taro.showLoading({ title: '登录中...' })
+      try {
+        const result = await silentLogin()
+        if (result.success && result.userInfo) {
+          setOpenid(result.userInfo.openid)
+
+          // 检查后端是否返回了头像昵称
+          if (result.userInfo.nickName && result.userInfo.avatarUrl) {
+            // 已有完整资料，直接显示
+            const wxUserInfo: WxUserInfo = {
+              nickName: result.userInfo.nickName,
+              avatarUrl: result.userInfo.avatarUrl
+            }
+            setWxUser(wxUserInfo)
+            saveWxUserInfo(wxUserInfo)
+            Taro.hideLoading()
+            Taro.showToast({ title: '登录成功', icon: 'success' })
+            return
+          }
+        } else {
+          Taro.hideLoading()
+          Taro.showToast({ title: result.error || '登录失败', icon: 'none' })
+          return
+        }
+      } catch (e) {
+        Taro.hideLoading()
+        Taro.showToast({ title: '登录失败，请重试', icon: 'none' })
+        return
+      }
+      Taro.hideLoading()
+    }
+
+    // 弹窗让用户完善资料
     setTempAvatar(wxUser?.avatarUrl || '')
     setTempNickname(wxUser?.nickName || '')
     setShowModal(true)
@@ -49,14 +99,14 @@ export default function Profile() {
       Taro.showToast({ title: '请输入昵称', icon: 'none' })
       return
     }
-    
+
     // 显示加载提示
-    Taro.showLoading({ title: '登录中...' })
-    
+    Taro.showLoading({ title: '保存中...' })
+
     try {
-      // 调用后端接口，一次性获取 openid 并保存头像和昵称
+      // 调用后端接口保存头像和昵称
       const result = await wxLoginWithBackend(tempNickname, tempAvatar)
-      
+
       if (result.success) {
         const newWxUser: WxUserInfo = {
           avatarUrl: tempAvatar,
@@ -64,14 +114,17 @@ export default function Profile() {
         }
         setWxUser(newWxUser)
         saveWxUserInfo(newWxUser)
+        if (result.userInfo?.openid) {
+          setOpenid(result.userInfo.openid)
+        }
         setShowModal(false)
-        Taro.showToast({ title: '登录成功', icon: 'success' })
+        Taro.showToast({ title: '保存成功', icon: 'success' })
       } else {
-        Taro.showToast({ title: result.error || '登录失败', icon: 'none' })
+        Taro.showToast({ title: result.error || '保存失败', icon: 'none' })
       }
     } catch (e: any) {
-      console.error('Login error:', e)
-      Taro.showToast({ title: '登录失败，请重试', icon: 'none' })
+      console.error('Save profile error:', e)
+      Taro.showToast({ title: '保存失败，请重试', icon: 'none' })
     } finally {
       Taro.hideLoading()
     }
@@ -85,41 +138,46 @@ export default function Profile() {
   const handleLogout = () => {
     logout()
     setWxUser(null)
+    setOpenid('')
     Taro.showToast({ title: '已退出登录', icon: 'success' })
   }
 
+  const showDevTip = () => {
+    Taro.showToast({ title: '功能开发中，敬请期待', icon: 'none' })
+  }
+
   const menuItems = [
-    { title: '历史记录', icon: '📋', onClick: () => {} },
-    { title: '数据导出', icon: '📤', onClick: () => {} },
-    { title: '提醒设置', icon: '⏰', onClick: () => {} },
-    { title: '关于我们', icon: 'ℹ️', onClick: () => {} },
+    { title: '历史记录', icon: '📋', onClick: showDevTip },
+    { title: '数据导出', icon: '📤', onClick: showDevTip },
+    { title: '提醒设置', icon: '⏰', onClick: showDevTip },
+    { title: '关于我们', icon: 'ℹ️', onClick: showDevTip },
   ]
 
   return (
     <View className='page'>
       {/* 用户信息卡片 */}
-      <View className='user-card' onClick={!isLoggedIn ? onClickLogin : undefined}>
+      <View className='user-card' onClick={!isProfileComplete ? onClickLogin : undefined}>
         {wxUser?.avatarUrl ? (
-          <Image className='avatar-img-display' src={wxUser.avatarUrl} mode='aspectFill' onClick={isLoggedIn ? onClickLogin : undefined} />
+          <Image className='avatar-img-display' src={wxUser.avatarUrl} mode='aspectFill' onClick={isProfileComplete ? onClickLogin : undefined} />
         ) : (
           <View className='avatar'>
             <Text className='avatar-text'>👤</Text>
           </View>
         )}
         <View className='user-info'>
-          <Text className='user-name'>{wxUser?.nickName || '点击登录'}</Text>
+          <Text className='user-name'>{wxUser?.nickName || (hasOpenid ? '点击完善资料' : '点击登录')}</Text>
           <Text className='user-desc'>
-            {isLoggedIn ? '记录健康，关爱自己' : '点击完成微信授权登录'}
+            {isProfileComplete ? '记录健康，关爱自己' : (hasOpenid ? `ID: ${openid.slice(0, 8)}...` : '登录后同步你的数据')}
           </Text>
         </View>
       </View>
 
-      {/* 登录弹窗 */}
+      {/* 完善资料弹窗 */}
       {showModal && (
         <View className='modal-mask' onClick={onCancel}>
           <View className='modal-content' onClick={(e) => e.stopPropagation()}>
-            <Text className='modal-title'>完善个人信息</Text>
-            
+            <Text className='modal-title'>完善个人资料</Text>
+
             {/* 头像选择 */}
             <Button className='avatar-picker' openType='chooseAvatar' onChooseAvatar={onChooseAvatar}>
               {tempAvatar ? (
@@ -153,8 +211,8 @@ export default function Profile() {
         </View>
       )}
 
-      {/* 统计卡片 - 只有登录后显示 */}
-      {isLoggedIn && (
+      {/* 统计卡片 - 有 openid 就显示 */}
+      {hasOpenid && (
         <View className='stats-card'>
           <View className='stat-item'>
             <Text className='stat-value'>0</Text>
@@ -184,8 +242,8 @@ export default function Profile() {
         ))}
       </View>
 
-      {/* 退出登录 - 只有登录后显示 */}
-      {isLoggedIn && (
+      {/* 退出登录 - 有 openid 就显示 */}
+      {hasOpenid && (
         <View className='logout-btn' onClick={handleLogout}>
           <Text className='logout-text'>退出登录</Text>
         </View>

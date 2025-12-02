@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { View, Text, Image } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
 import { getRecords, BPRecord, addRecord } from '../../lib/supabase'
-import { wxLogin, getUserInfo, UserInfo } from '../../lib/auth'
+import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
 import { API_BASE_URL } from '../../utils/api'
 import './index.scss'
 
@@ -39,10 +39,13 @@ export default function Index() {
 
   const autoLogin = async () => {
     try {
-      const result = await wxLogin()
+      // 静默登录获取 openid
+      const result = await silentLogin()
       if (result.success && result.userInfo) {
         setUserInfo(result.userInfo)
         await fetchRecords(result.userInfo.openid)
+      } else {
+        console.log('Silent login failed:', result.error)
       }
     } catch (e) {
       console.log('Auto login failed:', e)
