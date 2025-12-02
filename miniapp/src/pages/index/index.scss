@@ -135,6 +135,19 @@
   padding: 40rpx 0;
 }
 
+.empty-bp {
+  font-size: 72rpx;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.5);
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.empty-bp-hint {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .empty-text {
   font-size: 36rpx;
   color: #ffffff;
@@ -178,6 +191,23 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.summary-empty {
+  text-align: center;
+  padding: 32rpx 0;
+}
+
+.summary-empty-text {
+  font-size: 32rpx;
+  color: #64748b;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.summary-empty-hint {
+  font-size: 26rpx;
+  color: #94a3b8;
 }
 
 .summary-avg {

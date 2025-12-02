@@ -172,27 +172,56 @@ export default function Index() {
     }
   }
 
+  // 检查登录状态，未登录则提示
+  const checkLoginAndProceed = (callback: () => void) => {
+    // 测试模式下直接执行
+    if (USE_TEST_DATA) {
+      callback()
+      return
+    }
+    
+    if (!userInfo) {
+      Taro.showModal({
+        title: '需要登录',
+        content: '请先登录后再记录血压数据',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            Taro.switchTab({ url: '/pages/profile/index' })
+          }
+        }
+      })
+      return
+    }
+    callback()
+  }
+
   const goToInput = () => {
-    Taro.navigateTo({ url: '/pages/input/index' })
+    checkLoginAndProceed(() => {
+      Taro.navigateTo({ url: '/pages/input/index' })
+    })
   }
 
   const goToCamera = async () => {
-    try {
-      // 直接拉起相机或相册
-      const res = await Taro.chooseImage({
-        count: 1,
-        sizeType: ['compressed'],
-        sourceType: ['album', 'camera']
-      })
+    checkLoginAndProceed(async () => {
+      try {
+        // 直接拉起相机或相册
+        const res = await Taro.chooseImage({
+          count: 1,
+          sizeType: ['compressed'],
+          sourceType: ['album', 'camera']
+        })
 
-      const tempFilePath = res.tempFilePaths[0]
+        const tempFilePath = res.tempFilePaths[0]
 
-      // 开始分析
-      setAnalyzing(true)
-      await analyzeImage(tempFilePath)
-    } catch (e) {
-      console.log('User cancelled or error:', e)
-    }
+        // 开始分析
+        setAnalyzing(true)
+        await analyzeImage(tempFilePath)
+      } catch (e) {
+        console.log('User cancelled or error:', e)
+      }
+    })
   }
 
   const analyzeImage = async (filePath: string) => {
@@ -301,15 +330,17 @@ export default function Index() {
         </View>
 
         {/* 今日血压卡片 */}
-        {latestRecord && (
-          <View className='bp-card'>
-            <View className='card-header'>
-              <Text className='card-title'>💓 最新血压</Text>
+        <View className='bp-card'>
+          <View className='card-header'>
+            <Text className='card-title'>💓 最新血压</Text>
+            {latestRecord && (
               <View className={`card-status ${getBPStatus(latestRecord.systolic, latestRecord.diastolic).color}`}>
                 <Text className='card-status-text'>{getBPStatus(latestRecord.systolic, latestRecord.diastolic).label}</Text>
               </View>
-            </View>
+            )}
+          </View>
 
+          {latestRecord ? (
             <View className='card-body'>
               <View className='bp-row'>
                 <Text className='bp-value'>{latestRecord.systolic}</Text>
@@ -323,16 +354,21 @@ export default function Index() {
                 <Text className='pulse-unit'>bpm 心率</Text>
               </View>
             </View>
-          </View>
-        )}
+          ) : (
+            <View className='card-empty'>
+              <Text className='empty-bp'>-- / --</Text>
+              <Text className='empty-bp-hint'>暂无记录，点击上方按钮开始测量</Text>
+            </View>
+          )}
+        </View>
 
         {/* 本周概览卡片 */}
-        {weeklyAverage && (
-          <View className='summary-card'>
-            <View className='summary-header'>
-              <Text className='summary-title'>📊 本周概览</Text>
-              <Text className='summary-count'>共 {weeklyAverage.count} 次记录</Text>
-            </View>
+        <View className='summary-card'>
+          <View className='summary-header'>
+            <Text className='summary-title'>📊 本周概览</Text>
+            <Text className='summary-count'>共 {weeklyAverage?.count || 0} 次记录</Text>
+          </View>
+          {weeklyAverage ? (
             <View className='summary-content'>
               <View className='summary-avg'>
                 <Text className='avg-label'>平均血压</Text>
@@ -348,8 +384,13 @@ export default function Index() {
                 <Text className='status-text'>{getBPStatus(weeklyAverage.systolic, weeklyAverage.diastolic).label}</Text>
               </View>
             </View>
-          </View>
-        )}
+          ) : (
+            <View className='summary-empty'>
+              <Text className='summary-empty-text'>本周还没有记录</Text>
+              <Text className='summary-empty-hint'>坚持每天测量，了解血压趋势</Text>
+            </View>
+          )}
+        </View>
 
         {/* 记录列表 */}
         <View className='records-section'>
