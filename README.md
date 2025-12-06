@@ -35,17 +35,43 @@ create table records (
 
 ### 3. 配置环境变量
 
-复制 `.env.example` 为 `.env.local`：
+#### 3.1 申请 Gemini API Key
+
+1. **访问 Google AI Studio**
+   - 打开：https://aistudio.google.com/
+   - 使用 Google 账号登录
+
+2. **获取 API Key**
+   - 登录后，点击左侧菜单的 **"Get API key"**
+   - 或直接访问：https://aistudio.google.com/app/apikey
+   - 点击 **"Create API key"** 按钮
+   - 选择项目（可以创建新项目或使用现有项目）
+   - 创建成功后，复制 API Key（格式类似：`AIzaSy...`）
+
+3. **注意事项**
+   - 免费额度：通常每分钟 15 次请求（RPM）
+   - 计费：超出免费额度后可能产生费用，建议在 Google Cloud Console 设置预算提醒
+   - 安全：不要将 API Key 提交到代码仓库
+
+#### 3.2 配置环境变量
+
+创建 `.env.local` 文件（如果不存在）：
 
 ```bash
-cp .env.example .env.local
+touch .env.local
 ```
 
 编辑 `.env.local`，填入你的 Key：
 
 ```env
-# AI 识别
+# AI 识别 - 选择使用的模型: 'gemini' 或 'qwen'（默认: gemini）
+AI_MODEL=gemini
+
+# Gemini API Key（如果使用 Gemini）
 GEMINI_API_KEY=你的_Gemini_API_Key
+
+# 阿里云 DashScope API Key（如果使用 Qwen 或作为备用）
+DASHSCOPE_API_KEY=你的_DashScope_API_Key
 
 # Supabase 数据库
 NEXT_PUBLIC_SUPABASE_URL=你的_Supabase_Project_URL
@@ -95,7 +121,11 @@ npm run dev
 
 1. 将代码推送到 GitHub。
 2. 在 Vercel 导入项目。
-3. 在 Vercel 项目设置中添加所有必需的环境变量（包括 `JWT_SECRET`、`WX_APPID`、`WX_SECRET` 等）。
+3. 在 Vercel 项目设置中添加所有必需的环境变量：
+   - `AI_MODEL`（可选，默认 gemini）
+   - `GEMINI_API_KEY`（如果使用 Gemini）
+   - `DASHSCOPE_API_KEY`（如果使用 Qwen 或作为备用）
+   - `JWT_SECRET`、`WX_APPID`、`WX_SECRET` 等
 4. 点击 Deploy。
 
 ## 技术栈
