@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { View, Text, Image, ScrollView, Canvas } from '@tarojs/components'
+import { View, Text, Image, ScrollView, Canvas, Button } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage } from '@tarojs/taro'
 import { getRecords, BPRecord, addRecord } from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
@@ -402,11 +402,23 @@ export default function Index() {
         <View className='bp-card'>
           <View className='card-header'>
             <Text className='card-title'>💓 最新血压</Text>
-            {latestRecord && (
-              <View className={`card-status ${getBPStatus(latestRecord.systolic, latestRecord.diastolic).color}`}>
-                <Text className='card-status-text'>{getBPStatus(latestRecord.systolic, latestRecord.diastolic).label}</Text>
-              </View>
-            )}
+            <View className='card-header-right'>
+              {latestRecord && (
+                <View className={`card-status ${getBPStatus(latestRecord.systolic, latestRecord.diastolic).color}`}>
+                  <Text className='card-status-text'>{getBPStatus(latestRecord.systolic, latestRecord.diastolic).label}</Text>
+                </View>
+              )}
+              {latestRecord && (
+                <Button
+                  className='share-btn'
+                  openType='share'
+                  size='mini'
+                  plain
+                >
+                  <Text className='share-btn-text'>📤 分享</Text>
+                </Button>
+              )}
+            </View>
           </View>
 
           {latestRecord ? (

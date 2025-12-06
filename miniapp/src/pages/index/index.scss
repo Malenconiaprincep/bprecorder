@@ -47,9 +47,36 @@
   font-weight: 600;
 }
 
+.card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
 .card-status {
   padding: 8rpx 20rpx;
   border-radius: 20rpx;
+}
+
+.share-btn {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 20rpx !important;
+  height: 56rpx !important;
+  line-height: 56rpx !important;
+  min-width: 100rpx !important;
+  
+  &::after {
+    border: none !important;
+  }
+}
+
+.share-btn-text {
+  font-size: 24rpx;
+  color: #ffffff;
+  font-weight: 500;
 }
 
 /* 理想血压 - 深绿 */
