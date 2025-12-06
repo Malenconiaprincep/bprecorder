@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react'
-import { View, Text, Image, ScrollView } from '@tarojs/components'
-import Taro, { useLoad, useDidShow } from '@tarojs/taro'
+import { View, Text, Image, ScrollView, Canvas } from '@tarojs/components'
+import Taro, { useLoad, useDidShow, useShareAppMessage } from '@tarojs/taro'
 import { getRecords, BPRecord, addRecord } from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
 import { API_BASE_URL } from '../../utils/api'
+import { generateShareImage } from '../../utils/shareImage'
 import './index.scss'
 
 // 图标
@@ -86,6 +87,7 @@ export default function Index() {
     pulse: number
   } | null>(null)
   const [showResultModal, setShowResultModal] = useState(false)
+  const [shareImageUrl, setShareImageUrl] = useState<string>('')
 
   const latestRecord = records.length > 0 ? records[0] : null
 
@@ -146,6 +148,19 @@ export default function Index() {
     const storedUser = getUserInfo()
     if (storedUser) {
       fetchRecords(storedUser.openid)
+    }
+  })
+
+  // 分享小程序
+  useShareAppMessage(() => {
+    const shareTitle = latestRecord
+      ? `我的最新血压：${latestRecord.systolic}/${latestRecord.diastolic} mmHg`
+      : '血压记录助手 - 轻松记录，健康管理'
+    
+    return {
+      title: shareTitle,
+      path: '/pages/index/index',
+      imageUrl: shareImageUrl || '' // 使用生成的分享图片
     }
   })
 
@@ -303,13 +318,15 @@ export default function Index() {
       return
     }
 
+    const recordedAt = new Date().toISOString()
+
     try {
       const { error } = await addRecord({
         user_id: userInfo.openid,
         systolic: analyzeResult.systolic,
         diastolic: analyzeResult.diastolic,
         pulse: analyzeResult.pulse,
-        recorded_at: new Date().toISOString()
+        recorded_at: recordedAt
       })
 
       if (error) {
@@ -317,6 +334,20 @@ export default function Index() {
       } else {
         Taro.showToast({ title: '保存成功', icon: 'success' })
         setShowResultModal(false)
+        
+        // 生成分享图片
+        try {
+          const imageUrl = await generateShareImage(
+            analyzeResult.systolic,
+            analyzeResult.diastolic,
+            analyzeResult.pulse,
+            recordedAt
+          )
+          setShareImageUrl(imageUrl)
+        } catch (e) {
+          console.error('生成分享图片失败:', e)
+        }
+        
         setAnalyzeResult(null)
         // 刷新记录列表
         await fetchRecords(userInfo.openid)
@@ -338,6 +369,19 @@ export default function Index() {
 
   return (
     <>
+      {/* 隐藏的 Canvas，用于生成分享图片 */}
+      <Canvas
+        canvasId='shareCanvas'
+        style={{
+          position: 'fixed',
+          top: '-9999px',
+          left: '-9999px',
+          width: '750px',
+          height: '600px'
+        }}
+        disableScroll
+      />
+      
       <ScrollView className='page' scrollY enhanced showScrollbar={false}>
         {/* 顶部蓝色弧形背景 */}
         <View className='bg-curve' />

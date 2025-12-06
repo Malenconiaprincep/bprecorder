@@ -3,5 +3,6 @@ export default definePageConfig({
   navigationBarBackgroundColor: '#b5e0f7',
   navigationBarTextStyle: 'black',
   enablePullDownRefresh: false,
-  disableScroll: true
+  disableScroll: true,
+  enableShareAppMessage: true
 })
