@@ -5,6 +5,10 @@ import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, 
 import { getRecords, BPRecord } from '../../lib/supabase'
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import './index.scss'
+// @ts-ignore
+import DEFAULT_AVATAR from './avatar.png'
+
+// 默认头像路径（小程序中相对于小程序根目录）
 
 export default function Profile() {
   const [wxUser, setWxUser] = useState<WxUserInfo | null>(null)
@@ -102,7 +106,7 @@ export default function Profile() {
   // 页面每次显示时刷新数据
   useDidShow(() => {
     if (USE_TEST_DATA) return
-    
+
     const userInfo = getUserInfo()
     if (userInfo && userInfo.openid && !userInfo.openid.startsWith('wx_')) {
       fetchRecords(userInfo.openid)
@@ -230,13 +234,12 @@ export default function Profile() {
     <View className='page'>
       {/* 用户信息卡片 */}
       <View className='user-card' onClick={!isProfileComplete ? onClickLogin : undefined}>
-        {wxUser?.avatarUrl ? (
-          <Image className='avatar-img-display' src={wxUser.avatarUrl} mode='aspectFill' onClick={isProfileComplete ? onClickLogin : undefined} />
-        ) : (
-          <View className='avatar'>
-            <Text className='avatar-text'>👤</Text>
-          </View>
-        )}
+        <Image
+          className={`avatar-img-display ${wxUser?.avatarUrl ? '' : 'default-avatar'}`}
+          src={wxUser?.avatarUrl || DEFAULT_AVATAR}
+          mode='aspectFill'
+          onClick={isProfileComplete ? onClickLogin : undefined}
+        />
         <View className='user-info'>
           <Text className='user-name'>{wxUser?.nickName || (hasOpenid ? '点击完善资料' : '点击登录')}</Text>
           <Text className='user-desc'>
@@ -253,13 +256,8 @@ export default function Profile() {
 
             {/* 头像选择 */}
             <Button className='avatar-picker' openType='chooseAvatar' onChooseAvatar={onChooseAvatar}>
-              {tempAvatar ? (
-                <Image className='avatar-preview' src={tempAvatar} mode='aspectFill' />
-              ) : (
-                <View className='avatar-placeholder'>
-                  <Text className='avatar-placeholder-text'>点击选择头像</Text>
-                </View>
-              )}
+              <Image className='avatar-preview' src={tempAvatar || DEFAULT_AVATAR} mode='aspectFill' />
+              {!tempAvatar && <Text className='avatar-hint'>点击更换头像</Text>}
             </Button>
 
             {/* 昵称输入 */}
