@@ -481,7 +481,7 @@ export default function AnalysisPage() {
       {totalAverage && (
         <View className='stats-card'>
           <View className='stats-header'>
-            <Text className='stats-title'>📊 统计数据</Text>
+            <Text className='stats-title'><Text className='title-icon'>📊</Text><Text>统计数据</Text></Text>
             <Text className='stats-period'>
               {timeRange === 'week' ? '近7天' : '近30天'} · {totalAverage.days}天有记录
             </Text>

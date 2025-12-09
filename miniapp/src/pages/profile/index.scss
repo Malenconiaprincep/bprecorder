@@ -228,7 +228,14 @@
 
 .menu-icon {
   font-size: 40rpx;
+  width: 48rpx;
+  height: 48rpx;
+  line-height: 48rpx;
+  text-align: center;
   margin-right: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .menu-title {

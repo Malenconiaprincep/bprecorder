@@ -15,6 +15,10 @@ export default {
     //   chain.plugin('analyzer')
     //     .use(require('webpack-bundle-analyzer').BundleAnalyzerPlugin, [])
     // }
+  },
+  defineConstants: {
+    // 生产环境使用线上接口
+    API_BASE_URL: '"https://bprecorder.aikee.xyz"'
   }
 } satisfies UserConfigExport
 

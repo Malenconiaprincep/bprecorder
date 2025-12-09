@@ -20,6 +20,8 @@ export default defineConfig(async (merge, { command, mode }) => {
     outputRoot: 'dist',
     plugins: [],
     defineConstants: {
+      // 默认 API 地址（会被 dev/prod 配置覆盖）
+      API_BASE_URL: '"https://bprecorder.aikee.xyz"'
     },
     copy: {
       patterns: [

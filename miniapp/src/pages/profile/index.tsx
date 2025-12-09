@@ -6,9 +6,7 @@ import { getRecords, BPRecord } from '../../lib/supabase'
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import './index.scss'
 // @ts-ignore
-import DEFAULT_AVATAR from './avatar.png'
-
-// 默认头像路径（小程序中相对于小程序根目录）
+import DEFAULT_AVATAR from '../../assets/icons/avatar.png'
 
 export default function Profile() {
   const [wxUser, setWxUser] = useState<WxUserInfo | null>(null)
@@ -223,7 +221,12 @@ export default function Profile() {
     Taro.showToast({ title: '功能开发中，敬请期待', icon: 'none' })
   }
 
+  const goToGroups = () => {
+    Taro.navigateTo({ url: '/pages/groups/index' })
+  }
+
   const menuItems = [
+    { title: '我的组', icon: '👥', onClick: goToGroups },
     { title: '历史记录', icon: '📋', onClick: showDevTip },
     { title: '数据导出', icon: '📤', onClick: showDevTip },
     { title: '提醒设置', icon: '⏰', onClick: showDevTip },

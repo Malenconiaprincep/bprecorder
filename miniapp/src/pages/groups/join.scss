@@ -1,0 +1,151 @@
+.page {
+  min-height: 100vh;
+  background-color: #f0f6ff;
+  padding: 30rpx;
+}
+
+/* 通用标题图标间距 */
+.title-icon {
+  margin-right: 12rpx;
+}
+
+.header {
+  text-align: center;
+  padding: 60rpx 0;
+}
+
+.title {
+  font-size: 44rpx;
+  font-weight: 600;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  color: #64748b;
+}
+
+/* 输入区域 */
+.input-section {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 40rpx;
+}
+
+.code-input {
+  flex: 1;
+  height: 96rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 0 32rpx;
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 8rpx;
+  color: #1e293b;
+  text-align: center;
+}
+
+.search-btn {
+  width: 160rpx;
+  height: 96rpx;
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-btn-text {
+  font-size: 30rpx;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* 组预览卡片 */
+.group-preview {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 36rpx;
+  margin-bottom: 40rpx;
+  box-shadow: 0 4rpx 20rpx rgba(59, 130, 246, 0.15);
+}
+
+.preview-header {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 32rpx;
+}
+
+.preview-icon {
+  font-size: 64rpx;
+  margin-right: 24rpx;
+}
+
+.preview-info {
+  flex: 1;
+}
+
+.preview-name {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.preview-desc {
+  font-size: 26rpx;
+  color: #64748b;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.preview-count {
+  font-size: 24rpx;
+  color: #3b82f6;
+  background: #eff6ff;
+  padding: 6rpx 16rpx;
+  border-radius: 12rpx;
+}
+
+.join-btn {
+  height: 96rpx;
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.join-btn.disabled {
+  opacity: 0.6;
+}
+
+.join-btn-text {
+  font-size: 34rpx;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 提示 */
+.tips {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 32rpx;
+}
+
+.tips-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.tips-text {
+  font-size: 26rpx;
+  color: #94a3b8;
+}
+

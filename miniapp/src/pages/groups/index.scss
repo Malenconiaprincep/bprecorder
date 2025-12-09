@@ -1,0 +1,245 @@
+.page {
+  min-height: 100vh;
+  background-color: #f0f6ff;
+  padding: 30rpx;
+  padding-bottom: 50rpx;
+}
+
+/* 通用标题图标间距 */
+.title-icon {
+  margin-right: 12rpx;
+}
+
+.loading {
+  text-align: center;
+  padding: 100rpx;
+  color: #94a3b8;
+  font-size: 28rpx;
+}
+
+/* 操作按钮 */
+.actions {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  height: 100rpx;
+  border-radius: 50rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+}
+
+.action-btn.create {
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  box-shadow: 0 6rpx 20rpx rgba(74, 168, 232, 0.35);
+}
+
+.action-btn.join {
+  background: #ffffff;
+  border: 2rpx solid #e2e8f0;
+  box-shadow: none;
+}
+
+.action-icon {
+  font-size: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-text {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.action-btn.create .action-text {
+  color: #ffffff;
+}
+
+.action-btn.join .action-text {
+  color: #64748b;
+}
+
+/* 区块 */
+.section {
+  margin-bottom: 30rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+/* 空状态 */
+.empty {
+  text-align: center;
+  padding: 80rpx 40rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+}
+
+.empty-icon {
+  font-size: 64rpx;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #64748b;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: #94a3b8;
+  display: block;
+}
+
+/* 组列表 */
+.group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.group-card {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 32rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+}
+
+.group-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.group-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-desc {
+  font-size: 24rpx;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 10rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-meta {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.role-badge {
+  font-size: 20rpx;
+  color: #3b82f6;
+  background: #eff6ff;
+  padding: 4rpx 14rpx;
+  border-radius: 16rpx;
+  font-weight: 500;
+}
+
+.role-badge.owner {
+  color: #f59e0b;
+  background: #fef3c7;
+}
+
+.group-arrow {
+  font-size: 36rpx;
+  color: #cbd5e1;
+  margin-left: 16rpx;
+}
+
+/* 弹窗 */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 600rpx;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 48rpx;
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: center;
+  display: block;
+  margin-bottom: 40rpx;
+}
+
+.modal-input {
+  width: 100%;
+  height: 88rpx;
+  background: #f8fafc;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  color: #1e293b;
+  margin-bottom: 24rpx;
+  box-sizing: border-box;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 16rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+}
+
+.modal-btn.cancel {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.modal-btn.confirm {
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  color: #ffffff;
+}
+

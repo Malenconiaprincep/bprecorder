@@ -156,7 +156,7 @@ export default function Index() {
     const shareTitle = latestRecord
       ? `我的最新血压：${latestRecord.systolic}/${latestRecord.diastolic} mmHg`
       : '血压记录助手 - 轻松记录，健康管理'
-    
+
     return {
       title: shareTitle,
       path: '/pages/index/index',
@@ -334,7 +334,7 @@ export default function Index() {
       } else {
         Taro.showToast({ title: '保存成功', icon: 'success' })
         setShowResultModal(false)
-        
+
         // 生成分享图片
         try {
           const imageUrl = await generateShareImage(
@@ -347,7 +347,7 @@ export default function Index() {
         } catch (e) {
           console.error('生成分享图片失败:', e)
         }
-        
+
         setAnalyzeResult(null)
         // 刷新记录列表
         await fetchRecords(userInfo.openid)
@@ -381,7 +381,7 @@ export default function Index() {
         }}
         disableScroll
       />
-      
+
       <ScrollView className='page' scrollY enhanced showScrollbar={false}>
         {/* 顶部蓝色弧形背景 */}
         <View className='bg-curve' />
@@ -401,7 +401,7 @@ export default function Index() {
         {/* 今日血压卡片 */}
         <View className='bp-card'>
           <View className='card-header'>
-            <Text className='card-title'>💓 最新血压</Text>
+            <Text className='card-title'><Text className='title-icon'>💓</Text><Text>最新血压</Text></Text>
             <View className='card-header-right'>
               {latestRecord && (
                 <View className={`card-status ${getBPStatus(latestRecord.systolic, latestRecord.diastolic).color}`}>
@@ -415,7 +415,7 @@ export default function Index() {
                   size='mini'
                   plain
                 >
-                  <Text className='share-btn-text'>📤 分享</Text>
+                  <Text className='share-btn-text'><Text className='btn-icon'>📤</Text><Text>分享</Text></Text>
                 </Button>
               )}
             </View>
@@ -446,7 +446,7 @@ export default function Index() {
         {/* 本周概览卡片 */}
         <View className='summary-card'>
           <View className='summary-header'>
-            <Text className='summary-title'>📊 本周概览</Text>
+            <Text className='summary-title'><Text className='title-icon'>📊</Text><Text>本周概览</Text></Text>
             <Text className='summary-count'>共 {weeklyAverage?.count || 0} 次记录</Text>
           </View>
           {weeklyAverage ? (
@@ -475,7 +475,7 @@ export default function Index() {
 
         {/* 记录列表 */}
         <View className='records-section'>
-          <Text className='section-title'>📋 测量记录</Text>
+          <Text className='section-title'><Text className='title-icon'>📋</Text><Text>测量记录</Text></Text>
 
           {groupedRecords.length === 0 ? (
             <View className='empty-records'>

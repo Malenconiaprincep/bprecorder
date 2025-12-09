@@ -5,7 +5,10 @@ export default defineAppConfig({
     'pages/profile/index',
     'pages/input/index',
     'pages/camera/index',
-    'pages/login/index'
+    'pages/login/index',
+    'pages/groups/index',
+    'pages/groups/detail',
+    'pages/groups/join'
   ],
   window: {
     backgroundTextStyle: 'light',
