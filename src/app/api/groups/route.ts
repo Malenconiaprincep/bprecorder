@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { verifyToken } from '../wx-login/route'
 
 // Supabase 配置
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+
+// 复用 Supabase 客户端
+let supabaseInstance: SupabaseClient | null = null
+function getSupabase() {
+  if (!supabaseInstance && supabaseUrl && supabaseServiceKey) {
+    supabaseInstance = createClient(supabaseUrl, supabaseServiceKey)
+  }
+  return supabaseInstance
+}
 
 // 生成随机邀请码
 function generateInviteCode(length: number = 8): string {
@@ -35,11 +44,10 @@ export async function GET(request: NextRequest) {
     const inviteCode = searchParams.get('invite_code')
     const userId = searchParams.get('user_id')
 
-    if (!supabaseUrl || !supabaseServiceKey) {
+    const supabase = getSupabase()
+    if (!supabase) {
       return NextResponse.json({ success: false, error: '服务器配置错误' }, { status: 500, headers: corsHeaders })
     }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // 如果有邀请码，查询组信息
     if (inviteCode) {
@@ -70,10 +78,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: '缺少 user_id 参数' }, { status: 400, headers: corsHeaders })
     }
 
-    // 查询我加入的所有组
+    // 使用关联查询一次获取成员关系和组信息
     const { data: memberships, error: memberError } = await supabase
       .from('bp_group_members')
-      .select('group_id, role, joined_at')
+      .select(`
+        role,
+        joined_at,
+        bp_groups (
+          id,
+          name,
+          description,
+          owner_id,
+          invite_code,
+          created_at,
+          updated_at
+        )
+      `)
       .eq('user_id', userId)
 
     if (memberError) {
@@ -85,27 +105,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, groups: [] }, { headers: corsHeaders })
     }
 
-    // 获取组详情
-    const groupIds = memberships.map(m => m.group_id)
-    const { data: groups, error: groupError } = await supabase
-      .from('bp_groups')
-      .select('*')
-      .in('id', groupIds)
-
-    if (groupError) {
-      console.error('Query groups error:', groupError)
-      return NextResponse.json({ success: false, error: '查询失败' }, { status: 500, headers: corsHeaders })
-    }
-
-    // 合并成员信息和组信息
-    const result = groups?.map(group => {
-      const membership = memberships.find(m => m.group_id === group.id)
-      return {
-        ...group,
-        my_role: membership?.role || 'member',
-        joined_at: membership?.joined_at
-      }
-    }) || []
+    // 转换数据格式
+    const result = memberships
+      .filter(m => m.bp_groups) // 过滤掉没有关联组的记录
+      .map(m => ({
+        ...(m.bp_groups as any),
+        my_role: m.role || 'member',
+        joined_at: m.joined_at
+      }))
 
     return NextResponse.json({ success: true, groups: result }, { headers: corsHeaders })
 
@@ -125,11 +132,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '缺少必要参数' }, { status: 400, headers: corsHeaders })
     }
 
-    if (!supabaseUrl || !supabaseServiceKey) {
+    const supabase = getSupabase()
+    if (!supabase) {
       return NextResponse.json({ success: false, error: '服务器配置错误' }, { status: 500, headers: corsHeaders })
     }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // 生成唯一邀请码
     let inviteCode = generateInviteCode()

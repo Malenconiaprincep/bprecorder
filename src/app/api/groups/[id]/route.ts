@@ -58,7 +58,17 @@ export async function GET(
       console.error('Query members error:', memberError)
     }
 
-    // 获取每个成员的用户信息和最新血压记录
+    // 获取今天的日期范围（UTC）
+    const now = new Date()
+    // 使用北京时间（UTC+8）计算今天的开始和结束
+    const beijingOffset = 8 * 60 * 60 * 1000
+    const beijingNow = new Date(now.getTime() + beijingOffset)
+    const todayStart = new Date(beijingNow)
+    todayStart.setUTCHours(0, 0, 0, 0)
+    const todayStartUTC = new Date(todayStart.getTime() - beijingOffset)
+    const todayEndUTC = new Date(todayStartUTC.getTime() + 24 * 60 * 60 * 1000)
+
+    // 获取每个成员的用户信息和当天血压记录
     const membersWithDetails = await Promise.all(
       (members || []).map(async (member) => {
         // 获取用户信息
@@ -68,11 +78,13 @@ export async function GET(
           .eq('openid', member.user_id)
           .single()
 
-        // 获取最新血压记录
-        const { data: latestRecord } = await supabase
+        // 获取当天最新血压记录
+        const { data: todayRecord } = await supabase
           .from('bp_records')
           .select('systolic, diastolic, pulse, recorded_at')
           .eq('user_id', member.user_id)
+          .gte('recorded_at', todayStartUTC.toISOString())
+          .lt('recorded_at', todayEndUTC.toISOString())
           .order('recorded_at', { ascending: false })
           .limit(1)
           .single()
@@ -80,7 +92,7 @@ export async function GET(
         return {
           ...member,
           user: user || { nickname: null, avatar_url: null },
-          latest_record: latestRecord || null
+          latest_record: todayRecord || null
         }
       })
     )

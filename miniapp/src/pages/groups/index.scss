@@ -7,7 +7,11 @@
 
 /* 通用标题图标间距 */
 .title-icon {
-  margin-right: 12rpx;
+  margin-right: 20rpx;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  top: -2rpx;
 }
 
 .loading {
@@ -51,6 +55,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 12rpx;
 }
 
 .action-text {
@@ -58,6 +63,7 @@
   font-weight: 600;
 }
 
+.action-btn.create .action-icon,
 .action-btn.create .action-text {
   color: #ffffff;
 }
@@ -242,4 +248,3 @@
   background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
   color: #ffffff;
 }
-

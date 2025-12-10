@@ -1,0 +1,224 @@
+.page {
+  min-height: 100vh;
+  background-color: #f0f6ff;
+  padding: 30rpx;
+  padding-bottom: 50rpx;
+}
+
+.loading {
+  text-align: center;
+  padding: 100rpx;
+  color: #94a3b8;
+  font-size: 28rpx;
+}
+
+/* 成员信息头部 */
+.member-header {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 30rpx;
+}
+
+.member-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  border: 4rpx solid rgba(255, 255, 255, 0.5);
+  margin-right: 28rpx;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-name {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #ffffff;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.member-role {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4rpx 16rpx;
+  border-radius: 16rpx;
+  display: inline-block;
+}
+
+/* 区块 */
+.section {
+  margin-bottom: 30rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+}
+
+.title-icon {
+  margin-right: 12rpx;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  top: -2rpx;
+}
+
+/* 空状态 */
+.empty {
+  text-align: center;
+  padding: 80rpx 40rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+}
+
+.empty-icon {
+  font-size: 64rpx;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #64748b;
+  display: block;
+}
+
+/* 记录分组 */
+.record-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.record-group {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 24rpx;
+}
+
+.group-date {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #64748b;
+  display: block;
+  margin-bottom: 16rpx;
+  padding-left: 8rpx;
+}
+
+/* 记录列表 */
+.record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.record-card {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  background: #f8fafc;
+  border-radius: 16rpx;
+}
+
+.record-time {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #64748b;
+  width: 90rpx;
+  flex-shrink: 0;
+}
+
+.record-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.bp-values {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+  margin-bottom: 4rpx;
+}
+
+.bp-num {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.bp-unit {
+  font-size: 22rpx;
+  color: #94a3b8;
+}
+
+.record-extra {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.pulse {
+  font-size: 24rpx;
+  color: #64748b;
+}
+
+.hand {
+  font-size: 22rpx;
+  color: #94a3b8;
+  background: #f1f5f9;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+/* 状态徽章 */
+.status-badge {
+  padding: 8rpx 16rpx;
+  border-radius: 12rpx;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+}
+
+.status-badge.ideal {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.status-badge.normal {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.status-badge.prehigh {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.high-1 {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+.status-badge.high-2 {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.status-badge.high-3 {
+  background: #fecaca;
+  color: #b91c1c;
+}
+
+.badge-text {
+  font-size: 22rpx;
+  font-weight: 500;
+}

@@ -41,6 +41,7 @@ export default function GroupDetail() {
   const [members, setMembers] = useState<GroupMember[]>([])
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState('')
+  const [showInviteModal, setShowInviteModal] = useState(false)
 
   useLoad(() => {
     loadGroupDetail()
@@ -79,6 +80,10 @@ export default function GroupDetail() {
     if (result.success) {
       setGroup(result.group || null)
       setMembers(result.members || [])
+      // 设置导航栏标题为组名
+      if (result.group?.name) {
+        Taro.setNavigationBarTitle({ title: result.group.name })
+      }
     } else {
       Taro.showToast({ title: result.error || '加载失败', icon: 'none' })
     }
@@ -132,6 +137,13 @@ export default function GroupDetail() {
 
   const isOwner = group?.owner_id === userId
 
+  const goToMemberDetail = (memberId: string) => {
+    if (!group) return
+    Taro.navigateTo({
+      url: `/pages/groups/member?groupId=${group.id}&memberId=${memberId}`
+    })
+  }
+
   if (loading) {
     return (
       <View className='page'>
@@ -150,32 +162,43 @@ export default function GroupDetail() {
 
   return (
     <View className='page'>
-      {/* 组信息卡片 */}
-      <View className='group-header'>
-        <Text className='group-name'>{group.name}</Text>
-        {group.description && (
-          <Text className='group-desc'>{group.description}</Text>
-        )}
-        <View className='invite-section' onClick={handleCopyInviteCode}>
-          <Text className='invite-label'>邀请码：</Text>
-          <Text className='invite-code'>{group.invite_code}</Text>
-          <Text className='copy-btn'>复制</Text>
-        </View>
-
-        {/* 邀请方式 */}
-        <View className='invite-actions'>
-          <View className='invite-action' onClick={handleCopyInviteCode}>
-            <Text className='action-text'>复制邀请码</Text>
-          </View>
-          <Button className='invite-action share-btn' openType='share'>
-            <Text className='action-text'>分享给好友</Text>
-          </Button>
-        </View>
-      </View>
-
       {/* 成员列表 */}
       <View className='section'>
-        <Text className='section-title'><Text className='title-icon'>👥</Text><Text>成员 ({members.length})</Text></Text>
+        <View className='section-header'>
+          <Text className='section-title'><Text className='title-icon'>👥</Text><Text>成员 ({members.length})</Text></Text>
+          <View className='add-btn' onClick={() => setShowInviteModal(true)}>
+            <Text className='add-btn-icon'>＋</Text>
+          </View>
+        </View>
+
+        {/* 邀请弹框 */}
+        {showInviteModal && (
+          <View className='modal-mask' onClick={() => setShowInviteModal(false)}>
+            <View className='modal-content' onClick={e => e.stopPropagation()}>
+              <Text className='modal-title'>邀请成员</Text>
+
+              <View className='invite-code-box'>
+                <Text className='invite-code-label'>邀请码</Text>
+                <Text className='invite-code-value'>{group.invite_code}</Text>
+              </View>
+
+              <View className='modal-actions'>
+                <View className='modal-action' onClick={() => { handleCopyInviteCode(); setShowInviteModal(false); }}>
+                  <Text className='modal-action-icon'>📋</Text>
+                  <Text className='modal-action-text'>复制邀请码</Text>
+                </View>
+                <Button className='modal-action share-action' openType='share' onClick={() => setShowInviteModal(false)}>
+                  <Text className='modal-action-icon'>📤</Text>
+                  <Text className='modal-action-text'>分享给好友</Text>
+                </Button>
+              </View>
+
+              <View className='modal-close' onClick={() => setShowInviteModal(false)}>
+                <Text className='close-text'>关闭</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         <View className='member-list'>
           {members.map(member => {
@@ -183,7 +206,7 @@ export default function GroupDetail() {
             const status = record ? getBPStatus(record.systolic, record.diastolic) : null
 
             return (
-              <View key={member.id} className='member-card'>
+              <View key={member.id} className='member-card' onClick={() => goToMemberDetail(member.user_id)}>
                 <Image
                   className='member-avatar'
                   src={member.user?.avatar_url || DEFAULT_AVATAR}
@@ -212,9 +235,10 @@ export default function GroupDetail() {
                       </View>
                     </View>
                   ) : (
-                    <Text className='no-record'>暂无血压记录</Text>
+                    <Text className='no-record'>今日暂未测量</Text>
                   )}
                 </View>
+                <Text className='member-arrow'>›</Text>
               </View>
             )
           })}

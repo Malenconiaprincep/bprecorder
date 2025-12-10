@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 // Supabase 配置
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+
+// 复用 Supabase 客户端
+let supabaseInstance: SupabaseClient | null = null
+function getSupabase() {
+  if (!supabaseInstance && supabaseUrl && supabaseServiceKey) {
+    supabaseInstance = createClient(supabaseUrl, supabaseServiceKey)
+  }
+  return supabaseInstance
+}
 
 // CORS 头
 const corsHeaders = {
@@ -27,11 +36,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '缺少必要参数' }, { status: 400, headers: corsHeaders })
     }
 
-    if (!supabaseUrl || !supabaseServiceKey) {
+    const supabase = getSupabase()
+    if (!supabase) {
       return NextResponse.json({ success: false, error: '服务器配置错误' }, { status: 500, headers: corsHeaders })
     }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // 通过邀请码查找组
     const { data: group, error: groupError } = await supabase
@@ -68,6 +76,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 加入组
+    console.log('Joining group:', { group_id: group.id, user_id, nickname: memberNickname })
+
     const { data: membership, error: joinError } = await supabase
       .from('bp_group_members')
       .insert({
@@ -78,6 +88,8 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single()
+
+    console.log('Join result:', { membership, joinError })
 
     if (joinError) {
       console.error('Join group error:', joinError)

@@ -46,6 +46,7 @@ export async function getMyGroups(userId: string): Promise<{ success: boolean; g
       header: { 'Content-Type': 'application/json' }
     })
 
+    console.log('getMyGroups response:', res.data)
     if (res.statusCode === 200 && res.data.success) {
       return { success: true, groups: res.data.groups }
     }
@@ -151,6 +152,43 @@ export async function joinGroup(params: {
     return { success: false, error: res.data.error || '加入失败' }
   } catch (e: any) {
     console.error('joinGroup error:', e)
+    return { success: false, error: e.message || '网络错误' }
+  }
+}
+
+// 血压记录
+export interface BPRecord {
+  id: number
+  systolic: number
+  diastolic: number
+  pulse: number
+  recorded_at: string
+  hand?: string
+  note?: string
+}
+
+/**
+ * 获取组成员的血压记录
+ */
+export async function getMemberRecords(groupId: number, memberId: string): Promise<{
+  success: boolean
+  member?: GroupMember
+  records?: BPRecord[]
+  error?: string
+}> {
+  try {
+    const res = await Taro.request({
+      url: `${API_BASE_URL}/api/groups/${groupId}/members/${memberId}/records`,
+      method: 'GET',
+      header: { 'Content-Type': 'application/json' }
+    })
+
+    if (res.statusCode === 200 && res.data.success) {
+      return { success: true, member: res.data.member, records: res.data.records }
+    }
+    return { success: false, error: res.data.error || '获取失败' }
+  } catch (e: any) {
+    console.error('getMemberRecords error:', e)
     return { success: false, error: e.message || '网络错误' }
   }
 }

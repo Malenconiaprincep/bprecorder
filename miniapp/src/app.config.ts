@@ -8,7 +8,8 @@ export default defineAppConfig({
     'pages/login/index',
     'pages/groups/index',
     'pages/groups/detail',
-    'pages/groups/join'
+    'pages/groups/join',
+    'pages/groups/member'
   ],
   window: {
     backgroundTextStyle: 'light',
