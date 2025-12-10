@@ -67,6 +67,8 @@ export interface BPRecord {
   systolic: number
   diastolic: number
   pulse: number
+  hand?: 'left' | 'right'  // 左右手（可选）
+  note?: string            // 备注（可选）
   recorded_at: string
   created_at?: string
 }
@@ -94,6 +96,27 @@ export async function addRecord(record: Omit<BPRecord, 'id' | 'created_at'>): Pr
   })
 
   // POST 返回数组，取第一个
+  if (result.data && Array.isArray(result.data)) {
+    return { data: result.data[0] || null, error: null }
+  }
+  return { data: null, error: result.error }
+}
+
+/**
+ * 更新血压记录
+ */
+export async function updateRecord(
+  id: number, 
+  data: Partial<Omit<BPRecord, 'id' | 'user_id' | 'created_at'>>
+): Promise<{ data: BPRecord | null; error: string | null }> {
+  const result = await request<BPRecord[]>(`/bp_records`, {
+    method: 'PATCH',
+    params: {
+      id: `eq.${id}`
+    },
+    data
+  })
+
   if (result.data && Array.isArray(result.data)) {
     return { data: result.data[0] || null, error: null }
   }

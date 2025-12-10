@@ -161,15 +161,13 @@ export default function GroupDetail() {
           <Text className='invite-code'>{group.invite_code}</Text>
           <Text className='copy-btn'>复制</Text>
         </View>
-        
+
         {/* 邀请方式 */}
         <View className='invite-actions'>
           <View className='invite-action' onClick={handleCopyInviteCode}>
-            <Text className='action-icon'>📋</Text>
             <Text className='action-text'>复制邀请码</Text>
           </View>
           <Button className='invite-action share-btn' openType='share'>
-            <Text className='action-icon'>📤</Text>
             <Text className='action-text'>分享给好友</Text>
           </Button>
         </View>

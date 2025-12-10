@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { View, Text, Image, ScrollView, Canvas, Button } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage } from '@tarojs/taro'
-import { getRecords, BPRecord, addRecord } from '../../lib/supabase'
+import { getRecords, BPRecord, addRecord, deleteRecord } from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
 import { API_BASE_URL } from '../../utils/api'
 import { generateShareImage } from '../../utils/shareImage'
@@ -367,6 +367,52 @@ export default function Index() {
     e.stopPropagation && e.stopPropagation()
   }
 
+  // 处理记录点击（编辑/删除）
+  const handleRecordAction = (record: BPRecord) => {
+    Taro.showActionSheet({
+      itemList: ['编辑记录', '删除记录'],
+      itemColor: '#1e293b',
+      success: async (res) => {
+        if (res.tapIndex === 0) {
+          // 编辑
+          const params = new URLSearchParams({
+            id: String(record.id),
+            systolic: String(record.systolic),
+            diastolic: String(record.diastolic),
+            pulse: String(record.pulse),
+            hand: record.hand || '',
+            note: encodeURIComponent(record.note || '')
+          })
+          Taro.navigateTo({ url: `/pages/input/index?${params.toString()}` })
+        } else if (res.tapIndex === 1) {
+          // 删除确认
+          const confirmRes = await Taro.showModal({
+            title: '确认删除',
+            content: '删除后无法恢复，确定要删除这条记录吗？',
+            confirmText: '删除',
+            confirmColor: '#ef4444'
+          })
+          
+          if (confirmRes.confirm && record.id) {
+            Taro.showLoading({ title: '删除中...' })
+            const { error } = await deleteRecord(record.id)
+            Taro.hideLoading()
+            
+            if (error) {
+              Taro.showToast({ title: error, icon: 'none' })
+            } else {
+              Taro.showToast({ title: '已删除', icon: 'success' })
+              // 刷新列表
+              if (userInfo) {
+                fetchRecords(userInfo.openid)
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+
   return (
     <>
       {/* 隐藏的 Canvas，用于生成分享图片 */}
@@ -497,9 +543,16 @@ export default function Index() {
                   {group.records.map((record, idx) => {
                     const status = getBPStatus(record.systolic, record.diastolic)
                     return (
-                      <View key={record.id || idx} className='record-card'>
+                      <View 
+                        key={record.id || idx} 
+                        className='record-card'
+                        onClick={() => handleRecordAction(record)}
+                      >
                         <View className='record-time'>
                           <Text className='time-text'>{formatTime(record.recorded_at)}</Text>
+                          {record.hand && (
+                            <Text className='hand-tag'>{record.hand === 'left' ? '左' : '右'}</Text>
+                          )}
                         </View>
 
                         <View className='record-main'>
@@ -520,6 +573,12 @@ export default function Index() {
                             <Text className='badge-text'>{status.label}</Text>
                           </View>
                         </View>
+                        
+                        {record.note && (
+                          <View className='record-note'>
+                            <Text className='note-text'>📝 {record.note}</Text>
+                          </View>
+                        )}
                       </View>
                     )
                   })}
