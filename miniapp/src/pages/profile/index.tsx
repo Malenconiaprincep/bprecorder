@@ -338,6 +338,11 @@ export default function Profile() {
           <Text className='logout-text'>退出登录</Text>
         </View>
       )}
+
+      {/* 版本号 */}
+      <View className='version-info'>
+        <Text className='version-text'>v1.0.0</Text>
+      </View>
     </View>
   )
 }
