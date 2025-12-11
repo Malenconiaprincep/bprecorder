@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, Text, Image, Input, Button } from '@tarojs/components'
+import { View, Text, Input } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { getUserInfo } from '../../lib/auth'
 import { getMyGroups, createGroup, joinGroup, Group } from '../../lib/groups'
@@ -129,11 +129,11 @@ export default function Groups() {
       {/* 操作按钮 */}
       <View className='actions'>
         <View className='action-btn create' onClick={() => setShowCreateModal(true)}>
-          <Text className='action-icon'>➕</Text>
+          <Text className='action-icon'>+</Text>
           <Text className='action-text'>创建组</Text>
         </View>
         <View className='action-btn join' onClick={() => setShowJoinModal(true)}>
-          <Text className='action-icon'>🔗</Text>
+          <Text className='action-icon'>+</Text>
           <Text className='action-text'>加入组</Text>
         </View>
       </View>

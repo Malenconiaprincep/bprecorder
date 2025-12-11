@@ -27,19 +27,15 @@
 
 /* 添加按钮 */
 .add-btn {
-  width: 56rpx;
-  height: 56rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
-  border-radius: 50%;
-  box-shadow: 0 4rpx 12rpx rgba(74, 168, 232, 0.3);
+  padding: 8rpx;
 }
 
 .add-btn-icon {
-  font-size: 32rpx;
-  color: #ffffff;
+  font-size: 40rpx;
+  color: #94a3b8;
   font-weight: 300;
 }
 

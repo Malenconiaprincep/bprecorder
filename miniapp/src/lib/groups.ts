@@ -46,7 +46,6 @@ export async function getMyGroups(userId: string): Promise<{ success: boolean; g
       header: { 'Content-Type': 'application/json' }
     })
 
-    console.log('getMyGroups response:', res.data)
     if (res.statusCode === 200 && res.data.success) {
       return { success: true, groups: res.data.groups }
     }

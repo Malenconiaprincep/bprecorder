@@ -39,12 +39,17 @@ export async function OPTIONS() {
 
 // GET: 获取我的组列表 或 通过邀请码获取组信息
 export async function GET(request: NextRequest) {
+  const startTime = Date.now()
+
   try {
     const { searchParams } = new URL(request.url)
     const inviteCode = searchParams.get('invite_code')
     const userId = searchParams.get('user_id')
 
+    const t1 = Date.now()
     const supabase = getSupabase()
+    console.log(`[groups] getSupabase: ${Date.now() - t1}ms`)
+
     if (!supabase) {
       return NextResponse.json({ success: false, error: '服务器配置错误' }, { status: 500, headers: corsHeaders })
     }
@@ -79,6 +84,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 使用关联查询一次获取成员关系和组信息
+    const t2 = Date.now()
     const { data: memberships, error: memberError } = await supabase
       .from('bp_group_members')
       .select(`
@@ -95,6 +101,7 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq('user_id', userId)
+    console.log(`[groups] DB query: ${Date.now() - t2}ms`)
 
     if (memberError) {
       console.error('Query memberships error:', memberError)
@@ -102,6 +109,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!memberships || memberships.length === 0) {
+      console.log(`[groups] Total: ${Date.now() - startTime}ms (empty result)`)
       return NextResponse.json({ success: true, groups: [] }, { headers: corsHeaders })
     }
 
@@ -114,6 +122,7 @@ export async function GET(request: NextRequest) {
         joined_at: m.joined_at
       }))
 
+    console.log(`[groups] Total: ${Date.now() - startTime}ms, groups: ${result.length}`)
     return NextResponse.json({ success: true, groups: result }, { headers: corsHeaders })
 
   } catch (error: any) {
