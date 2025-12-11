@@ -12,7 +12,7 @@ import iconGroups from '../../assets/icons/groups.png'
 // @ts-ignore
 import iconExport from '../../assets/icons/tray.png'
 // @ts-ignore
-import iconShare from '../../assets/icons/share.png'
+import iconClock from '../../assets/icons/clock.png'
 
 export default function Profile() {
   const [wxUser, setWxUser] = useState<WxUserInfo | null>(null)
@@ -250,7 +250,7 @@ export default function Profile() {
   const menuItems = [
     { title: '我的组', icon: iconGroups, onClick: goToGroups },
     { title: '数据导出', icon: iconExport, onClick: showDevTip },
-    { title: '提醒设置', icon: iconShare, onClick: showDevTip },
+    { title: '提醒设置', icon: iconClock, onClick: showDevTip },
   ]
 
   return (
