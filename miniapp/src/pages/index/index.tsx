@@ -87,6 +87,7 @@ export default function Index() {
     pulse: number
   } | null>(null)
   const [showResultModal, setShowResultModal] = useState(false)
+  const [selectedHand, setSelectedHand] = useState<'left' | 'right'>('left')
   const [shareImageUrl, setShareImageUrl] = useState<string>('')
 
   const latestRecord = records.length > 0 ? records[0] : null
@@ -137,13 +138,17 @@ export default function Index() {
     return { systolic: avgSystolic, diastolic: avgDiastolic, count: weekRecords.length }
   }, [records])
 
+  // 标记是否已初始化，避免重复调用
+  const [initialized, setInitialized] = useState(false)
+
   useLoad(() => {
     initPage()
   })
 
-  // 页面每次显示时刷新数据（从输入页返回时）
+  // 页面每次显示时刷新数据（从输入页返回时，跳过首次）
   useDidShow(() => {
     if (USE_TEST_DATA) return
+    if (!initialized) return // 首次加载由 useLoad 处理
 
     const storedUser = getUserInfo()
     if (storedUser) {
@@ -168,6 +173,7 @@ export default function Index() {
     // 测试模式直接加载测试数据
     if (USE_TEST_DATA) {
       setRecords(getTestData())
+      setInitialized(true)
       return
     }
 
@@ -178,6 +184,7 @@ export default function Index() {
     } else {
       await autoLogin()
     }
+    setInitialized(true)
   }
 
   const autoLogin = async () => {
@@ -326,7 +333,8 @@ export default function Index() {
         systolic: analyzeResult.systolic,
         diastolic: analyzeResult.diastolic,
         pulse: analyzeResult.pulse,
-        recorded_at: recordedAt
+        recorded_at: recordedAt,
+        hand: selectedHand
       })
 
       if (error) {
@@ -392,12 +400,12 @@ export default function Index() {
             confirmText: '删除',
             confirmColor: '#ef4444'
           })
-          
+
           if (confirmRes.confirm && record.id) {
             Taro.showLoading({ title: '删除中...' })
             const { error } = await deleteRecord(record.id)
             Taro.hideLoading()
-            
+
             if (error) {
               Taro.showToast({ title: error, icon: 'none' })
             } else {
@@ -543,8 +551,8 @@ export default function Index() {
                   {group.records.map((record, idx) => {
                     const status = getBPStatus(record.systolic, record.diastolic)
                     return (
-                      <View 
-                        key={record.id || idx} 
+                      <View
+                        key={record.id || idx}
                         className='record-card'
                         onClick={() => handleRecordAction(record)}
                       >
@@ -573,7 +581,7 @@ export default function Index() {
                             <Text className='badge-text'>{status.label}</Text>
                           </View>
                         </View>
-                        
+
                         {record.note && (
                           <View className='record-note'>
                             <Text className='note-text'>📝 {record.note}</Text>
@@ -625,6 +633,23 @@ export default function Index() {
                   <Text className='result-label'>心率</Text>
                 </View>
               </View>
+
+              {/* 左右手选择 */}
+              <View className='hand-selector'>
+                <View
+                  className={`hand-option ${selectedHand === 'left' ? 'active' : ''}`}
+                  onClick={() => setSelectedHand('left')}
+                >
+                  <Text>左手</Text>
+                </View>
+                <View
+                  className={`hand-option ${selectedHand === 'right' ? 'active' : ''}`}
+                  onClick={() => setSelectedHand('right')}
+                >
+                  <Text>右手</Text>
+                </View>
+              </View>
+
               <View className='modal-actions'>
                 <View className='modal-btn cancel-btn' onClick={handleCloseModal}>
                   <Text>取消</Text>

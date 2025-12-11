@@ -76,7 +76,7 @@
   height: 56rpx !important;
   line-height: 56rpx !important;
   min-width: 100rpx !important;
-  
+
   &::after {
     border: none !important;
   }
@@ -768,6 +768,28 @@
   font-size: 48rpx;
   color: #cbd5e1;
   margin: 0 20rpx;
+}
+
+/* 左右手选择 */
+.hand-selector {
+  display: flex;
+  justify-content: center;
+  gap: 24rpx;
+  margin: 32rpx 0;
+}
+
+.hand-option {
+  padding: 16rpx 48rpx;
+  border-radius: 32rpx;
+  font-size: 28rpx;
+  color: #64748b;
+  background: #f1f5f9;
+  transition: all 0.2s;
+}
+
+.hand-option.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
 }
 
 .modal-actions {

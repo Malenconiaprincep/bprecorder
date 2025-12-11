@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { View, Text, Input } from '@tarojs/components'
-import Taro, { useLoad, useDidShow } from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { getUserInfo } from '../../lib/auth'
 import { getMyGroups, createGroup, joinGroup, Group } from '../../lib/groups'
 import './index.scss'
@@ -16,10 +16,6 @@ export default function Groups() {
   const [newGroupDesc, setNewGroupDesc] = useState('')
   const [inviteCode, setInviteCode] = useState('')
   const [userId, setUserId] = useState('')
-
-  useLoad(() => {
-    loadGroups()
-  })
 
   useDidShow(() => {
     loadGroups()
