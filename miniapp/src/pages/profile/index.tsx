@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { View, Text, Image, Button, Input } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
-import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, getUserInfo, silentLogin } from '../../lib/auth'
+import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, getUserInfo, silentLogin, uploadAvatar } from '../../lib/auth'
 import { getRecords, BPRecord } from '../../lib/supabase'
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import './index.scss'
@@ -176,15 +176,31 @@ export default function Profile() {
     }
 
     // 显示加载提示
-    Taro.showLoading({ title: '保存中...' })
+    Taro.showLoading({ title: '上传头像中...' })
 
     try {
+      let finalAvatarUrl = tempAvatar
+
+      // 如果是微信临时文件，先上传到服务器
+      if (tempAvatar.startsWith('wxfile://') || tempAvatar.startsWith('http://tmp')) {
+        const uploadResult = await uploadAvatar(tempAvatar, openid)
+        if (uploadResult.success && uploadResult.url) {
+          finalAvatarUrl = uploadResult.url
+        } else {
+          Taro.hideLoading()
+          Taro.showToast({ title: uploadResult.error || '头像上传失败', icon: 'none' })
+          return
+        }
+      }
+
+      Taro.showLoading({ title: '保存中...' })
+
       // 调用后端接口保存头像和昵称
-      const result = await wxLoginWithBackend(tempNickname, tempAvatar)
+      const result = await wxLoginWithBackend(tempNickname, finalAvatarUrl)
 
       if (result.success) {
         const newWxUser: WxUserInfo = {
-          avatarUrl: tempAvatar,
+          avatarUrl: finalAvatarUrl,
           nickName: tempNickname
         }
         setWxUser(newWxUser)

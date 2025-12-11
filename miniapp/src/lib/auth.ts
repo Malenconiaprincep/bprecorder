@@ -226,3 +226,35 @@ export function getToken(): string | null {
     return null
   }
 }
+
+/**
+ * 上传头像到服务器
+ * @param tempFilePath 微信临时文件路径 (wxfile://...)
+ * @param userId 用户 openid
+ * @returns 上传后的公开 URL
+ */
+export async function uploadAvatar(tempFilePath: string, userId: string): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    // 使用 Taro.uploadFile 上传文件
+    const uploadRes = await Taro.uploadFile({
+      url: `${API_BASE_URL}/api/upload-avatar`,
+      filePath: tempFilePath,
+      name: 'file',
+      formData: {
+        userId: userId
+      }
+    })
+
+    if (uploadRes.statusCode === 200) {
+      const data = JSON.parse(uploadRes.data)
+      if (data.success && data.url) {
+        return { success: true, url: data.url }
+      }
+      return { success: false, error: data.error || '上传失败' }
+    }
+    return { success: false, error: '上传失败' }
+  } catch (e: any) {
+    console.error('uploadAvatar error:', e)
+    return { success: false, error: e.message || '上传出错' }
+  }
+}
