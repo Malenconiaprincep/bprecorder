@@ -166,24 +166,43 @@ export interface BPRecord {
   note?: string
 }
 
+// 分页信息
+export interface Pagination {
+  page: number
+  limit: number
+  total: number
+  hasMore: boolean
+}
+
 /**
- * 获取组成员的血压记录
+ * 获取组成员的血压记录（支持分页）
  */
-export async function getMemberRecords(groupId: number, memberId: string): Promise<{
+export async function getMemberRecords(
+  groupId: number, 
+  memberId: string,
+  page: number = 1,
+  limit: number = 20
+): Promise<{
   success: boolean
   member?: GroupMember
   records?: BPRecord[]
+  pagination?: Pagination
   error?: string
 }> {
   try {
     const res = await Taro.request({
-      url: `${API_BASE_URL}/api/groups/${groupId}/members/${memberId}/records`,
+      url: `${API_BASE_URL}/api/groups/${groupId}/members/${memberId}/records?page=${page}&limit=${limit}`,
       method: 'GET',
       header: { 'Content-Type': 'application/json' }
     })
 
     if (res.statusCode === 200 && res.data.success) {
-      return { success: true, member: res.data.member, records: res.data.records }
+      return { 
+        success: true, 
+        member: res.data.member, 
+        records: res.data.records,
+        pagination: res.data.pagination
+      }
     }
     return { success: false, error: res.data.error || '获取失败' }
   } catch (e: any) {

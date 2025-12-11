@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { View, Text, Image } from '@tarojs/components'
-import Taro, { useLoad, useRouter } from '@tarojs/taro'
-import { getMemberRecords, GroupMember, BPRecord } from '../../lib/groups'
+import Taro, { useLoad, useRouter, useReachBottom } from '@tarojs/taro'
+import { getMemberRecords, GroupMember, BPRecord, Pagination } from '../../lib/groups'
 import './member.scss'
 // @ts-ignore
 import DEFAULT_AVATAR from '../../assets/icons/avatar.png'
@@ -66,34 +66,57 @@ export default function MemberDetail() {
   const [member, setMember] = useState<GroupMember | null>(null)
   const [records, setRecords] = useState<BPRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [pagination, setPagination] = useState<Pagination | null>(null)
+
+  const groupId = parseInt(router.params.groupId || '0')
+  const memberId = router.params.memberId || ''
 
   useLoad(() => {
-    loadMemberRecords()
+    loadMemberRecords(1)
   })
 
-  const loadMemberRecords = async () => {
-    const groupId = parseInt(router.params.groupId || '0')
-    const memberId = router.params.memberId || ''
+  // 触底加载更多
+  useReachBottom(() => {
+    if (pagination?.hasMore && !loadingMore) {
+      loadMemberRecords(pagination.page + 1)
+    }
+  })
 
+  const loadMemberRecords = useCallback(async (page: number) => {
     if (!groupId || !memberId) {
       Taro.showToast({ title: '参数错误', icon: 'none' })
       return
     }
 
-    setLoading(true)
-    const result = await getMemberRecords(groupId, memberId)
+    if (page === 1) {
+      setLoading(true)
+    } else {
+      setLoadingMore(true)
+    }
+
+    const result = await getMemberRecords(groupId, memberId, page, 20)
 
     if (result.success) {
-      setMember(result.member || null)
-      setRecords(result.records || [])
-      // 设置导航栏标题
-      const name = result.member?.nickname || result.member?.user?.nickname || '成员详情'
-      Taro.setNavigationBarTitle({ title: name })
+      if (page === 1) {
+        // 首页：设置成员信息和记录
+        setMember(result.member || null)
+        setRecords(result.records || [])
+        // 设置导航栏标题
+        const name = result.member?.nickname || result.member?.user?.nickname || '成员详情'
+        Taro.setNavigationBarTitle({ title: name })
+      } else {
+        // 加载更多：追加记录
+        setRecords(prev => [...prev, ...(result.records || [])])
+      }
+      setPagination(result.pagination || null)
     } else {
       Taro.showToast({ title: result.error || '加载失败', icon: 'none' })
     }
+
     setLoading(false)
-  }
+    setLoadingMore(false)
+  }, [groupId, memberId])
 
   const getRoleText = (role?: string) => {
     switch (role) {
@@ -142,7 +165,7 @@ export default function MemberDetail() {
       <View className='section'>
         <Text className='section-title'>
           <Text className='title-icon'>📊</Text>
-          <Text>血压记录 ({records.length})</Text>
+          <Text>血压记录 ({pagination?.total || records.length})</Text>
         </Text>
 
         {records.length === 0 ? (
@@ -185,6 +208,17 @@ export default function MemberDetail() {
                 </View>
               </View>
             ))}
+
+            {/* 加载更多提示 */}
+            <View className='load-more'>
+              {loadingMore ? (
+                <Text className='load-more-text'>加载中...</Text>
+              ) : pagination?.hasMore ? (
+                <Text className='load-more-text'>上拉加载更多</Text>
+              ) : (
+                <Text className='load-more-text'>没有更多了</Text>
+              )}
+            </View>
           </View>
         )}
       </View>
