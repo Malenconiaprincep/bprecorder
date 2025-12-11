@@ -6,6 +6,14 @@ import { getGroupDetail, deleteGroup, Group, GroupMember } from '../../lib/group
 import './detail.scss'
 // @ts-ignore
 import DEFAULT_AVATAR from '../../assets/icons/avatar.png'
+// @ts-ignore
+import iconGroups from '../../assets/icons/groups.png'
+// @ts-ignore
+import iconList from '../../assets/icons/list.png'
+// @ts-ignore
+import iconShare from '../../assets/icons/share.png'
+// @ts-ignore
+import iconHeart from '../../assets/icons/heart.png'
 
 // 血压状态判断
 const getBPStatus = (systolic: number, diastolic: number) => {
@@ -39,9 +47,10 @@ export default function GroupDetail() {
   const router = useRouter()
   const [group, setGroup] = useState<Group | null>(null)
   const [members, setMembers] = useState<GroupMember[]>([])
-  const [loading, setLoading] = useState(true)
+  const [isFirstLoad, setIsFirstLoad] = useState(true)
   const [userId, setUserId] = useState('')
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [loadError, setLoadError] = useState(false)
 
   useLoad(() => {
     loadGroupDetail()
@@ -66,6 +75,8 @@ export default function GroupDetail() {
     const groupId = parseInt(router.params.id || '0')
     if (!groupId) {
       Taro.showToast({ title: '参数错误', icon: 'none' })
+      setLoadError(true)
+      setIsFirstLoad(false)
       return
     }
 
@@ -74,7 +85,6 @@ export default function GroupDetail() {
       setUserId(userInfo.openid)
     }
 
-    setLoading(true)
     const result = await getGroupDetail(groupId)
 
     if (result.success) {
@@ -86,8 +96,9 @@ export default function GroupDetail() {
       }
     } else {
       Taro.showToast({ title: result.error || '加载失败', icon: 'none' })
+      setLoadError(true)
     }
-    setLoading(false)
+    setIsFirstLoad(false)
   }
 
   const handleCopyInviteCode = () => {
@@ -144,15 +155,28 @@ export default function GroupDetail() {
     })
   }
 
-  if (loading) {
-    return (
-      <View className='page'>
-        <View className='loading'>加载中...</View>
+  // 骨架屏成员卡片
+  const SkeletonMemberCard = () => (
+    <View className='member-card skeleton-card'>
+      <View className='skeleton-avatar' />
+      <View className='member-info'>
+        <View className='member-name-row'>
+          <View className='skeleton-line skeleton-member-name' />
+          <View className='skeleton-line skeleton-role' />
+        </View>
+        <View className='bp-info'>
+          <View className='skeleton-line skeleton-bp' />
+          <View className='skeleton-line skeleton-meta' />
+        </View>
       </View>
-    )
-  }
+      <Text className='member-arrow'>›</Text>
+    </View>
+  )
 
-  if (!group) {
+  // 首次加载且无数据时显示骨架屏
+  const showSkeleton = isFirstLoad && !group
+
+  if (loadError && !group) {
     return (
       <View className='page'>
         <View className='loading'>组不存在</View>
@@ -165,14 +189,19 @@ export default function GroupDetail() {
       {/* 成员列表 */}
       <View className='section'>
         <View className='section-header'>
-          <Text className='section-title'><Text className='title-icon'>👥</Text><Text>成员 ({members.length})</Text></Text>
-          <View className='add-btn' onClick={() => setShowInviteModal(true)}>
-            <Text className='add-btn-icon'>＋</Text>
-          </View>
+          <Text className='section-title'>
+            <Image className='title-icon' src={iconGroups} mode='aspectFit' />
+            <Text>成员{!showSkeleton && ` (${members.length})`}</Text>
+          </Text>
+          {!showSkeleton && (
+            <View className='add-btn' onClick={() => setShowInviteModal(true)}>
+              <Text className='add-btn-icon'>＋</Text>
+            </View>
+          )}
         </View>
 
         {/* 邀请弹框 */}
-        {showInviteModal && (
+        {showInviteModal && group && (
           <View className='modal-mask' onClick={() => setShowInviteModal(false)}>
             <View className='modal-content' onClick={e => e.stopPropagation()}>
               <Text className='modal-title'>邀请成员</Text>
@@ -184,11 +213,11 @@ export default function GroupDetail() {
 
               <View className='modal-actions'>
                 <View className='modal-action' onClick={() => { handleCopyInviteCode(); setShowInviteModal(false); }}>
-                  <Text className='modal-action-icon'>📋</Text>
+                  <Image className='modal-action-icon' src={iconList} mode='aspectFit' />
                   <Text className='modal-action-text'>复制邀请码</Text>
                 </View>
                 <Button className='modal-action share-action' openType='share' onClick={() => setShowInviteModal(false)}>
-                  <Text className='modal-action-icon'>📤</Text>
+                  <Image className='modal-action-icon' src={iconShare} mode='aspectFit' />
                   <Text className='modal-action-text'>分享给好友</Text>
                 </Button>
               </View>
@@ -200,49 +229,57 @@ export default function GroupDetail() {
           </View>
         )}
 
-        <View className='member-list'>
-          {members.map(member => {
-            const record = member.latest_record
-            const status = record ? getBPStatus(record.systolic, record.diastolic) : null
+        {showSkeleton ? (
+          <View className='member-list'>
+            <SkeletonMemberCard />
+            <SkeletonMemberCard />
+            <SkeletonMemberCard />
+          </View>
+        ) : (
+          <View className='member-list'>
+            {members.map(member => {
+              const record = member.latest_record
+              const status = record ? getBPStatus(record.systolic, record.diastolic) : null
 
-            return (
-              <View key={member.id} className='member-card' onClick={() => goToMemberDetail(member.user_id)}>
-                <Image
-                  className='member-avatar'
-                  src={member.user?.avatar_url || DEFAULT_AVATAR}
-                  mode='aspectFill'
-                />
-                <View className='member-info'>
-                  <View className='member-name-row'>
-                    <Text className='member-name'>
-                      {member.nickname || member.user?.nickname || '未设置昵称'}
-                    </Text>
-                    <Text className='member-role'>{getRoleText(member.role)}</Text>
-                  </View>
-
-                  {record ? (
-                    <View className='bp-info'>
-                      <View className='bp-values'>
-                        <Text className='bp-num'>{record.systolic}/{record.diastolic}</Text>
-                        <Text className='bp-unit'>mmHg</Text>
-                        <Text className='pulse'>💓 {record.pulse}</Text>
-                      </View>
-                      <View className='bp-meta'>
-                        <View className={`status-badge ${status?.color}`}>
-                          <Text className='badge-text'>{status?.label}</Text>
-                        </View>
-                        <Text className='bp-time'>{formatTime(record.recorded_at)}</Text>
-                      </View>
+              return (
+                <View key={member.id} className='member-card' onClick={() => goToMemberDetail(member.user_id)}>
+                  <Image
+                    className='member-avatar'
+                    src={member.user?.avatar_url || DEFAULT_AVATAR}
+                    mode='aspectFill'
+                  />
+                  <View className='member-info'>
+                    <View className='member-name-row'>
+                      <Text className='member-name'>
+                        {member.nickname || member.user?.nickname || '未设置昵称'}
+                      </Text>
+                      <Text className='member-role'>{getRoleText(member.role)}</Text>
                     </View>
-                  ) : (
-                    <Text className='no-record'>今日暂未测量</Text>
-                  )}
+
+                    {record ? (
+                      <View className='bp-info'>
+                        <View className='bp-values'>
+                          <Text className='bp-num'>{record.systolic}/{record.diastolic}</Text>
+                          <Text className='bp-unit'>mmHg</Text>
+                          <View className='pulse'><Image className='pulse-icon' src={iconHeart} mode='aspectFit' /><Text>{record.pulse}</Text></View>
+                        </View>
+                        <View className='bp-meta'>
+                          <View className={`status-badge ${status?.color}`}>
+                            <Text className='badge-text'>{status?.label}</Text>
+                          </View>
+                          <Text className='bp-time'>{formatTime(record.recorded_at)}</Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <Text className='no-record'>今日暂未测量</Text>
+                    )}
+                  </View>
+                  <Text className='member-arrow'>›</Text>
                 </View>
-                <Text className='member-arrow'>›</Text>
-              </View>
-            )
-          })}
-        </View>
+              )
+            })}
+          </View>
+        )}
       </View>
 
       {/* 操作按钮 - 仅组主可见 */}

@@ -5,6 +5,12 @@ import { getMemberRecords, GroupMember, BPRecord, Pagination } from '../../lib/g
 import './member.scss'
 // @ts-ignore
 import DEFAULT_AVATAR from '../../assets/icons/avatar.png'
+// @ts-ignore
+import iconChart from '../../assets/icons/chart.png'
+// @ts-ignore
+import iconList from '../../assets/icons/list.png'
+// @ts-ignore
+import iconHeart from '../../assets/icons/heart.png'
 
 // 血压状态判断
 const getBPStatus = (systolic: number, diastolic: number) => {
@@ -164,13 +170,13 @@ export default function MemberDetail() {
       {/* 记录列表 */}
       <View className='section'>
         <Text className='section-title'>
-          <Text className='title-icon'>📊</Text>
+          <Image className='title-icon' src={iconChart} mode='aspectFit' />
           <Text>血压记录 ({pagination?.total || records.length})</Text>
         </Text>
 
         {records.length === 0 ? (
           <View className='empty'>
-            <Text className='empty-icon'>📋</Text>
+            <Image className='empty-icon' src={iconList} mode='aspectFit' />
             <Text className='empty-text'>暂无血压记录</Text>
           </View>
         ) : (
@@ -193,7 +199,7 @@ export default function MemberDetail() {
                             <Text className='bp-unit'>mmHg</Text>
                           </View>
                           <View className='record-extra'>
-                            <Text className='pulse'>💓 {record.pulse}</Text>
+                            <View className='pulse'><Image className='pulse-icon' src={iconHeart} mode='aspectFit' /><Text>{record.pulse}</Text></View>
                             {record.hand && (
                               <Text className='hand'>{record.hand === 'left' ? '左手' : '右手'}</Text>
                             )}

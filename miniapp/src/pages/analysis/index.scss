@@ -6,9 +6,26 @@
   box-sizing: border-box;
 }
 
-/* 通用标题图标间距 */
+/* 通用标题图标 */
 .title-icon {
+  width: 36rpx;
+  height: 36rpx;
   margin-right: 12rpx;
+  vertical-align: middle;
+}
+
+.chart-title-icon {
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 8rpx;
+  vertical-align: middle;
+}
+
+.empty-icon {
+  width: 80rpx;
+  height: 80rpx;
+  display: block;
+  margin: 0 auto 20rpx;
 }
 
 /* 时间切换 */
@@ -60,6 +77,8 @@
   font-size: 32rpx;
   font-weight: 600;
   color: #1e293b;
+  display: flex;
+  align-items: center;
 }
 
 .chart-legend {
@@ -126,7 +145,11 @@
 .chart-area {
   flex: 1;
   position: relative;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.3) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(248, 250, 252, 0.6) 0%,
+    rgba(241, 245, 249, 0.3) 100%
+  );
   border-radius: 16rpx;
   overflow: visible;
   /* 固定宽高比，确保线条角度计算准确 */
@@ -392,6 +415,8 @@
   font-size: 32rpx;
   font-weight: 600;
   color: #1e293b;
+  display: flex;
+  align-items: center;
 }
 
 .stats-period {

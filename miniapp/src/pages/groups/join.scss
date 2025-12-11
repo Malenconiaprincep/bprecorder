@@ -4,9 +4,19 @@
   padding: 30rpx;
 }
 
-/* 通用标题图标间距 */
+/* 通用标题图标 */
 .title-icon {
+  width: 36rpx;
+  height: 36rpx;
   margin-right: 12rpx;
+  vertical-align: middle;
+}
+
+.preview-icon {
+  width: 80rpx;
+  height: 80rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
 }
 
 .header {
@@ -148,4 +158,3 @@
   font-size: 26rpx;
   color: #94a3b8;
 }
-

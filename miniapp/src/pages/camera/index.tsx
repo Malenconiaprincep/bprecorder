@@ -4,6 +4,8 @@ import Taro from '@tarojs/taro'
 import { addRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import './index.scss'
+// @ts-ignore
+import iconCamera from '../../assets/icons/camera.png'
 
 export default function CameraPage() {
   const [analyzing, setAnalyzing] = useState(false)
@@ -24,7 +26,7 @@ export default function CameraPage() {
 
       const tempFilePath = res.tempFilePaths[0]
       setPreviewImage(tempFilePath)
-      
+
       // TODO: 接入 AI 识别
       // 目前使用 mock 数据
       setAnalyzing(true)
@@ -94,7 +96,7 @@ export default function CameraPage() {
         /* 拍照区域 */
         <View className='camera-area' onClick={handleChooseImage}>
           <View className='camera-placeholder'>
-            <Text className='camera-icon'>📷</Text>
+            <Image className='camera-icon' src={iconCamera} mode='aspectFit' />
             <Text className='camera-text'>点击拍照或选择图片</Text>
             <Text className='camera-hint'>请将血压计屏幕对准相机</Text>
           </View>
@@ -103,7 +105,7 @@ export default function CameraPage() {
         /* 预览和结果 */
         <View className='result-area'>
           <Image className='preview-image' src={previewImage} mode='aspectFit' />
-          
+
           {analyzing ? (
             <View className='analyzing'>
               <Text className='analyzing-text'>AI 识别中...</Text>
@@ -126,7 +128,7 @@ export default function CameraPage() {
                   <Text className='result-label'>心率</Text>
                 </View>
               </View>
-              
+
               <View className='result-actions'>
                 <View className='action-btn retry-btn' onClick={reset}>
                   <Text>重新拍照</Text>

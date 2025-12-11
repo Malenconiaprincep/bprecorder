@@ -7,6 +7,12 @@ import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import './index.scss'
 // @ts-ignore
 import DEFAULT_AVATAR from '../../assets/icons/avatar.png'
+// @ts-ignore
+import iconGroups from '../../assets/icons/groups.png'
+// @ts-ignore
+import iconExport from '../../assets/icons/tray.png'
+// @ts-ignore
+import iconShare from '../../assets/icons/share.png'
 
 export default function Profile() {
   const [wxUser, setWxUser] = useState<WxUserInfo | null>(null)
@@ -242,11 +248,9 @@ export default function Profile() {
   }
 
   const menuItems = [
-    { title: '我的组', icon: '👥', onClick: goToGroups },
-    { title: '历史记录', icon: '📋', onClick: showDevTip },
-    { title: '数据导出', icon: '📤', onClick: showDevTip },
-    { title: '提醒设置', icon: '⏰', onClick: showDevTip },
-    { title: '关于我们', icon: 'ℹ️', onClick: showDevTip },
+    { title: '我的组', icon: iconGroups, onClick: goToGroups },
+    { title: '数据导出', icon: iconExport, onClick: showDevTip },
+    { title: '提醒设置', icon: iconShare, onClick: showDevTip },
   ]
 
   return (
@@ -325,7 +329,7 @@ export default function Profile() {
       <View className='menu-card'>
         {menuItems.map((item, index) => (
           <View key={index} className='menu-item' onClick={item.onClick}>
-            <Text className='menu-icon'>{item.icon}</Text>
+            <Image className='menu-icon' src={item.icon} mode='aspectFit' />
             <Text className='menu-title'>{item.title}</Text>
             <Text className='menu-arrow'>›</Text>
           </View>

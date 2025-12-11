@@ -1,21 +1,26 @@
-import { useState } from 'react'
-import { View, Text, Input } from '@tarojs/components'
+import { useState, useRef } from 'react'
+import { View, Text, Input, Image } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { getUserInfo } from '../../lib/auth'
 import { getMyGroups, createGroup, joinGroup, Group } from '../../lib/groups'
 import './index.scss'
 // @ts-ignore
 import DEFAULT_AVATAR from '../../assets/icons/avatar.png'
+// @ts-ignore
+import iconGroups from '../../assets/icons/groups.png'
+// @ts-ignore
+import iconList from '../../assets/icons/list.png'
 
 export default function Groups() {
   const [groups, setGroups] = useState<Group[]>([])
-  const [loading, setLoading] = useState(true)
+  const [isFirstLoad, setIsFirstLoad] = useState(true) // 是否首次加载
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showJoinModal, setShowJoinModal] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
   const [newGroupDesc, setNewGroupDesc] = useState('')
   const [inviteCode, setInviteCode] = useState('')
   const [userId, setUserId] = useState('')
+  const hasLoadedOnce = useRef(false) // 是否加载过数据
 
   useDidShow(() => {
     loadGroups()
@@ -24,18 +29,20 @@ export default function Groups() {
   const loadGroups = async () => {
     const userInfo = getUserInfo()
     if (!userInfo?.openid) {
-      setLoading(false)
+      setIsFirstLoad(false)
       return
     }
 
     setUserId(userInfo.openid)
-    setLoading(true)
+    // 只有首次加载且没有数据时才显示骨架屏，返回时静默刷新
+    // 不需要重置 isFirstLoad
 
     const result = await getMyGroups(userInfo.openid)
     if (result.success && result.groups) {
       setGroups(result.groups)
     }
-    setLoading(false)
+    hasLoadedOnce.current = true
+    setIsFirstLoad(false)
   }
 
   const handleCreateGroup = async () => {
@@ -112,13 +119,20 @@ export default function Groups() {
     }
   }
 
-  if (loading) {
-    return (
-      <View className='page'>
-        <View className='loading'>加载中...</View>
+  // 骨架屏组件
+  const SkeletonCard = () => (
+    <View className='group-card skeleton-card'>
+      <View className='group-info'>
+        <View className='skeleton-line skeleton-name' />
+        <View className='skeleton-line skeleton-desc' />
+        <View className='skeleton-badge' />
       </View>
-    )
-  }
+      <Text className='group-arrow'>›</Text>
+    </View>
+  )
+
+  // 首次加载时显示骨架屏
+  const showSkeleton = isFirstLoad && groups.length === 0
 
   return (
     <View className='page'>
@@ -136,11 +150,16 @@ export default function Groups() {
 
       {/* 组列表 */}
       <View className='section'>
-        <Text className='section-title'><Text className='title-icon'>👥</Text><Text>我的组</Text></Text>
+        <View className='section-title'><Image className='title-icon' src={iconGroups} mode='aspectFit' /><Text>我的组</Text></View>
 
-        {groups.length === 0 ? (
+        {showSkeleton ? (
+          <View className='group-list'>
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
+        ) : groups.length === 0 ? (
           <View className='empty'>
-            <Text className='empty-icon'>📋</Text>
+            <Image className='empty-icon' src={iconList} mode='aspectFit' />
             <Text className='empty-text'>还没有加入任何组</Text>
             <Text className='empty-hint'>创建一个组或通过邀请码加入</Text>
           </View>

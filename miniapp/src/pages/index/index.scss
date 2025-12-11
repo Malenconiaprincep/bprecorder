@@ -5,13 +5,45 @@
   box-sizing: border-box;
 }
 
-/* 通用标题图标间距 */
+/* 通用标题图标 */
 .title-icon {
+  width: 36rpx;
+  height: 36rpx;
   margin-right: 12rpx;
+  vertical-align: middle;
 }
 
 .btn-icon {
+  width: 24rpx;
+  height: 24rpx;
   margin-right: 8rpx;
+  vertical-align: middle;
+}
+
+.action-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 12rpx;
+}
+
+.pulse-icon {
+  width: 28rpx;
+  height: 28rpx;
+  vertical-align: middle;
+  margin-right: 4rpx;
+}
+
+.note-icon {
+  width: 24rpx;
+  height: 24rpx;
+  vertical-align: middle;
+  margin-right: 4rpx;
+}
+
+.empty-icon {
+  width: 80rpx;
+  height: 80rpx;
+  margin-bottom: 24rpx;
 }
 
 /* 底部占位符 */
@@ -54,6 +86,8 @@
   font-size: 32rpx;
   color: #ffffff;
   font-weight: 600;
+  display: flex;
+  align-items: center;
 }
 
 .card-header-right {
@@ -68,14 +102,14 @@
 }
 
 .share-btn {
-  padding: 0 !important;
+  padding: 8rpx 20rpx !important;
   margin: 0 !important;
   border: 1px solid rgba(255, 255, 255, 0.5) !important;
   background: rgba(255, 255, 255, 0.2) !important;
   border-radius: 20rpx !important;
-  height: 56rpx !important;
-  line-height: 56rpx !important;
-  min-width: 100rpx !important;
+  height: auto !important;
+  line-height: 1.2 !important;
+  min-width: auto !important;
 
   &::after {
     border: none !important;
@@ -83,9 +117,12 @@
 }
 
 .share-btn-text {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #ffffff;
-  font-weight: 500;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 理想血压 - 深绿 */
@@ -234,6 +271,8 @@
   font-size: 34rpx;
   font-weight: 600;
   color: #1e293b;
+  display: flex;
+  align-items: center;
 }
 
 .summary-count {
@@ -380,7 +419,8 @@
   font-size: 34rpx;
   font-weight: 600;
   color: #1e293b;
-  display: block;
+  display: flex;
+  align-items: center;
   margin-bottom: 20rpx;
 }
 
@@ -483,9 +523,9 @@
 .note-text {
   font-size: 24rpx;
   color: #94a3b8;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  display: flex;
+  align-items: flex-start;
+  gap: 4rpx;
   overflow: hidden;
 }
 

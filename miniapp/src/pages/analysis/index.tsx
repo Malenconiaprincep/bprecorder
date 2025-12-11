@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react'
-import { View, Text } from '@tarojs/components'
+import { View, Text, Image } from '@tarojs/components'
 import { useLoad } from '@tarojs/taro'
 import { getRecords, BPRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import './index.scss'
+// @ts-ignore
+import iconChart from '../../assets/icons/chart.png'
 
 // 获取日期字符串
 const formatDateKey = (date: Date) => {
@@ -246,7 +248,7 @@ export default function AnalysisPage() {
       {/* 图表卡片 */}
       <View className='chart-card'>
         <View className='chart-header'>
-          <Text className='chart-title'>📈 血压趋势</Text>
+          <View className='chart-title'><Image className='chart-title-icon' src={iconChart} mode='aspectFit' /><Text>血压趋势</Text></View>
           <View className='chart-legend'>
             <View className='legend-item'>
               <View className='legend-dot systolic' />
@@ -441,7 +443,7 @@ export default function AnalysisPage() {
           </View>
         ) : (
           <View className='chart-empty'>
-            <Text className='empty-icon'>📊</Text>
+            <Image className='empty-icon' src={iconChart} mode='aspectFit' />
             <Text className='empty-text'>暂无数据</Text>
             <Text className='empty-hint'>记录血压后这里会显示趋势图</Text>
           </View>
@@ -481,7 +483,7 @@ export default function AnalysisPage() {
       {totalAverage && (
         <View className='stats-card'>
           <View className='stats-header'>
-            <Text className='stats-title'><Text className='title-icon'>📊</Text><Text>统计数据</Text></Text>
+            <View className='stats-title'><Image className='title-icon' src={iconChart} mode='aspectFit' /><Text>统计数据</Text></View>
             <Text className='stats-period'>
               {timeRange === 'week' ? '近7天' : '近30天'} · {totalAverage.days}天有记录
             </Text>

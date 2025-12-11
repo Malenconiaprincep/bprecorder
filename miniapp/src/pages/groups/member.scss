@@ -5,6 +5,28 @@
   padding-bottom: 50rpx;
 }
 
+/* 通用标题图标 */
+.title-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 12rpx;
+  vertical-align: middle;
+}
+
+.empty-icon {
+  width: 80rpx;
+  height: 80rpx;
+  display: block;
+  margin: 0 auto 20rpx;
+}
+
+.pulse-icon {
+  width: 24rpx;
+  height: 24rpx;
+  vertical-align: middle;
+  margin-right: 4rpx;
+}
+
 .loading {
   text-align: center;
   padding: 100rpx;
@@ -170,6 +192,8 @@
 .pulse {
   font-size: 24rpx;
   color: #64748b;
+  display: flex;
+  align-items: center;
 }
 
 .hand {

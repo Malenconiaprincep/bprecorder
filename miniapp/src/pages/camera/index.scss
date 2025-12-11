@@ -39,11 +39,14 @@
 
 .camera-placeholder {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .camera-icon {
-  font-size: 80px;
-  display: block;
+  width: 120rpx;
+  height: 120rpx;
   margin-bottom: 24px;
 }
 
@@ -158,4 +161,3 @@
   color: #ffffff;
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
 }
-

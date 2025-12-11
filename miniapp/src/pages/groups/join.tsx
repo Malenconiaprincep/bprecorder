@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { View, Text, Input } from '@tarojs/components'
+import { View, Text, Input, Image } from '@tarojs/components'
 import Taro, { useLoad, useRouter } from '@tarojs/taro'
 import { getUserInfo, silentLogin } from '../../lib/auth'
 import { getGroupByInviteCode, joinGroup, Group } from '../../lib/groups'
 import './join.scss'
+// @ts-ignore
+import iconGroups from '../../assets/icons/groups.png'
 
 export default function JoinGroup() {
   const router = useRouter()
@@ -102,7 +104,7 @@ export default function JoinGroup() {
       {group && (
         <View className='group-preview'>
           <View className='preview-header'>
-            <Text className='preview-icon'>👥</Text>
+            <Image className='preview-icon' src={iconGroups} mode='aspectFit' />
             <View className='preview-info'>
               <Text className='preview-name'>{group.name}</Text>
               {group.description && (
@@ -111,9 +113,9 @@ export default function JoinGroup() {
               <Text className='preview-count'>{group.member_count || 0} 位成员</Text>
             </View>
           </View>
-          
-          <View 
-            className={`join-btn ${joining ? 'disabled' : ''}`} 
+
+          <View
+            className={`join-btn ${joining ? 'disabled' : ''}`}
             onClick={!joining ? handleJoin : undefined}
           >
             <Text className='join-btn-text'>{joining ? '加入中...' : '立即加入'}</Text>
@@ -123,7 +125,7 @@ export default function JoinGroup() {
 
       {/* 提示 */}
       <View className='tips'>
-        <Text className='tips-title'><Text className='title-icon'>💡</Text><Text>如何获取邀请码？</Text></Text>
+        <Text className='tips-title'>💡 如何获取邀请码？</Text>
         <Text className='tips-text'>请联系组的创建者，获取邀请码或分享链接</Text>
       </View>
     </View>

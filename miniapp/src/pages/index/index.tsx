@@ -8,8 +8,18 @@ import { generateShareImage } from '../../utils/shareImage'
 import './index.scss'
 
 // 图标
-import iconCamera from '../../assets/icons/xiangji.png'
-import iconEdit from '../../assets/icons/jianpanshuru.png'
+// @ts-ignore
+import iconCamera from '../../assets/icons/camera.png'
+// @ts-ignore
+import iconEdit from '../../assets/icons/note.png'
+// @ts-ignore
+import iconHeart from '../../assets/icons/heart.png'
+// @ts-ignore
+import iconChart from '../../assets/icons/chart.png'
+// @ts-ignore
+import iconList from '../../assets/icons/list.png'
+// @ts-ignore
+import iconShare from '../../assets/icons/share.png'
 
 // 血压状态判断（按医学标准）
 const getBPStatus = (systolic: number, diastolic: number) => {
@@ -443,11 +453,11 @@ export default function Index() {
         {/* 操作按钮 - 放在最顶部，最显眼 */}
         <View className='actions'>
           <View className='action-btn blue' onClick={goToCamera}>
-            <Text className='action-icon'>📷</Text>
+            <Image className='action-icon' src={iconCamera} mode='aspectFit' />
             <Text className='action-text-white'>拍照输入</Text>
           </View>
           <View className='action-btn white' onClick={goToInput}>
-            <Text className='action-icon'>✏️</Text>
+            <Image className='action-icon' src={iconEdit} mode='aspectFit' />
             <Text className='action-text-dark'>手动输入</Text>
           </View>
         </View>
@@ -455,7 +465,7 @@ export default function Index() {
         {/* 今日血压卡片 */}
         <View className='bp-card'>
           <View className='card-header'>
-            <Text className='card-title'><Text className='title-icon'>💓</Text><Text>最新血压</Text></Text>
+            <View className='card-title'><Image className='title-icon' src={iconHeart} mode='aspectFit' /><Text>最新血压</Text></View>
             <View className='card-header-right'>
               {latestRecord && (
                 <View className={`card-status ${getBPStatus(latestRecord.systolic, latestRecord.diastolic).color}`}>
@@ -469,7 +479,7 @@ export default function Index() {
                   size='mini'
                   plain
                 >
-                  <Text className='share-btn-text'><Text className='btn-icon'>📤</Text><Text>分享</Text></Text>
+                  <View className='share-btn-text'><Text>分享</Text></View>
                 </Button>
               )}
             </View>
@@ -500,7 +510,7 @@ export default function Index() {
         {/* 本周概览卡片 */}
         <View className='summary-card'>
           <View className='summary-header'>
-            <Text className='summary-title'><Text className='title-icon'>📊</Text><Text>本周概览</Text></Text>
+            <View className='summary-title'><Image className='title-icon' src={iconChart} mode='aspectFit' /><Text>本周概览</Text></View>
             <Text className='summary-count'>共 {weeklyAverage?.count || 0} 次记录</Text>
           </View>
           {weeklyAverage ? (
@@ -529,11 +539,11 @@ export default function Index() {
 
         {/* 记录列表 */}
         <View className='records-section'>
-          <Text className='section-title'><Text className='title-icon'>📋</Text><Text>测量记录</Text></Text>
+          <View className='section-title'><Image className='title-icon' src={iconList} mode='aspectFit' /><Text>测量记录</Text></View>
 
           {groupedRecords.length === 0 ? (
             <View className='empty-records'>
-              <Text className='empty-icon'>📝</Text>
+              <Image className='empty-icon' src={iconEdit} mode='aspectFit' />
               <Text className='empty-text'>还没有记录</Text>
               <Text className='empty-hint'>点击上方按钮开始记录血压</Text>
             </View>
@@ -574,7 +584,7 @@ export default function Index() {
 
                         <View className='record-extra'>
                           <View className='pulse-display'>
-                            <Text className='pulse-icon'>💓</Text>
+                            <Image className='pulse-icon' src={iconHeart} mode='aspectFit' />
                             <Text className='pulse-num'>{record.pulse}</Text>
                           </View>
                           <View className={`status-badge ${status.color}`}>
@@ -584,7 +594,7 @@ export default function Index() {
 
                         {record.note && (
                           <View className='record-note'>
-                            <Text className='note-text'>📝 {record.note}</Text>
+                            <View className='note-text'><Image className='note-icon' src={iconEdit} mode='aspectFit' /><Text>{record.note}</Text></View>
                           </View>
                         )}
                       </View>

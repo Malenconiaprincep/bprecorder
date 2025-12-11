@@ -5,13 +5,61 @@
   padding-bottom: 50rpx;
 }
 
-/* 通用标题图标间距 */
+/* 通用标题图标 */
 .title-icon {
-  margin-right: 20rpx;
-  display: inline-flex;
-  align-items: center;
-  position: relative;
-  top: -2rpx;
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 16rpx;
+  vertical-align: middle;
+}
+
+.empty-icon {
+  width: 80rpx;
+  height: 80rpx;
+  display: block;
+  margin: 0 auto 20rpx;
+}
+
+/* 骨架屏动画 */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-line {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 8rpx;
+}
+
+.skeleton-name {
+  width: 50%;
+  height: 32rpx;
+  margin-bottom: 12rpx;
+}
+
+.skeleton-desc {
+  width: 70%;
+  height: 24rpx;
+  margin-bottom: 12rpx;
+}
+
+.skeleton-badge {
+  width: 80rpx;
+  height: 28rpx;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 16rpx;
 }
 
 .loading {
@@ -95,12 +143,6 @@
   padding: 80rpx 40rpx;
   background: #ffffff;
   border-radius: 24rpx;
-}
-
-.empty-icon {
-  font-size: 64rpx;
-  display: block;
-  margin-bottom: 20rpx;
 }
 
 .empty-text {
