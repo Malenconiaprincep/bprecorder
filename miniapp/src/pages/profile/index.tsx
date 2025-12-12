@@ -345,7 +345,7 @@ export default function Profile() {
 
       {/* 版本号 */}
       <View className='version-info'>
-        <Text className='version-text'>v1.3.5</Text>
+        <Text className='version-text'>v1.4.0</Text>
       </View>
     </View>
   )
