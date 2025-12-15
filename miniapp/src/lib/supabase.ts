@@ -106,7 +106,7 @@ export async function addRecord(record: Omit<BPRecord, 'id' | 'created_at'>): Pr
  * 更新血压记录
  */
 export async function updateRecord(
-  id: number, 
+  id: number,
   data: Partial<Omit<BPRecord, 'id' | 'user_id' | 'created_at'>>
 ): Promise<{ data: BPRecord | null; error: string | null }> {
   const result = await request<BPRecord[]>(`/bp_records`, {
@@ -180,6 +180,18 @@ export async function getOrCreateUser(openid: string): Promise<{ data: WxUser | 
   }
 
   return { data: newUsers?.[0] || null, error: null }
+}
+
+/**
+ * 批量添加血压记录（用于数据导入）
+ */
+export async function addRecordsBatch(records: Array<Omit<BPRecord, 'id' | 'created_at'>>): Promise<{ data: BPRecord[] | null; error: string | null }> {
+  const result = await request<BPRecord[]>('/bp_records', {
+    method: 'POST',
+    data: records
+  })
+
+  return { data: result.data, error: result.error }
 }
 
 // 导出配置（方便调试）

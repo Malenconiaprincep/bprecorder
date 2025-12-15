@@ -273,3 +273,444 @@
   font-size: 24rpx;
   color: #cbd5e1;
 }
+
+/* 数据导入弹窗 */
+.import-modal {
+  width: 650rpx;
+  max-height: 80vh;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 48rpx;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab 切换 */
+.import-tabs {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 32rpx;
+  border-bottom: 2rpx solid #f1f5f9;
+}
+
+.import-tab {
+  flex: 1;
+  padding: 20rpx 0;
+  text-align: center;
+  border-bottom: 4rpx solid transparent;
+  margin-bottom: -2rpx;
+  transition: all 0.3s;
+}
+
+.import-tab.active {
+  border-bottom-color: #3b82f6;
+}
+
+.tab-text {
+  font-size: 30rpx;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.import-tab.active .tab-text {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+/* Tab 内容区域 */
+.tab-content {
+  flex: 1;
+  min-height: 200rpx;
+}
+
+.import-tip {
+  background: #f0f9ff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 32rpx;
+}
+
+.tip-text {
+  font-size: 26rpx;
+  color: #475569;
+  display: block;
+  line-height: 1.6;
+}
+
+.tip-link {
+  font-size: 26rpx;
+  color: #3b82f6;
+  display: block;
+  margin-top: 16rpx;
+  text-decoration: underline;
+}
+
+.csv-input {
+  width: 100%;
+  height: 300rpx;
+  background: #f8fafc;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  font-size: 26rpx;
+  color: #1e293b;
+  line-height: 1.6;
+  box-sizing: border-box;
+  font-family: monospace;
+}
+
+.import-format-hint {
+  background: #fefce8;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-top: 24rpx;
+  margin-bottom: 32rpx;
+}
+
+.format-title {
+  font-size: 24rpx;
+  color: #92400e;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.format-desc {
+  font-size: 22rpx;
+  color: #a16207;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.modal-btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 文件上传区域 */
+.file-upload-section {
+  margin-bottom: 32rpx;
+}
+
+.file-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  padding: 32rpx;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border: 2rpx dashed #3b82f6;
+  border-radius: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+
+.upload-icon {
+  font-size: 40rpx;
+}
+
+.upload-text {
+  font-size: 28rpx;
+  color: #3b82f6;
+  font-weight: 500;
+  max-width: 400rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12rpx;
+  padding: 0 8rpx;
+}
+
+.file-support-text {
+  font-size: 22rpx;
+  color: #94a3b8;
+  flex: 1;
+}
+
+.file-size-text {
+  font-size: 20rpx;
+  color: #cbd5e1;
+  text-align: center;
+  display: block;
+  margin-top: 8rpx;
+}
+
+.demo-link {
+  font-size: 22rpx;
+  color: #3b82f6;
+  text-decoration: underline;
+  padding: 4rpx 8rpx;
+}
+
+/* 分割线 */
+.divider-with-text {
+  display: flex;
+  align-items: center;
+  margin: 24rpx 0;
+  gap: 16rpx;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1rpx;
+  background: #e2e8f0;
+}
+
+.divider-text {
+  font-size: 24rpx;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* 文件预览区域 */
+.file-preview-section {
+  margin-top: 32rpx;
+  padding: 24rpx;
+  background: #f8fafc;
+  border-radius: 16rpx;
+}
+
+.file-info-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #e2e8f0;
+}
+
+.file-info-label {
+  font-size: 26rpx;
+  color: #64748b;
+  margin-right: 12rpx;
+  white-space: nowrap;
+}
+
+.file-info-name {
+  font-size: 26rpx;
+  color: #1e293b;
+  font-weight: 500;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-title {
+  font-size: 26rpx;
+  color: #475569;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.csv-preview {
+  max-height: 200rpx;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 8rpx;
+  padding: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.csv-preview-text {
+  font-size: 24rpx;
+  color: #1e293b;
+  line-height: 1.6;
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.confirm-tip {
+  padding: 16rpx;
+  background: #ecfdf5;
+  border-radius: 8rpx;
+  border-left: 4rpx solid #10b981;
+}
+
+.confirm-tip-text {
+  font-size: 24rpx;
+  color: #059669;
+  line-height: 1.5;
+}
+
+/* 文件信息区域（简化版） */
+.file-info-section {
+  margin-top: 32rpx;
+  padding: 24rpx;
+  background: #f8fafc;
+  border-radius: 16rpx;
+}
+
+.file-tip {
+  margin-top: 16rpx;
+  padding: 12rpx;
+  background: #ecfdf5;
+  border-radius: 8rpx;
+}
+
+.file-tip-text {
+  font-size: 24rpx;
+  color: #059669;
+  line-height: 1.5;
+}
+
+/* 确认导入弹窗 */
+.confirm-modal {
+  width: 720rpx;
+  max-height: 85vh;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 40rpx;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.confirm-summary {
+  margin-bottom: 24rpx;
+  padding: 16rpx;
+  background: #f0f9ff;
+  border-radius: 12rpx;
+}
+
+.summary-text {
+  font-size: 28rpx;
+  color: #0369a1;
+  font-weight: 600;
+}
+
+/* 数据列表 */
+.records-list {
+  margin-bottom: 24rpx;
+  border: 1rpx solid #e2e8f0;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.records-header {
+  display: flex;
+  background: #f8fafc;
+  border-bottom: 2rpx solid #e2e8f0;
+}
+
+.header-cell {
+  font-size: 26rpx;
+  color: #475569;
+  font-weight: 600;
+  padding: 20rpx 12rpx;
+  text-align: center;
+  border-right: 1rpx solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-cell:last-child {
+  border-right: none;
+}
+
+.date-cell {
+  flex: 0 0 200rpx;
+  min-width: 0;
+}
+
+.time-cell {
+  flex: 0 0 110rpx;
+  min-width: 0;
+}
+
+.bp-cell {
+  flex: 0 0 130rpx;
+  min-width: 0;
+}
+
+.pulse-cell {
+  flex: 0 0 90rpx;
+  min-width: 0;
+}
+
+.hand-cell {
+  flex: 0 0 50rpx;
+  min-width: 0;
+}
+
+.records-body {
+  max-height: 500rpx;
+  overflow-y: auto;
+}
+
+.record-row {
+  display: flex;
+  border-bottom: 1rpx solid #f1f5f9;
+}
+
+.record-row:last-child {
+  border-bottom: none;
+}
+
+.record-cell {
+  font-size: 26rpx;
+  color: #1e293b;
+  padding: 20rpx 12rpx;
+  text-align: center;
+  border-right: 1rpx solid #f1f5f9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+.record-cell:last-child {
+  border-right: none;
+}
+
+.record-row:nth-child(even) {
+  background: #fafbfc;
+}
+
+/* 备注区域 */
+.notes-section {
+  margin-bottom: 24rpx;
+  padding: 20rpx;
+  background: #fefce8;
+  border-radius: 12rpx;
+  border-left: 4rpx solid #eab308;
+}
+
+.notes-title {
+  font-size: 26rpx;
+  color: #a16207;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.note-item {
+  display: flex;
+  margin-bottom: 8rpx;
+  font-size: 24rpx;
+}
+
+.note-item:last-child {
+  margin-bottom: 0;
+}
+
+.note-label {
+  color: #92400e;
+  font-weight: 500;
+  margin-right: 8rpx;
+  white-space: nowrap;
+}
+
+.note-content {
+  color: #a16207;
+  flex: 1;
+  word-break: break-all;
+}
