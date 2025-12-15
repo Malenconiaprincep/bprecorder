@@ -455,53 +455,33 @@ export default function Profile() {
     })
   }
 
-  // 下载示例文件
-  const downloadDemoFile = async () => {
-    try {
-      Taro.showLoading({ title: '下载中...' })
+  // 显示电脑端下载提示
+  const downloadDemoFile = () => {
+    const SUPABASE_URL = 'https://vaeklnwhlogbvrwtthbe.supabase.co'
+    const demoFileUrl = `${SUPABASE_URL}/storage/v1/object/public/user-files/demo/bp_record_template.xlsx`
 
-      // 从 Supabase Storage 下载示例文件
-      // 使用 Supabase 的公开 URL（使用英文文件名）
-      const SUPABASE_URL = 'https://vaeklnwhlogbvrwtthbe.supabase.co'
-      const demoFileUrl = `${SUPABASE_URL}/storage/v1/object/public/user-files/demo/bp_record_template.xlsx`
-
-      await Taro.downloadFile({
-        url: demoFileUrl,
-        success: (res) => {
-          if (res.statusCode === 200) {
-            // 保存文件到本地
-            Taro.saveFile({
-              tempFilePath: res.tempFilePath,
-              success: () => {
-                Taro.hideLoading()
-                Taro.showToast({
-                  title: '示例文件已保存',
-                  icon: 'success',
-                  duration: 2000
-                })
-              },
-              fail: (err) => {
-                Taro.hideLoading()
-                console.error('Save file error:', err)
-                Taro.showToast({ title: '保存失败', icon: 'none' })
-              }
-            })
-          } else {
-            Taro.hideLoading()
-            Taro.showToast({ title: '下载失败', icon: 'none' })
-          }
-        },
-        fail: (err) => {
-          Taro.hideLoading()
-          console.error('Download error:', err)
-          Taro.showToast({ title: '下载失败，请检查网络', icon: 'none' })
+    Taro.showModal({
+      title: '下载示例文件',
+      content: `请在电脑浏览器中访问以下地址下载示例文件：\n\n${demoFileUrl}\n\n下载后，请将文件发送到微信（文件传输助手或好友），然后在本页面点击"从聊天记录选择文件"进行上传。`,
+      showCancel: true,
+      cancelText: '取消',
+      confirmText: '复制地址',
+      success: (res) => {
+        if (res.confirm) {
+          // 复制地址到剪贴板
+          Taro.setClipboardData({
+            data: demoFileUrl,
+            success: () => {
+              Taro.showToast({
+                title: '地址已复制，请在电脑浏览器中打开',
+                icon: 'success',
+                duration: 3000
+              })
+            }
+          })
         }
-      })
-    } catch (error: any) {
-      Taro.hideLoading()
-      console.error('Download demo error:', error)
-      Taro.showToast({ title: '下载失败', icon: 'none' })
-    }
+      }
+    })
   }
 
   // 解析 CSV 文本（返回包含显示字段的完整数据）
