@@ -656,10 +656,8 @@ export default function Profile() {
     { title: '提醒设置', icon: iconClock, onClick: showDevTip },
   ]
 
-  const hasAnyModal = showModal || showImportModal || showConfirmModal
-
   return (
-    <View className={`page ${hasAnyModal ? 'no-scroll' : ''}`}>
+    <View className='page'>
       {/* 用户信息卡片 */}
       <View className='user-card' onClick={!isProfileComplete ? onClickLogin : undefined}>
         <Image
@@ -750,7 +748,6 @@ export default function Profile() {
         <View
           className='modal-mask'
           onClick={() => setShowImportModal(false)}
-          catchMove
         >
           <View
             className='import-modal'
@@ -828,17 +825,8 @@ export default function Profile() {
                   placeholder={`日期,时间,收缩压,舒张压,脉搏,左右手,备注\n2025-12-15,08:30,125,80,72,左,早晨`}
                   value={csvText}
                   onInput={(e) => setCsvText(e.detail.value)}
-                  onFocus={() => {
-                    // 聚焦时延迟滚动，确保输入框可见
-                    setTimeout(() => {
-                      Taro.pageScrollTo({
-                        selector: '.csv-input',
-                        scrollTop: 0,
-                        duration: 300
-                      })
-                    }, 300)
-                  }}
                   adjustPosition={true}
+                  cursorSpacing={100}
                   holdKeyboard={false}
                   maxlength={-1}
                 />

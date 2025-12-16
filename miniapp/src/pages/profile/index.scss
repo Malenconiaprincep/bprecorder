@@ -8,10 +8,8 @@
 .page.no-scroll {
   overflow: hidden;
   height: 100vh;
-  position: fixed;
-  width: 100%;
-  top: 0;
-  left: 0;
+  /* 不使用 position: fixed，避免影响弹框内输入框的行为 */
+  position: relative;
 }
 
 /* 用户信息卡片 */
@@ -79,11 +77,15 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 10vh;
+  padding-bottom: 20vh;
   z-index: 1000;
-  overflow: hidden;
-  touch-action: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* 允许弹框内容滚动，但阻止背景页面滚动 */
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-content {
@@ -298,6 +300,12 @@
   position: relative;
   /* 当键盘弹起时，动态调整位置 */
   transition: transform 0.3s ease;
+  /* 确保弹框在键盘弹起时能够上移 */
+  margin-bottom: 0;
+  /* 允许弹框内容滚动，确保输入框可见 */
+  -webkit-overflow-scrolling: touch;
+  /* 确保可以滚动 */
+  touch-action: pan-y;
 }
 
 /* Tab 切换 */
