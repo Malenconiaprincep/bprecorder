@@ -128,6 +128,7 @@ export default function Profile() {
         await fetchRecords(result.userInfo.openid)
       }
     }
+
   })
 
   // 页面每次显示时刷新数据
@@ -655,8 +656,10 @@ export default function Profile() {
     { title: '提醒设置', icon: iconClock, onClick: showDevTip },
   ]
 
+  const hasAnyModal = showModal || showImportModal || showConfirmModal
+
   return (
-    <View className='page'>
+    <View className={`page ${hasAnyModal ? 'no-scroll' : ''}`}>
       {/* 用户信息卡片 */}
       <View className='user-card' onClick={!isProfileComplete ? onClickLogin : undefined}>
         <Image
@@ -675,7 +678,11 @@ export default function Profile() {
 
       {/* 完善资料弹窗 */}
       {showModal && (
-        <View className='modal-mask' onClick={onCancel}>
+        <View
+          className='modal-mask'
+          onClick={onCancel}
+          catchMove
+        >
           <View className='modal-content' onClick={(e) => e.stopPropagation()}>
             <Text className='modal-title'>完善个人资料</Text>
 
@@ -740,8 +747,15 @@ export default function Profile() {
 
       {/* 数据导入弹窗 */}
       {showImportModal && (
-        <View className='modal-mask' onClick={() => setShowImportModal(false)}>
-          <View className='import-modal' onClick={(e) => e.stopPropagation()}>
+        <View
+          className='modal-mask'
+          onClick={() => setShowImportModal(false)}
+          catchMove
+        >
+          <View
+            className='import-modal'
+            onClick={(e) => e.stopPropagation()}
+          >
             <Text className='modal-title'>数据导入</Text>
 
             {/* Tab 切换 */}
@@ -814,6 +828,18 @@ export default function Profile() {
                   placeholder={`日期,时间,收缩压,舒张压,脉搏,左右手,备注\n2025-12-15,08:30,125,80,72,左,早晨`}
                   value={csvText}
                   onInput={(e) => setCsvText(e.detail.value)}
+                  onFocus={() => {
+                    // 聚焦时延迟滚动，确保输入框可见
+                    setTimeout(() => {
+                      Taro.pageScrollTo({
+                        selector: '.csv-input',
+                        scrollTop: 0,
+                        duration: 300
+                      })
+                    }, 300)
+                  }}
+                  adjustPosition={true}
+                  holdKeyboard={false}
                   maxlength={-1}
                 />
 
@@ -842,8 +868,15 @@ export default function Profile() {
 
       {/* 确认导入弹窗 */}
       {showConfirmModal && (
-        <View className='modal-mask' onClick={() => setShowConfirmModal(false)}>
-          <View className='confirm-modal' onClick={(e) => e.stopPropagation()}>
+        <View
+          className='modal-mask'
+          onClick={() => setShowConfirmModal(false)}
+          catchMove
+        >
+          <View
+            className='confirm-modal'
+            onClick={(e) => e.stopPropagation()}
+          >
             <Text className='modal-title'>确认导入数据</Text>
 
             <View className='confirm-summary'>

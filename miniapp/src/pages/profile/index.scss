@@ -5,6 +5,15 @@
   padding-bottom: 200rpx;
 }
 
+.page.no-scroll {
+  overflow: hidden;
+  height: 100vh;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
 /* 用户信息卡片 */
 .user-card {
   display: flex;
@@ -73,6 +82,8 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  overflow: hidden;
+  touch-action: none;
 }
 
 .modal-content {
@@ -284,6 +295,9 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  position: relative;
+  /* 当键盘弹起时，动态调整位置 */
+  transition: transform 0.3s ease;
 }
 
 /* Tab 切换 */
@@ -357,6 +371,8 @@
   line-height: 1.6;
   box-sizing: border-box;
   font-family: monospace;
+  /* 确保输入框可以滚动到可视区域 */
+  scroll-into-view: true;
 }
 
 .import-format-hint {
@@ -403,7 +419,6 @@
   border-radius: 16rpx;
   margin-bottom: 12rpx;
 }
-
 
 .upload-icon {
   font-size: 40rpx;
