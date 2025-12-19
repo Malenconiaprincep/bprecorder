@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
-import { View, Text, Input, Button, Textarea } from '@tarojs/components'
+import { useState, useMemo } from 'react'
+import { View, Text, Input, Button, Textarea, Picker } from '@tarojs/components'
 import Taro, { useLoad, useRouter } from '@tarojs/taro'
-import { addRecord, updateRecord, BPRecord } from '../../lib/supabase'
+import { addRecord, updateRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import './index.scss'
 
@@ -12,9 +12,64 @@ export default function InputPage() {
   const [pulse, setPulse] = useState('')
   const [hand, setHand] = useState<'left' | 'right' | ''>('')
   const [note, setNote] = useState('')
+  const [noteExpanded, setNoteExpanded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [recordId, setRecordId] = useState<number | null>(null)
+
+  // 日期时间状态，默认值为当前时间
+  const getCurrentDateTime = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const hours = now.getHours()
+    const minutes = now.getMinutes()
+    // 将分钟数四舍五入到最近的15分钟
+    const roundedMinutes = Math.round(minutes / 15) * 15
+    return {
+      date: `${year}-${month}-${day}`,
+      time: `${String(hours).padStart(2, '0')}:${String(roundedMinutes).padStart(2, '0')}`
+    }
+  }
+
+  const [selectedDate, setSelectedDate] = useState(getCurrentDateTime().date)
+  const [selectedTime, setSelectedTime] = useState(getCurrentDateTime().time)
+
+  // 生成日期选项（最近30天）
+  const dateOptions = useMemo(() => {
+    const options: string[] = []
+    const now = new Date()
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(now)
+      date.setDate(now.getDate() - i)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      options.push(`${year}-${month}-${day}`)
+    }
+    return options
+  }, [])
+
+  // 生成时间选项（24小时，每15分钟一个选项）
+  const timeOptions = useMemo(() => {
+    const options: string[] = []
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const h = String(hour).padStart(2, '0')
+        const m = String(minute).padStart(2, '0')
+        options.push(`${h}:${m}`)
+      }
+    }
+    return options
+  }, [])
+
+  // 获取当前选择的索引
+  const getSelectedIndexes = useMemo(() => {
+    const dateIndex = dateOptions.findIndex(d => d === selectedDate)
+    const timeIndex = timeOptions.findIndex(t => t === selectedTime)
+    return [dateIndex >= 0 ? dateIndex : 0, timeIndex >= 0 ? timeIndex : 0]
+  }, [selectedDate, selectedTime, dateOptions, timeOptions])
 
   useLoad(() => {
     // 检查是否是编辑模式
@@ -27,9 +82,62 @@ export default function InputPage() {
       if (params.diastolic) setDiastolic(params.diastolic)
       if (params.pulse) setPulse(params.pulse)
       if (params.hand) setHand(params.hand as 'left' | 'right')
-      if (params.note) setNote(decodeURIComponent(params.note))
+      if (params.note) {
+        const decodedNote = decodeURIComponent(params.note)
+        setNote(decodedNote)
+        // 如果有备注内容，自动展开
+        if (decodedNote) {
+          setNoteExpanded(true)
+        }
+      }
+      // 如果有recorded_at参数，填充日期时间
+      if (params.recorded_at) {
+        const date = new Date(params.recorded_at)
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const hours = String(date.getHours()).padStart(2, '0')
+        const minutes = String(date.getMinutes()).padStart(2, '0')
+        // 将分钟数四舍五入到最近的15分钟
+        const roundedMinutes = Math.round(parseInt(minutes) / 15) * 15
+        setSelectedDate(`${year}-${month}-${day}`)
+        setSelectedTime(`${hours}:${String(roundedMinutes).padStart(2, '0')}`)
+      }
     }
   })
+
+  // 格式化日期时间显示
+  const formatDateTimeDisplay = useMemo(() => {
+    const [hours, minutes] = selectedTime.split(':')
+    const date = new Date(`${selectedDate}T${selectedTime}:00`)
+    const month = date.getMonth() + 1
+    const day = date.getDate()
+    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+    const weekDay = weekDays[date.getDay()]
+    const today = new Date()
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    const yesterday = new Date(today)
+    yesterday.setDate(today.getDate() - 1)
+    const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`
+
+    let dateLabel = ''
+    if (selectedDate === todayStr) {
+      dateLabel = '今天'
+    } else if (selectedDate === yesterdayStr) {
+      dateLabel = '昨天'
+    } else {
+      dateLabel = `${month}月${day}日 ${weekDay}`
+    }
+
+    return `${dateLabel} ${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`
+  }, [selectedDate, selectedTime])
+
+  // 处理日期时间选择
+  const handleDateTimeChange = (e: any) => {
+    const [dateIndex, timeIndex] = e.detail.value
+    setSelectedDate(dateOptions[dateIndex])
+    setSelectedTime(timeOptions[timeIndex])
+  }
 
   const handleSave = async () => {
     if (!systolic || !diastolic || !pulse) {
@@ -47,12 +155,15 @@ export default function InputPage() {
     try {
       if (isEdit && recordId) {
         // 编辑模式
+        // 将选择的日期时间转换为ISO字符串（添加秒数）
+        const recordedAt = new Date(`${selectedDate}T${selectedTime}:00`).toISOString()
         const { error } = await updateRecord(recordId, {
           systolic: parseInt(systolic),
           diastolic: parseInt(diastolic),
           pulse: parseInt(pulse),
           hand: hand || undefined,
-          note: note || undefined
+          note: note || undefined,
+          recorded_at: recordedAt
         })
 
         if (error) {
@@ -65,6 +176,8 @@ export default function InputPage() {
         }
       } else {
         // 新增模式
+        // 将选择的日期时间转换为ISO字符串（添加秒数）
+        const recordedAt = new Date(`${selectedDate}T${selectedTime}:00`).toISOString()
         const { error } = await addRecord({
           user_id: userInfo.openid,
           systolic: parseInt(systolic),
@@ -72,7 +185,7 @@ export default function InputPage() {
           pulse: parseInt(pulse),
           hand: hand || undefined,
           note: note || undefined,
-          recorded_at: new Date().toISOString()
+          recorded_at: recordedAt
         })
 
         if (error) {
@@ -128,18 +241,34 @@ export default function InputPage() {
           />
         </View>
 
+        {/* 日期时间选择 */}
+        <View className='input-group'>
+          <Text className='input-label'>测量日期时间</Text>
+          <Picker
+            mode='multiSelector'
+            range={[dateOptions, timeOptions]}
+            value={getSelectedIndexes}
+            onChange={handleDateTimeChange}
+          >
+            <View className='datetime-picker'>
+              <Text className='datetime-label'>{formatDateTimeDisplay}</Text>
+              <Text className='datetime-icon'>📅</Text>
+            </View>
+          </Picker>
+        </View>
+
         {/* 左右手选择 */}
         <View className='input-group'>
           <Text className='input-label'>测量手臂 (可选)</Text>
           <View className='hand-selector'>
-            <View 
+            <View
               className={`hand-option ${hand === 'left' ? 'active' : ''}`}
               onClick={() => setHand(hand === 'left' ? '' : 'left')}
             >
               <Text className='hand-icon'>🤚</Text>
               <Text className='hand-text'>左手</Text>
             </View>
-            <View 
+            <View
               className={`hand-option ${hand === 'right' ? 'active' : ''}`}
               onClick={() => setHand(hand === 'right' ? '' : 'right')}
             >
@@ -151,14 +280,24 @@ export default function InputPage() {
 
         {/* 备注 */}
         <View className='input-group'>
-          <Text className='input-label'>备注 (可选)</Text>
-          <Textarea
-            className='note-field'
-            placeholder='添加备注，如：饭后、运动后等'
-            value={note}
-            onInput={(e) => setNote(e.detail.value)}
-            maxlength={200}
-          />
+          <View className='note-header' onClick={() => setNoteExpanded(!noteExpanded)}>
+            <Text className='input-label'>备注 (可选)</Text>
+            <Text className={`note-expand-icon ${noteExpanded ? 'expanded' : ''}`}>▼</Text>
+          </View>
+          {(noteExpanded || note) && (
+            <Textarea
+              className='note-field'
+              placeholder='添加备注，如：饭后、运动后等'
+              value={note}
+              onInput={(e) => {
+                setNote(e.detail.value)
+                if (e.detail.value && !noteExpanded) {
+                  setNoteExpanded(true)
+                }
+              }}
+              maxlength={200}
+            />
+          )}
         </View>
       </View>
 
