@@ -144,6 +144,7 @@ export interface WxUser {
   nickname?: string
   avatar_url?: string
   created_at?: string
+  last_login_at?: string
 }
 
 /**
