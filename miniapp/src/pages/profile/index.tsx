@@ -916,7 +916,7 @@ export default function Profile() {
 
       {/* 版本号 */}
       <View className='version-info'>
-        <Text className='version-text'>v1.6.3</Text>
+        <Text className='version-text'>v1.7.1</Text>
       </View>
     </View>
   )
