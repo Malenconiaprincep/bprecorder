@@ -485,3 +485,59 @@ export async function deleteGroup(groupId: number, userId: string): Promise<{ su
     return { success: false, error: e.message || '网络错误' }
   }
 }
+
+/**
+ * 退出组（成员可以退出自己的组）
+ */
+export async function leaveGroup(groupId: number, userId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const isDev = process.env.NODE_ENV === 'development'
+    const API_BASE_URL = isDev ? 'http://localhost:3000' : 'https://bprecorder.aikee.xyz'
+
+    const res = await Taro.request({
+      url: `${API_BASE_URL}/api/groups/${groupId}/members/${userId}?user_id=${userId}`,
+      method: 'DELETE',
+      header: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      const result = res.data as { success: boolean; error?: string }
+      return result
+    }
+
+    return { success: false, error: res.data?.error || '退出失败' }
+  } catch (e: any) {
+    console.error('leaveGroup error:', e)
+    return { success: false, error: e.message || '网络错误' }
+  }
+}
+
+/**
+ * 踢出组员（仅组主可以）
+ */
+export async function removeMember(groupId: number, memberId: string, userId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const isDev = process.env.NODE_ENV === 'development'
+    const API_BASE_URL = isDev ? 'http://localhost:3000' : 'https://bprecorder.aikee.xyz'
+
+    const res = await Taro.request({
+      url: `${API_BASE_URL}/api/groups/${groupId}/members/${memberId}?user_id=${userId}`,
+      method: 'DELETE',
+      header: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      const result = res.data as { success: boolean; error?: string }
+      return result
+    }
+
+    return { success: false, error: res.data?.error || '操作失败' }
+  } catch (e: any) {
+    console.error('removeMember error:', e)
+    return { success: false, error: e.message || '网络错误' }
+  }
+}

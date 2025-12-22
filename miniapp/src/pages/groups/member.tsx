@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react'
 import { View, Text, Image } from '@tarojs/components'
 import Taro, { useLoad, useRouter, useReachBottom } from '@tarojs/taro'
-import { getMemberRecords, GroupMember, BPRecord, Pagination } from '../../lib/groups'
+import { getMemberRecords, leaveGroup, GroupMember, BPRecord, Pagination } from '../../lib/groups'
+import { getUserInfo } from '../../lib/auth'
 import './member.scss'
 // @ts-ignore
 import DEFAULT_AVATAR from '../../assets/icons/avatar.png'
@@ -74,11 +75,18 @@ export default function MemberDetail() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [pagination, setPagination] = useState<Pagination | null>(null)
+  const [userId, setUserId] = useState('')
 
   const groupId = parseInt(router.params.groupId || '0')
   const memberId = router.params.memberId || ''
+  const isSelf = userId === memberId && userId !== ''
+  const isOwner = member?.role === 'owner'
 
   useLoad(() => {
+    const userInfo = getUserInfo()
+    if (userInfo?.openid) {
+      setUserId(userInfo.openid)
+    }
     loadMemberRecords(1)
   })
 
@@ -132,6 +140,32 @@ export default function MemberDetail() {
     }
   }
 
+  const handleLeaveGroup = async () => {
+    if (!groupId || !userId) return
+
+    const res = await Taro.showModal({
+      title: '确认退出',
+      content: '确定要退出此组吗？',
+      confirmText: '退出',
+      confirmColor: '#ef4444'
+    })
+
+    if (!res.confirm) return
+
+    Taro.showLoading({ title: '退出中...' })
+    const result = await leaveGroup(groupId, userId)
+    Taro.hideLoading()
+
+    if (result.success) {
+      Taro.showToast({ title: '已退出', icon: 'success' })
+      setTimeout(() => {
+        Taro.navigateBack({ delta: 2 }) // 返回组列表（跳过组详情页）
+      }, 1000)
+    } else {
+      Taro.showToast({ title: result.error || '退出失败', icon: 'none' })
+    }
+  }
+
   if (loading) {
     return (
       <View className='page'>
@@ -166,6 +200,15 @@ export default function MemberDetail() {
           <Text className='member-role'>{getRoleText(member.role)}</Text>
         </View>
       </View>
+
+      {/* 退出组按钮 - 仅自己且非组主时显示 */}
+      {isSelf && !isOwner && (
+        <View className='danger-section'>
+          <View className='danger-btn' onClick={handleLeaveGroup}>
+            <Text className='danger-text'>退出此组</Text>
+          </View>
+        </View>
+      )}
 
       {/* 记录列表 */}
       <View className='section'>

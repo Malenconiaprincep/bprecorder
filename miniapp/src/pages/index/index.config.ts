@@ -4,5 +4,6 @@ export default definePageConfig({
   navigationBarTextStyle: 'black',
   enablePullDownRefresh: false,
   disableScroll: true,
-  enableShareAppMessage: true
+  enableShareAppMessage: true,
+  enableShareTimeline: true
 })

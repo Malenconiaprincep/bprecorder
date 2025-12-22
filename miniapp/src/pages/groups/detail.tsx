@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text, Image, Button } from '@tarojs/components'
 import Taro, { useLoad, useRouter, useShareAppMessage } from '@tarojs/taro'
 import { getUserInfo } from '../../lib/auth'
-import { getGroupDetail, deleteGroup, Group, GroupMember } from '../../lib/groups'
+import { getGroupDetail, deleteGroup, leaveGroup, removeMember, Group, GroupMember } from '../../lib/groups'
 import './detail.scss'
 // @ts-ignore
 import DEFAULT_AVATAR from '../../assets/icons/avatar.png'
@@ -51,6 +51,8 @@ export default function GroupDetail() {
   const [userId, setUserId] = useState('')
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [loadError, setLoadError] = useState(false)
+  const [swipedMemberId, setSwipedMemberId] = useState<string | null>(null) // 当前滑开的成员ID
+  const [touchStartX, setTouchStartX] = useState(0) // 触摸开始X坐标
 
   useLoad(() => {
     loadGroupDetail()
@@ -147,12 +149,123 @@ export default function GroupDetail() {
   }
 
   const isOwner = group?.owner_id === userId
+  const currentMember = members.find(m => m.user_id === userId)
+  const isMember = !!currentMember && !isOwner
 
   const goToMemberDetail = (memberId: string) => {
     if (!group) return
     Taro.navigateTo({
       url: `/pages/groups/member?groupId=${group.id}&memberId=${memberId}`
     })
+  }
+
+  const handleLeaveGroup = async () => {
+    if (!group) return
+
+    const res = await Taro.showModal({
+      title: '确认退出',
+      content: `确定要退出「${group.name}」吗？`,
+      confirmText: '退出',
+      confirmColor: '#ef4444'
+    })
+
+    if (!res.confirm) return
+
+    Taro.showLoading({ title: '退出中...' })
+    const result = await leaveGroup(group.id, userId)
+    Taro.hideLoading()
+
+    if (result.success) {
+      Taro.showToast({ title: '已退出', icon: 'success' })
+      setTimeout(() => {
+        Taro.navigateBack()
+      }, 1000)
+    } else {
+      Taro.showToast({ title: result.error || '退出失败', icon: 'none' })
+    }
+  }
+
+  // 处理触摸开始
+  const handleTouchStart = (e: any, _memberId: string, canRemove: boolean) => {
+    if (!canRemove) return // 不能删除的成员不处理滑动
+    setTouchStartX(e.touches[0].clientX)
+  }
+
+  // 处理触摸移动
+  const handleTouchMove = (e: any, memberId: string, canRemove: boolean) => {
+    if (!canRemove) return // 不能删除的成员不处理滑动
+    const currentX = e.touches[0].clientX
+    const diffX = touchStartX - currentX
+
+    // 向左滑动（手指向左移动，diffX > 0）超过80rpx，显示删除按钮
+    if (diffX > 80) {
+      setSwipedMemberId(memberId)
+    }
+    // 向右滑动（手指向右移动，diffX < 0），隐藏删除按钮
+    else if (diffX < -80) {
+      setSwipedMemberId(null)
+    }
+  }
+
+  // 处理触摸结束
+  const handleTouchEnd = () => {
+    // 可以在这里添加一些逻辑，比如滑动距离不够时自动回弹
+  }
+
+  // 点击卡片（非删除按钮区域）
+  const handleCardClick = (memberId: string) => {
+    // 如果当前有滑开的卡片，先关闭
+    if (swipedMemberId) {
+      setSwipedMemberId(null)
+      return
+    }
+    // 否则进入详情
+    goToMemberDetail(memberId)
+  }
+
+  // 点击删除按钮
+  const handleDeleteClick = async (member: GroupMember, e: any) => {
+    e.stopPropagation()
+    setSwipedMemberId(null) // 关闭滑动
+    const memberName = member.nickname || member.user?.nickname || '未设置昵称'
+    await handleRemoveMember(member.user_id, memberName)
+  }
+
+  const handleRemoveMember = async (memberId: string, memberName: string) => {
+    if (!group) return
+
+    // 第一次确认
+    const res1 = await Taro.showModal({
+      title: '确认删除',
+      content: `确定要将「${memberName}」从组中删除吗？`,
+      confirmText: '删除',
+      confirmColor: '#ef4444',
+      cancelText: '取消'
+    })
+
+    if (!res1.confirm) return
+
+    // 第二次确认
+    const res2 = await Taro.showModal({
+      title: '再次确认',
+      content: `删除后「${memberName}」将无法查看组内数据，确定要继续吗？`,
+      confirmText: '确定删除',
+      confirmColor: '#ef4444',
+      cancelText: '取消'
+    })
+
+    if (!res2.confirm) return
+
+    Taro.showLoading({ title: '删除中...' })
+    const result = await removeMember(group.id, memberId, userId)
+    Taro.hideLoading()
+
+    if (result.success) {
+      Taro.showToast({ title: '已删除', icon: 'success' })
+      loadGroupDetail() // 重新加载组详情
+    } else {
+      Taro.showToast({ title: result.error || '删除失败', icon: 'none' })
+    }
   }
 
   // 骨架屏成员卡片
@@ -240,41 +353,63 @@ export default function GroupDetail() {
             {members.map(member => {
               const record = member.latest_record
               const status = record ? getBPStatus(record.systolic, record.diastolic) : null
+              const memberName = member.nickname || member.user?.nickname || '未设置昵称'
+
+              const canRemove = isOwner && member.role !== 'owner' && member.user_id !== userId
+
+              const isSwiped = swipedMemberId === member.user_id
 
               return (
-                <View key={member.id} className='member-card' onClick={() => goToMemberDetail(member.user_id)}>
-                  <Image
-                    className='member-avatar'
-                    src={member.user?.avatar_url || DEFAULT_AVATAR}
-                    mode='aspectFill'
-                  />
-                  <View className='member-info'>
-                    <View className='member-name-row'>
-                      <Text className='member-name'>
-                        {member.nickname || member.user?.nickname || '未设置昵称'}
-                      </Text>
-                      <Text className='member-role'>{getRoleText(member.role)}</Text>
-                    </View>
-
-                    {record ? (
-                      <View className='bp-info'>
-                        <View className='bp-values'>
-                          <Text className='bp-num'>{record.systolic}/{record.diastolic}</Text>
-                          <Text className='bp-unit'>mmHg</Text>
-                          <View className='pulse'><Image className='pulse-icon' src={iconHeart} mode='aspectFit' /><Text>{record.pulse}</Text></View>
-                        </View>
-                        <View className='bp-meta'>
-                          <View className={`status-badge ${status?.color}`}>
-                            <Text className='badge-text'>{status?.label}</Text>
-                          </View>
-                          <Text className='bp-time'>{formatTime(record.recorded_at)}</Text>
-                        </View>
+                <View
+                  key={member.id}
+                  className='member-card-wrapper'
+                  onClick={() => handleCardClick(member.user_id)}
+                >
+                  <View
+                    className={`member-card ${isSwiped ? 'swiped' : ''}`}
+                    onTouchStart={(e) => handleTouchStart(e, member.user_id, canRemove)}
+                    onTouchMove={(e) => handleTouchMove(e, member.user_id, canRemove)}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    <Image
+                      className='member-avatar'
+                      src={member.user?.avatar_url || DEFAULT_AVATAR}
+                      mode='aspectFill'
+                    />
+                    <View className='member-info'>
+                      <View className='member-name-row'>
+                        <Text className='member-name'>{memberName}</Text>
+                        <Text className='member-role'>{getRoleText(member.role)}</Text>
                       </View>
-                    ) : (
-                      <Text className='no-record'>今日暂未测量</Text>
-                    )}
+
+                      {record ? (
+                        <View className='bp-info'>
+                          <View className='bp-values'>
+                            <Text className='bp-num'>{record.systolic}/{record.diastolic}</Text>
+                            <Text className='bp-unit'>mmHg</Text>
+                            <View className='pulse'><Image className='pulse-icon' src={iconHeart} mode='aspectFit' /><Text>{record.pulse}</Text></View>
+                          </View>
+                          <View className='bp-meta'>
+                            <View className={`status-badge ${status?.color}`}>
+                              <Text className='badge-text'>{status?.label}</Text>
+                            </View>
+                            <Text className='bp-time'>{formatTime(record.recorded_at)}</Text>
+                          </View>
+                        </View>
+                      ) : (
+                        <Text className='no-record'>今日暂未测量</Text>
+                      )}
+                    </View>
+                    <Text className='member-arrow'>›</Text>
                   </View>
-                  <Text className='member-arrow'>›</Text>
+                  {canRemove && (
+                    <View
+                      className={`member-delete-btn ${isSwiped ? 'show' : ''}`}
+                      onClick={(e) => handleDeleteClick(member, e)}
+                    >
+                      <Text className='delete-btn-text'>删除</Text>
+                    </View>
+                  )}
                 </View>
               )
             })}
@@ -282,12 +417,18 @@ export default function GroupDetail() {
         )}
       </View>
 
-      {/* 操作按钮 - 仅组主可见 */}
-      {isOwner && (
+      {/* 操作按钮 */}
+      {(isOwner || isMember) && (
         <View className='danger-section'>
-          <View className='danger-btn' onClick={handleDeleteGroup}>
-            <Text className='danger-text'>解散此组</Text>
-          </View>
+          {isOwner ? (
+            <View className='danger-btn' onClick={handleDeleteGroup}>
+              <Text className='danger-text'>解散此组</Text>
+            </View>
+          ) : (
+            <View className='danger-btn' onClick={handleLeaveGroup}>
+              <Text className='danger-text'>退出此组</Text>
+            </View>
+          )}
         </View>
       )}
     </View>

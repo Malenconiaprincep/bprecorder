@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react'
 import { View, Text, Image, ScrollView, Canvas, Button } from '@tarojs/components'
-import Taro, { useLoad, useDidShow, useShareAppMessage } from '@tarojs/taro'
+import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { getRecords, BPRecord, addRecord, deleteRecord } from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
 import { API_BASE_URL } from '../../utils/api'
 import { generateShareImage } from '../../utils/shareImage'
+import { getMyGroups, Group } from '../../lib/groups'
 import './index.scss'
 
 // 图标
@@ -20,6 +21,8 @@ import iconChart from '../../assets/icons/chart.png'
 import iconList from '../../assets/icons/list.png'
 // @ts-ignore
 import iconShare from '../../assets/icons/share.png'
+// @ts-ignore
+import iconGroups from '../../assets/icons/groups.png'
 
 // 血压状态判断（按医学标准）
 const getBPStatus = (systolic: number, diastolic: number) => {
@@ -99,6 +102,8 @@ export default function Index() {
   const [showResultModal, setShowResultModal] = useState(false)
   const [selectedHand, setSelectedHand] = useState<'left' | 'right'>('left')
   const [shareImageUrl, setShareImageUrl] = useState<string>('')
+  const [myGroups, setMyGroups] = useState<Group[]>([])
+  const [groupsLoading, setGroupsLoading] = useState(true) // 组数据加载状态
 
   const latestRecord = records.length > 0 ? records[0] : null
 
@@ -163,10 +168,11 @@ export default function Index() {
     const storedUser = getUserInfo()
     if (storedUser) {
       fetchRecords(storedUser.openid)
+      fetchGroups(storedUser.openid)
     }
   })
 
-  // 分享小程序
+  // 分享小程序给朋友
   useShareAppMessage(() => {
     const shareTitle = latestRecord
       ? `我的最新血压：${latestRecord.systolic}/${latestRecord.diastolic} mmHg`
@@ -175,6 +181,18 @@ export default function Index() {
     return {
       title: shareTitle,
       path: '/pages/index/index',
+      imageUrl: shareImageUrl || '' // 使用生成的分享图片
+    }
+  })
+
+  // 分享小程序到朋友圈
+  useShareTimeline(() => {
+    const shareTitle = latestRecord
+      ? `我的最新血压：${latestRecord.systolic}/${latestRecord.diastolic} mmHg`
+      : '血压记录助手 - 轻松记录，健康管理'
+
+    return {
+      title: shareTitle,
       imageUrl: shareImageUrl || '' // 使用生成的分享图片
     }
   })
@@ -191,6 +209,7 @@ export default function Index() {
     if (storedUser) {
       setUserInfo(storedUser)
       await fetchRecords(storedUser.openid)
+      await fetchGroups(storedUser.openid)
     } else {
       await autoLogin()
     }
@@ -204,6 +223,7 @@ export default function Index() {
       if (result.success && result.userInfo) {
         setUserInfo(result.userInfo)
         await fetchRecords(result.userInfo.openid)
+        await fetchGroups(result.userInfo.openid)
       } else {
         console.log('Silent login failed:', result.error)
       }
@@ -226,6 +246,25 @@ export default function Index() {
       }
     } catch (e) {
       console.error('Failed to fetch records', e)
+    }
+  }
+
+  const fetchGroups = async (userId: string) => {
+    if (USE_TEST_DATA) {
+      setGroupsLoading(false)
+      return
+    }
+
+    setGroupsLoading(true)
+    try {
+      const result = await getMyGroups(userId)
+      if (result.success && result.groups) {
+        setMyGroups(result.groups)
+      }
+    } catch (e) {
+      console.error('Failed to fetch groups', e)
+    } finally {
+      setGroupsLoading(false)
     }
   }
 
@@ -533,6 +572,42 @@ export default function Index() {
             <View className='summary-empty'>
               <Text className='summary-empty-text'>本周还没有记录</Text>
               <Text className='summary-empty-hint'>坚持每天测量，了解血压趋势</Text>
+            </View>
+          )}
+        </View>
+
+        {/* 我的组快捷入口 - 始终显示 */}
+        <View className={`groups-shortcut ${groupsLoading ? 'loading' : ''}`} onClick={() => {
+          if (groupsLoading) return // 加载中不响应点击
+          // 如果只有一个组，直接进入组详情；否则进入组列表
+          if (myGroups.length === 1) {
+            Taro.navigateTo({ url: `/pages/groups/detail?id=${myGroups[0].id}` })
+          } else {
+            Taro.navigateTo({ url: '/pages/groups/index' })
+          }
+        }}>
+          {groupsLoading ? (
+            <View className='groups-shortcut-content'>
+              <View className='groups-shortcut-icon-skeleton' />
+              <View className='groups-shortcut-info'>
+                <View className='groups-shortcut-title-skeleton' />
+                <View className='groups-shortcut-desc-skeleton' />
+              </View>
+            </View>
+          ) : (
+            <View className='groups-shortcut-content'>
+              <Image className='groups-shortcut-icon' src={iconGroups} mode='aspectFit' />
+              <View className='groups-shortcut-info'>
+                <Text className='groups-shortcut-title'>我的组</Text>
+                {myGroups.length === 0 ? (
+                  <Text className='groups-shortcut-desc groups-shortcut-hint'>创建或加入组，与家人朋友一起记录</Text>
+                ) : myGroups.length === 1 ? (
+                  <Text className='groups-shortcut-desc'>{myGroups[0].name}</Text>
+                ) : (
+                  <Text className='groups-shortcut-desc'>已加入 {myGroups.length} 个组</Text>
+                )}
+              </View>
+              <Text className='groups-shortcut-arrow'>›</Text>
             </View>
           )}
         </View>

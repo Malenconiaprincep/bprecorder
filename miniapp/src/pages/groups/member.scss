@@ -257,3 +257,21 @@
   font-size: 24rpx;
   color: #94a3b8;
 }
+
+/* 危险操作区域 */
+.danger-section {
+  margin-top: 40rpx;
+  margin-bottom: 30rpx;
+}
+
+.danger-btn {
+  padding: 32rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+  text-align: center;
+}
+
+.danger-text {
+  font-size: 30rpx;
+  color: #ef4444;
+}

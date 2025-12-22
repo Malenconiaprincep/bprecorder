@@ -411,7 +411,7 @@
 
 /* 记录列表区域 */
 .records-section {
-  margin: 0 30rpx;
+  margin: 30rpx 30rpx 0 30rpx;
   padding-bottom: 40rpx;
 }
 
@@ -449,9 +449,7 @@
   color: #94a3b8;
 }
 
-.records-list {
-  /* 列表自然展开，不限制高度 */
-}
+/* records-list 列表自然展开，不限制高度 */
 
 /* 日期分组 */
 .date-group {
@@ -695,6 +693,139 @@
   font-size: 34rpx;
   font-weight: 600;
   color: #1e293b;
+}
+
+/* 我的组快捷入口 */
+.groups-shortcut {
+  position: relative;
+  z-index: 1;
+  margin: 0 30rpx 20rpx;
+  padding: 20rpx 28rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  min-height: 100rpx; /* 固定最小高度，避免跳动 */
+  display: flex;
+  align-items: center;
+}
+
+.groups-shortcut:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+  background: #f8fafc;
+}
+
+.groups-shortcut.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.groups-shortcut-content {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.groups-shortcut-icon {
+  width: 44rpx;
+  height: 44rpx;
+  flex-shrink: 0;
+}
+
+.groups-shortcut-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  min-height: 60rpx; /* 固定最小高度 */
+  justify-content: center;
+}
+
+.groups-shortcut-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.4;
+}
+
+.groups-shortcut-desc {
+  font-size: 24rpx;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.groups-shortcut-hint {
+  color: #94a3b8;
+  font-size: 24rpx;
+}
+
+/* 骨架屏动画 */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.groups-shortcut-icon-skeleton {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 8rpx;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.groups-shortcut-title-skeleton {
+  width: 120rpx;
+  height: 30rpx;
+  border-radius: 6rpx;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.groups-shortcut-desc-skeleton {
+  width: 200rpx;
+  height: 24rpx;
+  border-radius: 6rpx;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.groups-shortcut-groups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4rpx;
+  line-height: 1.4;
+}
+
+.groups-shortcut-group-item {
+  font-size: 24rpx;
+  color: #64748b;
+}
+
+.groups-shortcut-separator {
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.groups-shortcut-more {
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.groups-shortcut-arrow {
+  font-size: 36rpx;
+  color: #cbd5e1;
+  font-weight: 300;
+  flex-shrink: 0;
 }
 
 /* 识别中遮罩 */
