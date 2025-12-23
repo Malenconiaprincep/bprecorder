@@ -614,9 +614,12 @@ export default function Index() {
           }
         }}>
           <View className='groups-shortcut-content'>
-            <Image className='groups-shortcut-icon' src={iconGroups} mode='aspectFit' />
-            <View className='groups-shortcut-info'>
+            <View className='groups-shortcut-header'>
+              <Image className='groups-shortcut-icon' src={iconGroups} mode='aspectFit' />
               <Text className='groups-shortcut-title'>我的组</Text>
+              <Text className='groups-shortcut-arrow'>›</Text>
+            </View>
+            <View className='groups-shortcut-info'>
               {myGroups.length === 0 ? (
                 <Text className='groups-shortcut-desc groups-shortcut-hint'>创建或加入组，与家人朋友一起记录</Text>
               ) : myGroups.length === 1 ? (
@@ -625,7 +628,6 @@ export default function Index() {
                 <Text className='groups-shortcut-desc'>已加入 {myGroups.length} 个组</Text>
               )}
             </View>
-            <Text className='groups-shortcut-arrow'>›</Text>
           </View>
         </View>
 
