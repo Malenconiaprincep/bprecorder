@@ -87,6 +87,17 @@ const formatDateLabel = (isoString: string) => {
   return `${month}月${day}日 ${weekDays[date.getDay()]}`
 }
 
+// 格式化日期时间用于记录项显示
+const formatRecordDateTime = (isoString: string) => {
+  const date = new Date(isoString)
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${month}月${day}日 ${weekDays[date.getDay()]} ${hours}:${minutes}`
+}
+
 // 测试数据
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 
@@ -540,7 +551,7 @@ export default function Index() {
                 </View>
               </View>
               <View className='bp-info-row'>
-                <Text className='bp-desc'>收缩压 / 舒张压</Text>
+                {/* <Text className='bp-desc'>收缩压 / 舒张压</Text> */}
                 {bpDifference && (
                   <View className='bp-diff-inline'>
                     <Text className='bp-diff-label'>较最近一次：</Text>
@@ -574,9 +585,9 @@ export default function Index() {
               <View className='summary-avg'>
                 <Text className='avg-label'>平均血压</Text>
                 <View className='avg-values'>
-                  <Text className='avg-number'>{weeklyAverage.systolic}</Text>
+                  <Text className='avg-number systolic'>{weeklyAverage.systolic}</Text>
                   <Text className='avg-slash'>/</Text>
-                  <Text className='avg-number'>{weeklyAverage.diastolic}</Text>
+                  <Text className='avg-number diastolic'>{weeklyAverage.diastolic}</Text>
                   <Text className='avg-unit'>mmHg</Text>
                 </View>
               </View>
@@ -620,71 +631,73 @@ export default function Index() {
 
         {/* 记录列表 */}
         <View className='records-section'>
-          <View className='section-title'><Image className='title-icon' src={iconList} mode='aspectFit' /><Text>测量记录</Text></View>
+          <View className='records-card'>
+            <View className='section-title'><Image className='title-icon' src={iconList} mode='aspectFit' /><Text>测量记录</Text></View>
 
-          {groupedRecords.length === 0 ? (
-            <View className='empty-records'>
-              <Image className='empty-icon' src={iconEdit} mode='aspectFit' />
-              <Text className='empty-text'>还没有记录</Text>
-              <Text className='empty-hint'>点击上方按钮开始记录血压</Text>
-            </View>
-          ) : (
-            <View className='records-list'>
-              {groupedRecords.map(group => (
-                <View key={group.dateKey} className='date-group'>
-                  <View className='date-header'>
-                    <Text className='date-label'>{group.dateLabel}</Text>
-                    {group.records.length > 1 && (
-                      <Text className='date-count'>{group.records.length}次</Text>
-                    )}
-                  </View>
+            {groupedRecords.length === 0 ? (
+              <View className='empty-records'>
+                <Image className='empty-icon' src={iconEdit} mode='aspectFit' />
+                <Text className='empty-text'>还没有记录</Text>
+                <Text className='empty-hint'>点击上方按钮开始记录血压</Text>
+              </View>
+            ) : (
+              <View className='records-list'>
+                {groupedRecords.map((group, groupIdx) => (
+                  <View key={group.dateKey} className='date-group'>
+                    {group.records.map((record, idx) => {
+                      const status = getBPStatus(record.systolic, record.diastolic)
+                      const isLastInGroup = idx === group.records.length - 1
+                      const isLastGroup = groupIdx === groupedRecords.length - 1
+                      // 显示分割线：如果不是（组内最后一个 且 最后一个组）
+                      const showDivider = !(isLastInGroup && isLastGroup)
+                      const dateTime = formatRecordDateTime(record.recorded_at)
+                      return (
+                        <View
+                          key={record.id || idx}
+                          className={`record-item ${showDivider ? 'has-divider' : ''}`}
+                          onClick={() => handleRecordAction(record)}
+                        >
+                          {/* 顶部：血压值 + 心率 + 状态标签（右上角） */}
+                          <View className='record-top'>
+                            <View className='record-bp-section'>
+                              <View className='bp-display'>
+                                <Text className='bp-num systolic'>{record.systolic}</Text>
+                                <Text className='bp-divider'>/</Text>
+                                <Text className='bp-num diastolic'>{record.diastolic}</Text>
+                              </View>
+                              <View className='pulse-display'>
+                                <Image className='pulse-icon' src={iconHeart} mode='aspectFit' />
+                                <Text className='pulse-num'>{record.pulse}</Text>
+                              </View>
+                            </View>
+                            <View className={`status-badge ${status.color}`}>
+                              <Text className='badge-text'>{status.label}</Text>
+                            </View>
+                          </View>
 
-                  {group.records.map((record, idx) => {
-                    const status = getBPStatus(record.systolic, record.diastolic)
-                    return (
-                      <View
-                        key={record.id || idx}
-                        className='record-card'
-                        onClick={() => handleRecordAction(record)}
-                      >
-                        <View className='record-time'>
-                          <Text className='time-text'>{formatTime(record.recorded_at)}</Text>
-                          {record.hand && (
-                            <Text className='hand-tag'>{record.hand === 'left' ? '左' : '右'}</Text>
+                          {/* 中间：日期时间和左右手信息 */}
+                          <View className='record-middle'>
+                            <Text className='datetime-text'>{dateTime}</Text>
+                            {record.hand && (
+                              <Text className='bottom-info-text'>
+                                {record.hand === 'left' ? '左' : '右'}臂
+                              </Text>
+                            )}
+                          </View>
+                          {/* 备注单独一行 */}
+                          {record.note && (
+                            <View className='record-note-row'>
+                              <Text className='note-text'>备注：{record.note}</Text>
+                            </View>
                           )}
                         </View>
-
-                        <View className='record-main'>
-                          <View className='bp-display'>
-                            <Text className='bp-num systolic'>{record.systolic}</Text>
-                            <Text className='bp-divider'>/</Text>
-                            <Text className='bp-num diastolic'>{record.diastolic}</Text>
-                          </View>
-                          <Text className='bp-unit-text'>mmHg</Text>
-                        </View>
-
-                        <View className='record-extra'>
-                          <View className='pulse-display'>
-                            <Image className='pulse-icon' src={iconHeart} mode='aspectFit' />
-                            <Text className='pulse-num'>{record.pulse}</Text>
-                          </View>
-                          <View className={`status-badge ${status.color}`}>
-                            <Text className='badge-text'>{status.label}</Text>
-                          </View>
-                        </View>
-
-                        {record.note && (
-                          <View className='record-note'>
-                            <View className='note-text'><Image className='note-icon' src={iconEdit} mode='aspectFit' /><Text>{record.note}</Text></View>
-                          </View>
-                        )}
-                      </View>
-                    )
-                  })}
-                </View>
-              ))}
-            </View>
-          )}
+                      )
+                    })}
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
 
         {/* 底部占位，防止被 tabbar 遮挡 */}
