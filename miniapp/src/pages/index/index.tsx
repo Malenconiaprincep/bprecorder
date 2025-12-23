@@ -103,9 +103,18 @@ export default function Index() {
   const [selectedHand, setSelectedHand] = useState<'left' | 'right'>('left')
   const [shareImageUrl, setShareImageUrl] = useState<string>('')
   const [myGroups, setMyGroups] = useState<Group[]>([])
-  const [groupsLoading, setGroupsLoading] = useState(true) // 组数据加载状态
 
   const latestRecord = records.length > 0 ? records[0] : null
+  const previousRecord = records.length > 1 ? records[1] : null
+
+  // 计算血压差
+  const bpDifference = useMemo(() => {
+    if (!latestRecord || !previousRecord) return null
+    return {
+      systolic: latestRecord.systolic - previousRecord.systolic,
+      diastolic: latestRecord.diastolic - previousRecord.diastolic
+    }
+  }, [latestRecord, previousRecord])
 
   // 按日期分组记录
   const groupedRecords = useMemo(() => {
@@ -250,12 +259,8 @@ export default function Index() {
   }
 
   const fetchGroups = async (userId: string) => {
-    if (USE_TEST_DATA) {
-      setGroupsLoading(false)
-      return
-    }
+    if (USE_TEST_DATA) return
 
-    setGroupsLoading(true)
     try {
       const result = await getMyGroups(userId)
       if (result.success && result.groups) {
@@ -263,8 +268,6 @@ export default function Index() {
       }
     } catch (e) {
       console.error('Failed to fetch groups', e)
-    } finally {
-      setGroupsLoading(false)
     }
   }
 
@@ -531,11 +534,25 @@ export default function Index() {
                 <Text className='bp-slash'>/</Text>
                 <Text className='bp-value'>{latestRecord.diastolic}</Text>
                 <Text className='bp-unit'>mmHg</Text>
+                <View className='pulse-inline'>
+                  <Text className='pulse-value-inline'>{latestRecord.pulse}</Text>
+                  <Text className='pulse-unit-inline'>bpm</Text>
+                </View>
               </View>
-              <Text className='bp-desc'>收缩压 / 舒张压</Text>
-              <View className='pulse-row'>
-                <Text className='pulse-value'>{latestRecord.pulse}</Text>
-                <Text className='pulse-unit'>bpm 心率</Text>
+              <View className='bp-info-row'>
+                <Text className='bp-desc'>收缩压 / 舒张压</Text>
+                {bpDifference && (
+                  <View className='bp-diff-inline'>
+                    <Text className='bp-diff-label'>较最近一次：</Text>
+                    <Text className={`bp-diff-text ${bpDifference.systolic >= 0 ? 'diff-up' : 'diff-down'}`}>
+                      {bpDifference.systolic >= 0 ? '↑' : '↓'} {Math.abs(bpDifference.systolic)}
+                    </Text>
+                    <Text className='bp-diff-separator'>/</Text>
+                    <Text className={`bp-diff-text ${bpDifference.diastolic >= 0 ? 'diff-up' : 'diff-down'}`}>
+                      {bpDifference.diastolic >= 0 ? '↑' : '↓'} {Math.abs(bpDifference.diastolic)}
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
           ) : (
@@ -577,8 +594,7 @@ export default function Index() {
         </View>
 
         {/* 我的组快捷入口 - 始终显示 */}
-        <View className={`groups-shortcut ${groupsLoading ? 'loading' : ''}`} onClick={() => {
-          if (groupsLoading) return // 加载中不响应点击
+        <View className='groups-shortcut' onClick={() => {
           // 如果只有一个组，直接进入组详情；否则进入组列表
           if (myGroups.length === 1) {
             Taro.navigateTo({ url: `/pages/groups/detail?id=${myGroups[0].id}` })
@@ -586,30 +602,20 @@ export default function Index() {
             Taro.navigateTo({ url: '/pages/groups/index' })
           }
         }}>
-          {groupsLoading ? (
-            <View className='groups-shortcut-content'>
-              <View className='groups-shortcut-icon-skeleton' />
-              <View className='groups-shortcut-info'>
-                <View className='groups-shortcut-title-skeleton' />
-                <View className='groups-shortcut-desc-skeleton' />
-              </View>
+          <View className='groups-shortcut-content'>
+            <Image className='groups-shortcut-icon' src={iconGroups} mode='aspectFit' />
+            <View className='groups-shortcut-info'>
+              <Text className='groups-shortcut-title'>我的组</Text>
+              {myGroups.length === 0 ? (
+                <Text className='groups-shortcut-desc groups-shortcut-hint'>创建或加入组，与家人朋友一起记录</Text>
+              ) : myGroups.length === 1 ? (
+                <Text className='groups-shortcut-desc'>{myGroups[0].name}</Text>
+              ) : (
+                <Text className='groups-shortcut-desc'>已加入 {myGroups.length} 个组</Text>
+              )}
             </View>
-          ) : (
-            <View className='groups-shortcut-content'>
-              <Image className='groups-shortcut-icon' src={iconGroups} mode='aspectFit' />
-              <View className='groups-shortcut-info'>
-                <Text className='groups-shortcut-title'>我的组</Text>
-                {myGroups.length === 0 ? (
-                  <Text className='groups-shortcut-desc groups-shortcut-hint'>创建或加入组，与家人朋友一起记录</Text>
-                ) : myGroups.length === 1 ? (
-                  <Text className='groups-shortcut-desc'>{myGroups[0].name}</Text>
-                ) : (
-                  <Text className='groups-shortcut-desc'>已加入 {myGroups.length} 个组</Text>
-                )}
-              </View>
-              <Text className='groups-shortcut-arrow'>›</Text>
-            </View>
-          )}
+            <Text className='groups-shortcut-arrow'>›</Text>
+          </View>
         </View>
 
         {/* 记录列表 */}
