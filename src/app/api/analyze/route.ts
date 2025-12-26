@@ -11,13 +11,58 @@ const getModelType = (): ModelType => {
   return (modelType === 'qwen' || modelType === 'gemini') ? modelType : 'gemini';
 };
 
-// 使用 Qwen-VL 模型分析
-async function analyzeWithQwen(imageBase64: string, mimeType: string): Promise<any> {
-  const apiKey = process.env.DASHSCOPE_API_KEY;
-  if (!apiKey) {
-    throw new Error("DASHSCOPE_API_KEY is missing");
+// 获取 Gemini API 密钥列表（支持多个备用密钥）
+const getGeminiApiKeys = (): string[] => {
+  const keys: string[] = [];
+
+  // 主密钥
+  if (process.env.GEMINI_API_KEY) {
+    keys.push(process.env.GEMINI_API_KEY);
   }
 
+  // 备用密钥（GEMINI_API_KEY_1, GEMINI_API_KEY_2, ...）
+  let i = 1;
+  while (process.env[`GEMINI_API_KEY_${i}`]) {
+    keys.push(process.env[`GEMINI_API_KEY_${i}`]!);
+    i++;
+  }
+
+  // 也支持逗号分隔的格式（GEMINI_API_KEYS=key1,key2,key3）
+  if (process.env.GEMINI_API_KEYS) {
+    const commaSeparatedKeys = process.env.GEMINI_API_KEYS.split(',').map(k => k.trim()).filter(k => k);
+    keys.push(...commaSeparatedKeys);
+  }
+
+  return keys;
+};
+
+// 获取 Qwen API 密钥列表（支持多个备用密钥）
+const getQwenApiKeys = (): string[] => {
+  const keys: string[] = [];
+
+  // 主密钥
+  if (process.env.DASHSCOPE_API_KEY) {
+    keys.push(process.env.DASHSCOPE_API_KEY);
+  }
+
+  // 备用密钥（DASHSCOPE_API_KEY_1, DASHSCOPE_API_KEY_2, ...）
+  let i = 1;
+  while (process.env[`DASHSCOPE_API_KEY_${i}`]) {
+    keys.push(process.env[`DASHSCOPE_API_KEY_${i}`]!);
+    i++;
+  }
+
+  // 也支持逗号分隔的格式（DASHSCOPE_API_KEYS=key1,key2,key3）
+  if (process.env.DASHSCOPE_API_KEYS) {
+    const commaSeparatedKeys = process.env.DASHSCOPE_API_KEYS.split(',').map(k => k.trim()).filter(k => k);
+    keys.push(...commaSeparatedKeys);
+  }
+
+  return keys;
+};
+
+// 使用 Qwen-VL 模型分析（使用指定的 API 密钥）
+async function analyzeWithQwen(imageBase64: string, mimeType: string, apiKey: string): Promise<any> {
   const openai = new OpenAI({
     apiKey: apiKey,
     baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -35,8 +80,6 @@ async function analyzeWithQwen(imageBase64: string, mimeType: string): Promise<a
   `;
 
   const dataUrl = `data:${mimeType};base64,${imageBase64}`;
-
-  console.log("Calling Alibaba Qwen-VL API...");
 
   const response = await openai.chat.completions.create({
     model: "qwen-vl-max",
@@ -64,13 +107,52 @@ async function analyzeWithQwen(imageBase64: string, mimeType: string): Promise<a
   return parseAIResponse(text);
 }
 
-// 使用 Gemini 2.5 Flash 模型分析
-async function analyzeWithGemini(imageBase64: string, mimeType: string): Promise<any> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is missing");
+// 使用 Qwen-VL 模型分析（自动尝试多个备用密钥）
+async function analyzeWithQwenWithFallback(imageBase64: string, mimeType: string): Promise<any> {
+  const apiKeys = getQwenApiKeys();
+  if (apiKeys.length === 0) {
+    throw new Error("DASHSCOPE_API_KEY is missing");
   }
 
+  console.log(`Calling Alibaba Qwen-VL API with ${apiKeys.length} key(s)...`);
+
+  let lastError: any = null;
+  for (let i = 0; i < apiKeys.length; i++) {
+    try {
+      const result = await analyzeWithQwen(imageBase64, mimeType, apiKeys[i]);
+      if (i > 0) {
+        console.log(`Qwen succeeded with fallback key ${i + 1}`);
+      }
+      return result;
+    } catch (error: any) {
+      lastError = error;
+      // 检测 429 限流错误（检查多种可能的错误格式）
+      const isRateLimitError =
+        error.status === 429 ||
+        error.code === 429 ||
+        error.statusCode === 429 ||
+        error.message?.includes('429') ||
+        error.message?.toLowerCase().includes('too many requests') ||
+        error.message?.toLowerCase().includes('rate limit') ||
+        error.message?.toLowerCase().includes('quota exceeded') ||
+        error.message?.toLowerCase().includes('resource exhausted');
+
+      if (isRateLimitError && i < apiKeys.length - 1) {
+        console.log(`Qwen API key ${i + 1} rate limited (429), trying next key...`);
+        continue;
+      }
+      // 如果不是限流错误，或者是最后一个密钥，直接抛出错误
+      if (!isRateLimitError || i === apiKeys.length - 1) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError || new Error("All Qwen API keys failed");
+}
+
+// 使用 Gemini 2.5 Flash 模型分析（使用指定的 API 密钥）
+async function analyzeWithGemini(imageBase64: string, mimeType: string, apiKey: string): Promise<any> {
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
@@ -82,8 +164,6 @@ async function analyzeWithGemini(imageBase64: string, mimeType: string): Promise
     If you cannot clearly see a screen with these numbers, return {"error": "Unable to read display"}.
     Do not include markdown formatting like \`\`\`json.
   `;
-
-  console.log("Calling Google Gemini 2.5 Flash API...");
 
   const result = await model.generateContent([
     {
@@ -104,6 +184,50 @@ async function analyzeWithGemini(imageBase64: string, mimeType: string): Promise
 
   console.log('Gemini response text:', text);
   return parseAIResponse(text);
+}
+
+// 使用 Gemini 2.5 Flash 模型分析（自动尝试多个备用密钥）
+async function analyzeWithGeminiWithFallback(imageBase64: string, mimeType: string): Promise<any> {
+  const apiKeys = getGeminiApiKeys();
+  if (apiKeys.length === 0) {
+    throw new Error("GEMINI_API_KEY is missing");
+  }
+
+  console.log(`Calling Google Gemini 2.5 Flash API with ${apiKeys.length} key(s)...`);
+
+  let lastError: any = null;
+  for (let i = 0; i < apiKeys.length; i++) {
+    try {
+      const result = await analyzeWithGemini(imageBase64, mimeType, apiKeys[i]);
+      if (i > 0) {
+        console.log(`Gemini succeeded with fallback key ${i + 1}`);
+      }
+      return result;
+    } catch (error: any) {
+      lastError = error;
+      // 检测 429 限流错误（检查多种可能的错误格式）
+      const isRateLimitError =
+        error.status === 429 ||
+        error.code === 429 ||
+        error.statusCode === 429 ||
+        error.message?.includes('429') ||
+        error.message?.toLowerCase().includes('too many requests') ||
+        error.message?.toLowerCase().includes('rate limit') ||
+        error.message?.toLowerCase().includes('quota exceeded') ||
+        error.message?.toLowerCase().includes('resource exhausted');
+
+      if (isRateLimitError && i < apiKeys.length - 1) {
+        console.log(`Gemini API key ${i + 1} rate limited (429), trying next key...`);
+        continue;
+      }
+      // 如果不是限流错误，或者是最后一个密钥，直接抛出错误
+      if (!isRateLimitError || i === apiKeys.length - 1) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError || new Error("All Gemini API keys failed");
 }
 
 // 解析 AI 响应为 JSON
@@ -140,22 +264,22 @@ export async function POST(req: NextRequest) {
     let result;
     try {
       if (modelType === 'gemini') {
-        result = await analyzeWithGemini(base64Image, mimeType);
+        result = await analyzeWithGeminiWithFallback(base64Image, mimeType);
       } else {
-        result = await analyzeWithQwen(base64Image, mimeType);
+        result = await analyzeWithQwenWithFallback(base64Image, mimeType);
       }
       return NextResponse.json(result);
     } catch (error: any) {
       // 如果主模型失败，尝试备用模型
       console.error(`${modelType} model failed:`, error.message);
       console.log(`Trying fallback model...`);
-      
+
       try {
         if (modelType === 'gemini') {
-          result = await analyzeWithQwen(base64Image, mimeType);
+          result = await analyzeWithQwenWithFallback(base64Image, mimeType);
           console.log('Fallback to Qwen succeeded');
         } else {
-          result = await analyzeWithGemini(base64Image, mimeType);
+          result = await analyzeWithGeminiWithFallback(base64Image, mimeType);
           console.log('Fallback to Gemini succeeded');
         }
         return NextResponse.json(result);
