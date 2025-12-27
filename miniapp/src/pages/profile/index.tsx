@@ -743,7 +743,7 @@ export default function Profile() {
     { title: '数据导入', icon: iconImport, onClick: openImportModal },
     { title: '数据导出', icon: iconExport, onClick: showDevTip },
     { title: '提醒设置', icon: iconClock, onClick: showDevTip },
-    { title: '加入交流群', icon: iconShare, onClick: openGroupModal },
+    { title: '交流群', icon: iconShare, onClick: openGroupModal },
   ]
 
   return (
@@ -1014,7 +1014,7 @@ export default function Profile() {
         >
           <View className='group-modal' onClick={(e) => e.stopPropagation()}>
             <View className='group-modal-header'>
-              <Text className='group-modal-title'>加入交流群</Text>
+              <Text className='group-modal-title'>交流群</Text>
               <Text className='group-modal-close' onClick={closeGroupModal}>×</Text>
             </View>
             <View className='group-modal-body'>
