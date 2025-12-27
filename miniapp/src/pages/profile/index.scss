@@ -737,3 +737,236 @@
   flex: 1;
   word-break: break-all;
 }
+
+/* 加入交流群弹窗 */
+.group-modal {
+  width: 600rpx;
+  background: #ffffff;
+  border-radius: 32rpx;
+  overflow: hidden;
+}
+
+.group-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40rpx;
+  border-bottom: 1rpx solid #e2e8f0;
+}
+
+.group-modal-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.group-modal-close {
+  font-size: 48rpx;
+  color: #94a3b8;
+  line-height: 1;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.group-modal-body {
+  padding: 40rpx;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.group-modal-desc {
+  font-size: 28rpx;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 40rpx;
+  line-height: 1.6;
+}
+
+/* 联系方式区块 */
+.contact-method {
+  margin-bottom: 32rpx;
+}
+
+.contact-method:last-child {
+  margin-bottom: 0;
+}
+
+.contact-method-title {
+  font-size: 30rpx;
+  color: #1e293b;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.contact-method-desc {
+  font-size: 24rpx;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 20rpx;
+  line-height: 1.5;
+}
+
+.divider-line {
+  height: 1rpx;
+  background: #e2e8f0;
+  margin: 32rpx 0;
+}
+
+/* 客服消息按钮 */
+.customer-service-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: 44rpx;
+  border: none;
+}
+
+.customer-service-btn::after {
+  border: none;
+}
+
+/* 联系信息行 */
+.contact-info-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: #f8fafc;
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+
+.contact-info-label {
+  font-size: 26rpx;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.contact-info-value {
+  flex: 1;
+  font-size: 28rpx;
+  color: #1e293b;
+  font-weight: 500;
+  text-align: left;
+}
+
+.qrcode-loading {
+  font-size: 28rpx;
+  color: #94a3b8;
+  padding: 80rpx 0;
+  text-align: center;
+}
+
+.qrcode-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.qrcode-image {
+  width: 400rpx;
+  height: 400rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.qrcode-hint {
+  font-size: 24rpx;
+  color: #94a3b8;
+  margin-top: 16rpx;
+}
+
+.qrcode-placeholder {
+  width: 400rpx;
+  height: 400rpx;
+  border-radius: 16rpx;
+  border: 2rpx dashed #cbd5e1;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+
+.qrcode-placeholder-text {
+  font-size: 28rpx;
+  color: #64748b;
+  margin-bottom: 16rpx;
+  text-align: center;
+}
+
+.qrcode-placeholder-hint {
+  font-size: 24rpx;
+  color: #94a3b8;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.group-number-section {
+  padding-top: 32rpx;
+  border-top: 1rpx solid #e2e8f0;
+}
+
+.group-number-label {
+  font-size: 26rpx;
+  color: #64748b;
+  display: block;
+  margin-bottom: 16rpx;
+  text-align: center;
+}
+
+.group-number-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: #f8fafc;
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+
+.group-number-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #1e293b;
+  font-weight: 500;
+  text-align: center;
+}
+
+.copy-btn {
+  padding: 12rpx 32rpx;
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  border-radius: 16rpx;
+}
+
+.copy-btn-text {
+  font-size: 26rpx;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.group-modal-footer {
+  padding: 0 40rpx 40rpx;
+}
+
+.group-modal-btn {
+  width: 100%;
+  height: 88rpx;
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: #ffffff;
+  font-weight: 600;
+}
