@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { View, Text, Image, ScrollView, Canvas, Button } from '@tarojs/components'
+import { View, Text, Image, ScrollView, Canvas, Button, Textarea } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { getRecords, BPRecord, addRecord, deleteRecord } from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
@@ -112,6 +112,8 @@ export default function Index() {
   } | null>(null)
   const [showResultModal, setShowResultModal] = useState(false)
   const [selectedHand, setSelectedHand] = useState<'left' | 'right'>('left')
+  const [note, setNote] = useState('')
+  const [noteExpanded, setNoteExpanded] = useState(false)
   const [shareImageUrl, setShareImageUrl] = useState<string>('')
   const [myGroups, setMyGroups] = useState<Group[]>([])
 
@@ -397,7 +399,8 @@ export default function Index() {
         diastolic: analyzeResult.diastolic,
         pulse: analyzeResult.pulse,
         recorded_at: recordedAt,
-        hand: selectedHand
+        hand: selectedHand,
+        note: note || undefined
       })
 
       if (error) {
@@ -420,6 +423,8 @@ export default function Index() {
         }
 
         setAnalyzeResult(null)
+        setNote('')
+        setNoteExpanded(false)
         // 刷新记录列表
         await fetchRecords(userInfo.openid)
       }
@@ -431,6 +436,8 @@ export default function Index() {
   const handleCloseModal = () => {
     setShowResultModal(false)
     setAnalyzeResult(null)
+    setNote('')
+    setNoteExpanded(false)
   }
 
   const handleModalContentClick = (e: any) => {
@@ -754,6 +761,28 @@ export default function Index() {
                 >
                   <Text>右手</Text>
                 </View>
+              </View>
+
+              {/* 备注输入 */}
+              <View className='note-section'>
+                <View className='note-header' onClick={() => setNoteExpanded(!noteExpanded)}>
+                  <Text className='note-label'>备注 (可选)</Text>
+                  <Text className={`note-expand-icon ${noteExpanded ? 'expanded' : ''}`}>▼</Text>
+                </View>
+                {(noteExpanded || note) && (
+                  <Textarea
+                    className='note-field'
+                    placeholder='添加备注，如：饭后、运动后等'
+                    value={note}
+                    onInput={(e) => {
+                      setNote(e.detail.value)
+                      if (e.detail.value && !noteExpanded) {
+                        setNoteExpanded(true)
+                      }
+                    }}
+                    maxlength={200}
+                  />
+                )}
               </View>
 
               <View className='modal-actions'>

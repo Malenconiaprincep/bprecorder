@@ -135,6 +135,48 @@
   border-left: 1px solid #e2e8f0;
 }
 
+/* 备注输入 */
+.note-section {
+  margin-bottom: 32px;
+  padding-top: 32px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.note-label {
+  font-size: 26px;
+  color: #64748b;
+}
+
+.note-expand-icon {
+  font-size: 20px;
+  color: #94a3b8;
+  transition: transform 0.3s ease;
+  transform: rotate(0deg);
+}
+
+.note-expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.note-field {
+  width: 100%;
+  min-height: 80px;
+  font-size: 28px;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 24px;
+  box-sizing: border-box;
+}
+
 .result-actions {
   display: flex;
   gap: 16px;

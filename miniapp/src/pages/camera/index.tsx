@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { View, Text, Image } from '@tarojs/components'
+import { View, Text, Image, Textarea } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { addRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
@@ -15,6 +15,8 @@ export default function CameraPage() {
     diastolic: number
     pulse: number
   } | null>(null)
+  const [note, setNote] = useState('')
+  const [noteExpanded, setNoteExpanded] = useState(false)
 
   const handleChooseImage = async () => {
     try {
@@ -58,6 +60,7 @@ export default function CameraPage() {
         systolic: result.systolic,
         diastolic: result.diastolic,
         pulse: result.pulse,
+        note: note || undefined,
         recorded_at: new Date().toISOString()
       })
 
@@ -81,6 +84,8 @@ export default function CameraPage() {
   const reset = () => {
     setPreviewImage('')
     setResult(null)
+    setNote('')
+    setNoteExpanded(false)
   }
 
   return (
@@ -127,6 +132,28 @@ export default function CameraPage() {
                   <Text className='result-number'>{result.pulse}</Text>
                   <Text className='result-label'>心率</Text>
                 </View>
+              </View>
+
+              {/* 备注输入 */}
+              <View className='note-section'>
+                <View className='note-header' onClick={() => setNoteExpanded(!noteExpanded)}>
+                  <Text className='note-label'>备注 (可选)</Text>
+                  <Text className={`note-expand-icon ${noteExpanded ? 'expanded' : ''}`}>▼</Text>
+                </View>
+                {(noteExpanded || note) && (
+                  <Textarea
+                    className='note-field'
+                    placeholder='添加备注，如：饭后、运动后等'
+                    value={note}
+                    onInput={(e) => {
+                      setNote(e.detail.value)
+                      if (e.detail.value && !noteExpanded) {
+                        setNoteExpanded(true)
+                      }
+                    }}
+                    maxlength={200}
+                  />
+                )}
               </View>
 
               <View className='result-actions'>
