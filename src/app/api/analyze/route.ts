@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import axios from "axios";
 
 // 支持的模型类型
 type ModelType = 'qwen' | 'gemini' | 'anyrouter';
@@ -67,13 +68,9 @@ const getQwenApiKeys = (): string[] => {
 const getAnyRouterApiKeys = (): string[] => {
   const keys: string[] = [];
 
-  // 主密钥（默认使用提供的 token）
-  const defaultKey = 'sk-3RyCHtlEBWG7jEBa1ttmu4zkqgLA2kO9njPsVdFxvI6tgWAR';
+  // 主密钥
   if (process.env.ANYROUTER_API_KEY) {
     keys.push(process.env.ANYROUTER_API_KEY);
-  } else {
-    // 如果没有配置环境变量，使用默认密钥
-    keys.push(defaultKey);
   }
 
   // 备用密钥（ANYROUTER_API_KEY_1, ANYROUTER_API_KEY_2, ...）
@@ -262,13 +259,16 @@ async function analyzeWithGeminiWithFallback(imageBase64: string, mimeType: stri
 }
 
 // 使用 AnyRouter 平台分析（使用指定的 API 密钥）
+// 使用 axios 直接请求
 async function analyzeWithAnyRouter(imageBase64: string, mimeType: string, apiKey: string): Promise<any> {
-  console.log('apiKey:', apiKey);
-  const openai = new OpenAI({
-    apiKey: apiKey,
-    baseURL: "https://anyrouter.top",
-    timeout: 60000,
-    maxRetries: 2,
+  // AnyRouter baseURL - 根据文档应该是 https://anyrouter.top/v1
+  const baseURL = process.env.ANYROUTER_BASE_URL || "https://anyrouter.top/v1";
+  const model = process.env.ANYROUTER_MODEL || "gemini-2.5-pro";
+
+  console.log('AnyRouter API config:', {
+    baseURL,
+    apiKey: apiKey.substring(0, 10) + '...',
+    model
   });
 
   const prompt = `
@@ -282,25 +282,33 @@ async function analyzeWithAnyRouter(imageBase64: string, mimeType: string, apiKe
 
   const dataUrl = `data:${mimeType};base64,${imageBase64}`;
 
-  // 使用 gpt-4o 或 gpt-4-vision 模型（AnyRouter 会根据配置路由到实际模型）
-  const response = await openai.chat.completions.create({
-    model: process.env.ANYROUTER_MODEL || "gpt-4o",
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "text", text: prompt },
-          {
-            type: "image_url",
-            image_url: { url: dataUrl },
-          },
-        ],
-      },
-    ],
-    max_tokens: 500,
-  });
+  const options = {
+    method: 'POST',
+    url: `${baseURL}/chat/completions`,
+    headers: {
+      'Authorization': `Bearer ${apiKey}`
+    },
+    data: {
+      model: model,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "image_url",
+              image_url: { url: dataUrl },
+            },
+          ],
+        },
+      ],
+      max_tokens: 500,
+    },
+    timeout: 60000,
+  };
 
-  const text = response.choices[0]?.message?.content;
+  const response = await axios(options);
+  const text = response.data.choices[0]?.message?.content;
   if (!text) {
     throw new Error("Empty response from AnyRouter");
   }
