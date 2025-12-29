@@ -1,4 +1,6 @@
 import Taro from '@tarojs/taro'
+import { API_BASE_URL } from '../utils/api'
+import { getUserInfo } from './auth'
 
 // Supabase 配置
 const SUPABASE_URL = 'https://vaeklnwhlogbvrwtthbe.supabase.co'
@@ -87,19 +89,35 @@ export async function getRecords(userId: string): Promise<{ data: BPRecord[] | n
 }
 
 /**
- * 添加血压记录
+ * 添加血压记录（单个）
  */
 export async function addRecord(record: Omit<BPRecord, 'id' | 'created_at'>): Promise<{ data: BPRecord | null; error: string | null }> {
-  const result = await request<BPRecord[]>('/bp_records', {
-    method: 'POST',
-    data: record
-  })
+  // 获取 openid，用于更新 last_login_at
+  const userInfo = getUserInfo()
+  const openid = userInfo?.openid
 
-  // POST 返回数组，取第一个
-  if (result.data && Array.isArray(result.data)) {
-    return { data: result.data[0] || null, error: null }
+  // 调用 Next.js API，在插入成功后更新 last_login_at
+  try {
+    const res = await Taro.request({
+      url: `${API_BASE_URL}/api/bp_records`,
+      method: 'POST',
+      header: {
+        'Content-Type': 'application/json',
+        ...(openid ? { 'x-openid': openid } : {})
+      },
+      data: record
+    })
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return { data: res.data, error: null }
+    } else {
+      const errorMsg = res.data?.error || res.data?.message || `请求失败 (${res.statusCode})`
+      return { data: null, error: errorMsg }
+    }
+  } catch (e: any) {
+    console.error('addRecord error:', e)
+    return { data: null, error: e.message || '网络请求失败' }
   }
-  return { data: null, error: result.error }
 }
 
 /**
