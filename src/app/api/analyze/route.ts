@@ -6,10 +6,10 @@ import axios from "axios";
 // 支持的模型类型
 type ModelType = 'qwen' | 'gemini' | 'anyrouter';
 
-// 获取要使用的模型（通过环境变量配置，默认为 anyrouter）
+// 获取要使用的模型（通过环境变量配置，默认为 gemini）
 const getModelType = (): ModelType => {
   const modelType = process.env.AI_MODEL?.toLowerCase();
-  return (modelType === 'qwen' || modelType === 'gemini' || modelType === 'anyrouter') ? modelType : 'anyrouter';
+  return (modelType === 'qwen' || modelType === 'gemini' || modelType === 'anyrouter') ? modelType : 'gemini';
 };
 
 // 获取 Gemini API 密钥列表（支持多个备用密钥）
