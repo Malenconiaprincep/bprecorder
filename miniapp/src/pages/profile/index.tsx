@@ -1101,7 +1101,7 @@ export default function Profile() {
       )}
 
       <View className='version-info'>
-        <Text className='version-text'>v1.8.2</Text>
+        <Text className='version-text'>v1.9.0</Text>
       </View>
     </View>
   )
