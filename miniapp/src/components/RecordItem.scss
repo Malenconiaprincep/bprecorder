@@ -1,0 +1,173 @@
+.record-item {
+  display: flex;
+  flex-direction: column;
+  padding: 24rpx 8rpx 24rpx 0;
+  position: relative;
+
+  &.has-divider::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1rpx;
+    background: #e2e8f0;
+  }
+}
+
+/* 顶部：血压值 + 心率 + 状态标签（右上角） */
+.record-top {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 12rpx;
+}
+
+.record-bp-section {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+  flex: 1;
+  padding-left: 0;
+}
+
+.bp-display {
+  display: flex;
+  align-items: baseline;
+}
+
+.bp-num {
+  font-size: 60rpx;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.bp-num.systolic {
+  color: #ea580c;
+}
+
+.bp-num.diastolic {
+  color: #2563eb;
+}
+
+.bp-divider {
+  font-size: 44rpx;
+  color: #cbd5e1;
+  margin: 0 4rpx;
+  line-height: 1;
+}
+
+.pulse-display {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.pulse-icon {
+  width: 22rpx;
+  height: 22rpx;
+}
+
+.pulse-num {
+  font-size: 28rpx;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.status-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 4rpx 14rpx;
+  border-radius: 14rpx;
+  font-size: 24rpx;
+}
+
+/* 中间：日期时间和左右手信息 */
+.record-middle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10rpx;
+  padding-left: 0;
+}
+
+.datetime-text {
+  font-size: 26rpx;
+  color: #94a3b8;
+  flex: 1;
+}
+
+.bottom-info-text {
+  font-size: 24rpx;
+  color: #94a3b8;
+  margin-left: auto;
+  padding-right: 5rpx;
+}
+
+/* 备注单独一行 */
+.record-note-row {
+  margin-top: 4rpx;
+  margin-bottom: 4rpx;
+}
+
+.note-text {
+  font-size: 24rpx;
+  color: #94a3b8;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+.status-badge.ideal {
+  background: #bbf7d0;
+}
+
+.status-badge.normal {
+  background: #dcfce7;
+}
+
+.status-badge.prehigh {
+  background: #fef3c7;
+}
+
+.status-badge.high-1 {
+  background: #fed7aa;
+}
+
+.status-badge.high-2 {
+  background: #fee2e2;
+}
+
+.status-badge.high-3 {
+  background: #fecaca;
+}
+
+.badge-text {
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.status-badge.ideal .badge-text {
+  color: #15803d;
+}
+
+.status-badge.normal .badge-text {
+  color: #16a34a;
+}
+
+.status-badge.prehigh .badge-text {
+  color: #b45309;
+}
+
+.status-badge.high-1 .badge-text {
+  color: #c2410c;
+}
+
+.status-badge.high-2 .badge-text {
+  color: #dc2626;
+}
+
+.status-badge.high-3 .badge-text {
+  color: #991b1b;
+}
+

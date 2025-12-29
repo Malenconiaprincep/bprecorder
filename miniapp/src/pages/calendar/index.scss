@@ -1,0 +1,295 @@
+.calendar-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #e8f4ff 0%, #f0f6ff 100%);
+  padding: 20rpx 32rpx 40rpx 32rpx;
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+  padding: 0 8rpx;
+}
+
+.calendar-card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  margin-bottom: 32rpx;
+}
+
+.calendar-nav-btn {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.calendar-nav-btn:active {
+  background: #f8fafc;
+  transform: scale(0.95);
+}
+
+.calendar-nav-icon {
+  font-size: 48rpx;
+  color: #5bb8f5;
+  font-weight: 300;
+  line-height: 1;
+  display: block;
+  text-align: center;
+  // 使用 transform 微调垂直位置，确保箭头完全居中
+  transform: translateY(-1rpx);
+}
+
+.calendar-month-text {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.calendar-weekdays {
+  display: flex;
+  margin-bottom: 16rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.calendar-weekday {
+  flex: 0 0 calc((100% - 24rpx) / 7);
+  width: calc((100% - 24rpx) / 7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 0;
+  box-sizing: border-box;
+}
+
+.calendar-weekday:not(:last-child) {
+  margin-right: 4rpx;
+}
+
+.calendar-weekday-text {
+  font-size: 24rpx;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.calendar-days {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 32rpx;
+  box-sizing: border-box;
+}
+
+.calendar-day-empty {
+  flex: 0 0 calc((100% - 24rpx) / 7);
+  width: calc((100% - 24rpx) / 7);
+  aspect-ratio: 1;
+  margin-bottom: 4rpx;
+  margin-right: 4rpx;
+  box-sizing: border-box;
+}
+
+.calendar-day-empty:nth-child(7n) {
+  margin-right: 0;
+}
+
+.calendar-day-cell {
+  flex: 0 0 calc((100% - 24rpx) / 7);
+  width: calc((100% - 24rpx) / 7);
+  aspect-ratio: 1;
+  margin-bottom: 4rpx;
+  margin-right: 4rpx;
+  box-sizing: border-box;
+}
+
+.calendar-day-cell:nth-child(7n) {
+  margin-right: 0;
+}
+
+.calendar-day-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 12rpx;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 2rpx solid transparent;
+  background: #ffffff;
+}
+
+.calendar-day-cell.other-month {
+  opacity: 0.3;
+}
+
+.calendar-day-cell.has-records {
+  background: #e0f2fe;
+  border-color: #bae6fd;
+}
+
+.calendar-day-cell.has-records.has-abnormal {
+  background: #fee2e2;
+  border-color: #fecaca;
+}
+
+.calendar-day-cell.today {
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  border-color: #4aa8e8;
+}
+
+.calendar-day-cell.selected {
+  border-color: #4aa8e8;
+  box-shadow: 0 0 0 4rpx rgba(91, 184, 245, 0.2);
+}
+
+.calendar-day-cell:active {
+  transform: scale(0.95);
+}
+
+.calendar-day-number {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.calendar-day-cell.today .calendar-day-number {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.calendar-day-cell.other-month .calendar-day-number {
+  color: #cbd5e1;
+}
+
+.calendar-today-label {
+  position: absolute;
+  top: 4rpx;
+  right: 4rpx;
+  font-size: 18rpx;
+  color: #ffffff;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.3);
+  padding: 2rpx 6rpx;
+  border-radius: 6rpx;
+}
+
+.calendar-day-count {
+  position: absolute;
+  bottom: 4rpx;
+  font-size: 20rpx;
+  color: #5bb8f5;
+  font-weight: 600;
+}
+
+.calendar-day-cell.today .calendar-day-count {
+  color: #ffffff;
+}
+
+.calendar-day-cell.has-abnormal .calendar-day-count {
+  color: #ef4444;
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24rpx;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #e2e8f0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.legend-dot {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 6rpx;
+}
+
+.legend-dot.today-dot {
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+}
+
+.legend-dot.normal-dot {
+  background: #e0f2fe;
+}
+
+.legend-dot.abnormal-dot {
+  background: #fee2e2;
+}
+
+.legend-text {
+  font-size: 24rpx;
+  color: #64748b;
+}
+
+/* 选中日期的记录列表 */
+.selected-records-section {
+  margin-top: 32rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.selected-records-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.selected-records-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.selected-records-count {
+  font-size: 26rpx;
+  color: #94a3b8;
+}
+
+.selected-records-list {
+  margin-bottom: 24rpx;
+}
+
+.back-to-home-btn {
+  margin-top: 24rpx;
+  padding: 20rpx;
+  background: #5bb8f5;
+  border-radius: 16rpx;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.back-to-home-btn:active {
+  background: #4aa8e8;
+  transform: scale(0.98);
+}
+
+.back-to-home-text {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: 500;
+}

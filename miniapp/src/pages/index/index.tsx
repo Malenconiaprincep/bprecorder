@@ -116,8 +116,6 @@ export default function Index() {
   const [noteExpanded, setNoteExpanded] = useState(false)
   const [shareImageUrl, setShareImageUrl] = useState<string>('')
   const [myGroups, setMyGroups] = useState<Group[]>([])
-  const [showCalendar, setShowCalendar] = useState(false) // 是否显示日历弹窗
-  const [currentMonth, setCurrentMonth] = useState(new Date()) // 当前显示的月份
   const [selectedDate, setSelectedDate] = useState<string | null>(null) // 选中的日期（用于筛选）
 
   const latestRecord = records.length > 0 ? records[0] : null
@@ -163,24 +161,6 @@ export default function Index() {
     return groups
   }, [records])
 
-  // 获取每个日期的记录数量和状态（用于日历显示）
-  const dateRecordInfo = useMemo(() => {
-    const info: { [dateKey: string]: { count: number; hasAbnormal: boolean } } = {}
-    records.forEach(r => {
-      const dateKey = r.recorded_at.split('T')[0]
-      if (!info[dateKey]) {
-        info[dateKey] = { count: 0, hasAbnormal: false }
-      }
-      info[dateKey].count++
-      // 判断是否有异常血压（高血压）
-      const status = getBPStatus(r.systolic, r.diastolic)
-      if (status.color !== 'normal' && status.color !== 'ideal') {
-        info[dateKey].hasAbnormal = true
-      }
-    })
-    return info
-  }, [records])
-
   // 根据选中的日期筛选记录
   const filteredGroupedRecords = useMemo(() => {
     if (!selectedDate) {
@@ -188,66 +168,6 @@ export default function Index() {
     }
     return groupedRecords.filter(group => group.dateKey === selectedDate)
   }, [groupedRecords, selectedDate])
-
-  // 生成当前月份的日历数据
-  const calendarData = useMemo(() => {
-    const year = currentMonth.getFullYear()
-    const month = currentMonth.getMonth()
-    
-    // 获取当月第一天和最后一天
-    const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
-    
-    // 获取第一天是星期几（0=周日，1=周一...）
-    const firstDayWeek = firstDay.getDay()
-    // 转换为周一为0的格式
-    const startOffset = firstDayWeek === 0 ? 6 : firstDayWeek - 1
-    
-    // 生成日历数组
-    const days: Array<{ date: Date; dateKey: string; isCurrentMonth: boolean; count?: number; hasAbnormal?: boolean } | null> = []
-    
-    // 填充前面的空白
-    for (let i = 0; i < startOffset; i++) {
-      days.push(null)
-    }
-    
-    // 填充当月的日期
-    for (let day = 1; day <= lastDay.getDate(); day++) {
-      const date = new Date(year, month, day)
-      const dateKey = date.toISOString().split('T')[0]
-      const recordInfo = dateRecordInfo[dateKey]
-      days.push({
-        date,
-        dateKey,
-        isCurrentMonth: true,
-        count: recordInfo?.count,
-        hasAbnormal: recordInfo?.hasAbnormal
-      })
-    }
-    
-    return days
-  }, [currentMonth, dateRecordInfo])
-
-  // 切换月份
-  const changeMonth = (direction: 'prev' | 'next') => {
-    const newMonth = new Date(currentMonth)
-    if (direction === 'prev') {
-      newMonth.setMonth(newMonth.getMonth() - 1)
-    } else {
-      newMonth.setMonth(newMonth.getMonth() + 1)
-    }
-    setCurrentMonth(newMonth)
-    setSelectedDate(null) // 切换月份时清除选中
-  }
-
-  // 如果选中了日期，高亮显示
-  const scrollToDate = (dateKey: string) => {
-    setSelectedDate(dateKey)
-    // 2秒后清除高亮
-    setTimeout(() => {
-      setSelectedDate(null)
-    }, 2000)
-  }
 
   // 计算本周平均值
   const weeklyAverage = useMemo(() => {
@@ -274,6 +194,28 @@ export default function Index() {
 
   // 页面每次显示时刷新数据（从输入页返回时，跳过首次）
   useDidShow(() => {
+    // 检查是否有从日历页面返回的选中日期
+    if ((global as any).__selectedDate) {
+      const dateKey = (global as any).__selectedDate
+      setSelectedDate(dateKey)
+      delete (global as any).__selectedDate
+
+      // 滚动到对应日期
+      setTimeout(() => {
+        Taro.createSelectorQuery()
+          .select(`#date-${dateKey}`)
+          .boundingClientRect((rect: any) => {
+            if (rect) {
+              Taro.pageScrollTo({
+                scrollTop: rect.top + rect.height / 2 - Taro.getSystemInfoSync().windowHeight / 2,
+                duration: 300
+              })
+            }
+          })
+          .exec()
+      }, 300)
+    }
+
     if (USE_TEST_DATA) return
     if (!initialized) return // 首次加载由 useLoad 处理
 
@@ -739,7 +681,9 @@ export default function Index() {
               )}
               {/* 数据日历按钮 */}
               {groupedRecords.length > 0 && (
-                <View className='calendar-trigger-btn' onClick={() => setShowCalendar(true)}>
+                <View className='calendar-trigger-btn' onClick={() => {
+                  Taro.navigateTo({ url: '/pages/calendar/index' })
+                }}>
                   <Text className='calendar-trigger-text'>数据日历</Text>
                   {selectedDate && (
                     <Text className='calendar-trigger-badge'>已筛选</Text>
@@ -768,8 +712,8 @@ export default function Index() {
               <>
                 <View className='records-list'>
                   {filteredGroupedRecords.map((group, groupIdx) => (
-                    <View 
-                      key={group.dateKey} 
+                    <View
+                      key={group.dateKey}
                       className={`date-group ${selectedDate === group.dateKey ? 'highlighted' : ''}`}
                       id={`date-${group.dateKey}`}
                     >
@@ -837,97 +781,6 @@ export default function Index() {
         {/* 底部占位，防止被 tabbar 遮挡 */}
         <View className='bottom-spacer' />
       </ScrollView>
-
-      {/* 日历弹窗 - 放在 ScrollView 外面 */}
-      {showCalendar && (
-        <View className='calendar-modal-mask' onClick={() => setShowCalendar(false)}>
-          <View className='calendar-modal' onClick={(e) => e.stopPropagation()}>
-            {/* 月份导航 */}
-            <View className='calendar-header'>
-              <View className='calendar-nav-btn' onClick={() => changeMonth('prev')}>
-                <Text className='calendar-nav-icon'>‹</Text>
-              </View>
-              <Text className='calendar-month-text'>
-                {currentMonth.getFullYear()}年{currentMonth.getMonth() + 1}月
-              </Text>
-              <View className='calendar-nav-btn' onClick={() => changeMonth('next')}>
-                <Text className='calendar-nav-icon'>›</Text>
-              </View>
-            </View>
-
-            {/* 星期标题 */}
-            <View className='calendar-weekdays'>
-              {['周一', '周二', '周三', '周四', '周五', '周六', '周日'].map((day, idx) => (
-                <View key={idx} className='calendar-weekday'>
-                  <Text className='calendar-weekday-text'>{day}</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* 日期网格 */}
-            <View className='calendar-days'>
-              {calendarData.map((day, idx) => {
-                if (!day) {
-                  return <View key={`empty-${idx}`} className='calendar-day-empty' />
-                }
-
-                const today = new Date()
-                const isToday = day.dateKey === today.toISOString().split('T')[0]
-                const isSelected = selectedDate === day.dateKey
-                const hasRecords = day.count !== undefined && day.count > 0
-
-                return (
-                  <View
-                    key={day.dateKey}
-                    className={`calendar-day-cell ${!day.isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasRecords ? 'has-records' : ''} ${day.hasAbnormal ? 'has-abnormal' : ''}`}
-                    onClick={() => {
-                      if (day.isCurrentMonth && hasRecords) {
-                        if (selectedDate === day.dateKey) {
-                          setSelectedDate(null) // 再次点击取消筛选
-                        } else {
-                          setSelectedDate(day.dateKey)
-                        }
-                        setShowCalendar(false) // 选择后关闭弹窗
-                      }
-                    }}
-                  >
-                    <Text className={`calendar-day-number ${isToday ? 'today-text' : ''} ${!day.isCurrentMonth ? 'other-month-text' : ''}`}>
-                      {day.date.getDate()}
-                    </Text>
-                    {isToday && (
-                      <Text className='calendar-today-label'>今</Text>
-                    )}
-                    {hasRecords && day.count && day.count > 1 && (
-                      <Text className='calendar-day-count'>{day.count}</Text>
-                    )}
-                  </View>
-                )
-              })}
-            </View>
-
-            {/* 图例 */}
-            <View className='calendar-legend'>
-              <View className='legend-item'>
-                <View className='legend-dot today-dot' />
-                <Text className='legend-text'>今天</Text>
-              </View>
-              <View className='legend-item'>
-                <View className='legend-dot normal-dot' />
-                <Text className='legend-text'>有记录</Text>
-              </View>
-              <View className='legend-item'>
-                <View className='legend-dot abnormal-dot' />
-                <Text className='legend-text'>异常</Text>
-              </View>
-            </View>
-
-            {/* 关闭按钮 */}
-            <View className='calendar-close-btn' onClick={() => setShowCalendar(false)}>
-              <Text className='calendar-close-text'>关闭</Text>
-            </View>
-          </View>
-        </View>
-      )}
 
       {/* 识别中遮罩 - 放在 ScrollView 外面 */}
       {analyzing && (
