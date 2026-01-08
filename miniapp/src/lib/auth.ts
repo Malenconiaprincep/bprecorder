@@ -10,6 +10,8 @@ export interface UserInfo {
   openid: string
   nickName?: string
   avatarUrl?: string
+  fontSizeMode?: 'normal' | 'elder'
+  isNewUser?: boolean
 }
 
 export interface WxUserInfo {
@@ -64,11 +66,13 @@ export async function silentLogin(): Promise<{ success: boolean; userInfo?: User
       const fullUserInfo: UserInfo = {
         openid: respUserInfo.openid,
         nickName: respUserInfo.nickName || savedWxUser?.nickName,
-        avatarUrl: respUserInfo.avatarUrl || savedWxUser?.avatarUrl
+        avatarUrl: respUserInfo.avatarUrl || savedWxUser?.avatarUrl,
+        fontSizeMode: respUserInfo.fontSizeMode || undefined,
+        isNewUser: respUserInfo.isNewUser || false
       }
       Taro.setStorageSync(USER_INFO_KEY, JSON.stringify(fullUserInfo))
 
-      console.log('silentLogin: 静默登录成功，openid:', respUserInfo.openid)
+      console.log('silentLogin: 静默登录成功，openid:', respUserInfo.openid, 'isNewUser:', respUserInfo.isNewUser)
       return { success: true, userInfo: fullUserInfo, token }
     } else {
       const errorMsg = response.data?.error || '登录失败'

@@ -262,21 +262,26 @@ export async function POST(request: NextRequest) {
       sub: dbUserId?.toString() || openid
     })
 
-    // 获取最新的用户信息（包含头像和昵称）
+    // 获取最新的用户信息（包含头像、昵称和字体模式）
     let finalNickName = nickName
     let finalAvatarUrl = avatarUrl
+    let fontSizeMode: string | null = null
+    let isNewUser = false
 
     if (supabaseUrl && supabaseServiceKey && dbUserId) {
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
       const { data: latestUser } = await supabase
         .from('wx_users')
-        .select('nickname, avatar_url')
+        .select('nickname, avatar_url, font_size_mode, created_at')
         .eq('id', dbUserId)
         .single()
 
       if (latestUser) {
         finalNickName = latestUser.nickname || nickName
         finalAvatarUrl = latestUser.avatar_url || avatarUrl
+        fontSizeMode = latestUser.font_size_mode || null
+        // 判断是否是新用户：font_size_mode 为空表示还未设置过
+        isNewUser = !latestUser.font_size_mode
       }
     }
 
@@ -284,7 +289,9 @@ export async function POST(request: NextRequest) {
       id: dbUserId,
       openid,
       nickName: finalNickName,
-      avatarUrl: finalAvatarUrl
+      avatarUrl: finalAvatarUrl,
+      fontSizeMode,
+      isNewUser
     }
 
     const duration = Date.now() - startTime

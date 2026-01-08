@@ -3,6 +3,7 @@ import { View, Text, Image, ScrollView, Canvas, Button, Textarea } from '@tarojs
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { getRecords, BPRecord, addRecord, deleteRecord } from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
+import { FontSizeMode, getCurrentFontSizeMode, initFontSizeMode, getFontSizeModeClass, saveLocalFontSizeMode, applyFontSizeMode } from '../../lib/settings'
 import { API_BASE_URL } from '../../utils/api'
 import { generateShareImage } from '../../utils/shareImage'
 import { getMyGroups, Group } from '../../lib/groups'
@@ -118,6 +119,9 @@ export default function Index() {
   const [myGroups, setMyGroups] = useState<Group[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null) // 选中的日期（用于筛选）
 
+  // 字体模式状态
+  const [fontSizeMode, setFontSizeModeState] = useState<FontSizeMode>('normal')
+
   const latestRecord = records.length > 0 ? records[0] : null
   const previousRecord = records.length > 1 ? records[1] : null
 
@@ -192,8 +196,27 @@ export default function Index() {
     initPage()
   })
 
+  // 监听字体模式变化，立即更新页面
+  React.useEffect(() => {
+    const handleFontModeChange = (mode: FontSizeMode) => {
+      setFontSizeModeState(mode)
+    }
+
+    Taro.eventCenter.on('fontSizeModeChanged', handleFontModeChange)
+
+    return () => {
+      Taro.eventCenter.off('fontSizeModeChanged', handleFontModeChange)
+    }
+  }, [])
+
   // 页面每次显示时刷新数据（从输入页返回时，跳过首次）
   useDidShow(() => {
+    // 每次显示页面时同步字体模式（解决从设置页面返回后样式不更新的问题）
+    const currentMode = getCurrentFontSizeMode()
+    if (currentMode !== fontSizeMode) {
+      setFontSizeModeState(currentMode)
+    }
+
     // 检查是否有从日历页面返回的选中日期
     if ((global as any).__selectedDate) {
       const dateKey = (global as any).__selectedDate
@@ -252,6 +275,10 @@ export default function Index() {
   })
 
   const initPage = async () => {
+    // 初始化字体模式
+    const currentMode = initFontSizeMode()
+    setFontSizeModeState(currentMode)
+
     // 测试模式直接加载测试数据
     if (USE_TEST_DATA) {
       setRecords(getTestData())
@@ -262,6 +289,12 @@ export default function Index() {
     const storedUser = getUserInfo()
     if (storedUser) {
       setUserInfo(storedUser)
+      // 如果服务器返回了字体模式，同步到本地
+      if (storedUser.fontSizeMode) {
+        saveLocalFontSizeMode(storedUser.fontSizeMode)
+        applyFontSizeMode(storedUser.fontSizeMode)
+        setFontSizeModeState(storedUser.fontSizeMode)
+      }
       await fetchRecords(storedUser.openid)
       await fetchGroups(storedUser.openid)
     } else {
@@ -276,6 +309,14 @@ export default function Index() {
       const result = await silentLogin()
       if (result.success && result.userInfo) {
         setUserInfo(result.userInfo)
+
+        // 同步服务器的字体模式设置
+        if (result.userInfo.fontSizeMode) {
+          saveLocalFontSizeMode(result.userInfo.fontSizeMode)
+          applyFontSizeMode(result.userInfo.fontSizeMode)
+          setFontSizeModeState(result.userInfo.fontSizeMode)
+        }
+
         await fetchRecords(result.userInfo.openid)
         await fetchGroups(result.userInfo.openid)
       } else {
@@ -477,6 +518,7 @@ export default function Index() {
     e.stopPropagation && e.stopPropagation()
   }
 
+
   // 处理记录点击（编辑/删除）
   const handleRecordAction = (record: BPRecord) => {
     Taro.showActionSheet({
@@ -538,7 +580,7 @@ export default function Index() {
         disableScroll
       />
 
-      <ScrollView className='page' scrollY enhanced showScrollbar={false}>
+      <ScrollView className={`page ${getFontSizeModeClass(fontSizeMode)}`} scrollY enhanced showScrollbar={false}>
         {/* 顶部蓝色弧形背景 */}
         <View className='bg-curve' />
 
@@ -866,6 +908,7 @@ export default function Index() {
           </View>
         </View>
       )}
+
     </>
   )
 }

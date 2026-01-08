@@ -1,0 +1,181 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+// Supabase 配置
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+
+// 处理 CORS 预检请求
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-openid',
+      'Access-Control-Max-Age': '86400',
+    },
+  })
+}
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+/**
+ * GET - 获取用户设置
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const openid = request.headers.get('x-openid')
+
+    if (!openid) {
+      return NextResponse.json({ success: false, error: '缺少用户标识' }, {
+        status: 400,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json({ success: false, error: '服务器配置错误' }, {
+        status: 500,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    const { data: user, error } = await supabase
+      .from('wx_users')
+      .select('font_size_mode')
+      .eq('openid', openid)
+      .single()
+
+    if (error) {
+      console.error('Failed to get user settings:', error)
+      return NextResponse.json({ success: false, error: '获取设置失败' }, {
+        status: 500,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    return NextResponse.json({
+      success: true,
+      settings: {
+        fontSizeMode: user?.font_size_mode || 'normal'
+      }
+    }, {
+      headers: { 'Access-Control-Allow-Origin': '*' },
+    })
+
+  } catch (error: any) {
+    console.error('[user-settings] GET error:', error)
+    return NextResponse.json({
+      success: false,
+      error: '服务器错误'
+    }, {
+      status: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+    })
+  }
+}
+
+/**
+ * POST - 更新用户设置
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const openid = request.headers.get('x-openid')
+
+    if (!openid) {
+      return NextResponse.json({ success: false, error: '缺少用户标识' }, {
+        status: 400,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    let body
+    try {
+      body = await request.json()
+    } catch (jsonError) {
+      return NextResponse.json({
+        success: false,
+        error: '请求体必须是有效的 JSON 格式'
+      }, {
+        status: 400,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    const { fontSizeMode } = body
+
+    // 验证 fontSizeMode 的值
+    if (fontSizeMode && !['normal', 'elder'].includes(fontSizeMode)) {
+      return NextResponse.json({
+        success: false,
+        error: '无效的字体模式设置'
+      }, {
+        status: 400,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json({ success: false, error: '服务器配置错误' }, {
+        status: 500,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // 构建更新数据
+    const updateData: { font_size_mode?: string } = {}
+    if (fontSizeMode) {
+      updateData.font_size_mode = fontSizeMode
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: '没有提供要更新的设置'
+      }, {
+        status: 400,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    const { error: updateError } = await supabase
+      .from('wx_users')
+      .update(updateData)
+      .eq('openid', openid)
+
+    if (updateError) {
+      console.error('Failed to update user settings:', updateError)
+      return NextResponse.json({ success: false, error: '更新设置失败' }, {
+        status: 500,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      })
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: '设置已更新',
+      settings: {
+        fontSizeMode: fontSizeMode || 'normal'
+      }
+    }, {
+      headers: { 'Access-Control-Allow-Origin': '*' },
+    })
+
+  } catch (error: any) {
+    console.error('[user-settings] POST error:', error)
+    return NextResponse.json({
+      success: false,
+      error: '服务器错误'
+    }, {
+      status: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+    })
+  }
+}
+

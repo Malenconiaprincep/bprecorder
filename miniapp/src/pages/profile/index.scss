@@ -257,6 +257,12 @@
   color: #1e293b;
 }
 
+.menu-extra {
+  font-size: 26rpx;
+  color: #94a3b8;
+  margin-right: 12rpx;
+}
+
 .menu-arrow {
   font-size: 36rpx;
   color: #cbd5e1;
@@ -969,4 +975,101 @@
   font-size: 32rpx;
   color: #ffffff;
   font-weight: 600;
+}
+
+/* ========== 关怀模式下 Profile 页面特定样式 ========== */
+.page.elder-mode {
+  padding: 30rpx !important;
+  padding-bottom: 200rpx !important;
+  
+  /* 用户卡片放大 */
+  .user-card {
+    padding: 40rpx !important;
+    border-radius: 32rpx !important;
+    margin-bottom: 30rpx !important;
+  }
+  
+  .avatar-img-display {
+    width: 120rpx !important;
+    height: 120rpx !important;
+    margin-right: 32rpx !important;
+  }
+  
+  .user-name {
+    font-size: 42rpx !important;
+    margin-bottom: 10rpx !important;
+  }
+  
+  .user-desc {
+    font-size: 30rpx !important;
+  }
+  
+  /* 统计卡片放大 */
+  .stats-card {
+    padding: 44rpx 24rpx !important;
+    border-radius: 32rpx !important;
+    margin-bottom: 30rpx !important;
+  }
+  
+  .stat-value {
+    font-size: 56rpx !important;
+    margin-bottom: 10rpx !important;
+  }
+  
+  .stat-label {
+    font-size: 28rpx !important;
+  }
+  
+  .stat-divider {
+    height: 64rpx !important;
+  }
+  
+  /* 菜单项放大 */
+  .menu-card {
+    border-radius: 32rpx !important;
+    margin-bottom: 30rpx !important;
+  }
+  
+  .menu-item {
+    padding: 40rpx 44rpx !important;
+  }
+  
+  .menu-icon {
+    width: 56rpx !important;
+    height: 56rpx !important;
+    margin-right: 28rpx !important;
+  }
+  
+  .menu-title {
+    font-size: 38rpx !important;
+  }
+  
+  .menu-extra {
+    font-size: 32rpx !important;
+    margin-right: 16rpx !important;
+  }
+  
+  .menu-arrow {
+    font-size: 44rpx !important;
+  }
+  
+  /* 退出按钮放大 */
+  .logout-btn {
+    padding: 38rpx !important;
+    border-radius: 32rpx !important;
+  }
+  
+  .logout-text {
+    font-size: 38rpx !important;
+  }
+  
+  /* 版本号 */
+  .version-info {
+    padding: 44rpx 0 !important;
+    margin-top: 24rpx !important;
+  }
+  
+  .version-text {
+    font-size: 30rpx !important;
+  }
 }

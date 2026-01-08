@@ -9,6 +9,524 @@ page {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* ========== 关怀模式（大字体 + 简化布局）样式 ========== */
+/* 关怀模式特点：字体放大约1.3倍、简化布局、隐藏次要信息 */
+
+.elder-mode {
+  /* ===== 二、用户卡片简化 ===== */
+  .user-card {
+    padding: 40rpx !important;
+    margin-bottom: 28rpx !important;
+  }
+  
+  .user-name {
+    font-size: 48rpx !important;
+    margin-bottom: 12rpx !important;
+  }
+  
+  .user-desc {
+    font-size: 34rpx !important;
+  }
+  
+  .avatar-img-display {
+    width: 130rpx !important;
+    height: 130rpx !important;
+  }
+  
+  /* ===== 三、操作按钮放大（核心功能更突出） ===== */
+  .actions {
+    padding: 20rpx 30rpx 0 30rpx !important;
+    margin-bottom: 24rpx !important;
+    gap: 24rpx !important;
+  }
+  
+  .action-btn {
+    padding: 40rpx 24rpx !important;
+    border-radius: 28rpx !important;
+  }
+  
+  .action-text-white,
+  .action-text-dark {
+    font-size: 40rpx !important;
+  }
+  
+  .action-icon {
+    width: 56rpx !important;
+    height: 56rpx !important;
+    margin-right: 12rpx !important;
+  }
+  
+  /* ===== 四、血压卡片简化 ===== */
+  .bp-card {
+    margin: 0 30rpx 24rpx !important;
+    padding: 32rpx !important;
+    border-radius: 32rpx !important;
+  }
+  
+  .card-title {
+    font-size: 38rpx !important;
+  }
+  
+  .title-icon {
+    width: 40rpx !important;
+    height: 40rpx !important;
+    margin-right: 14rpx !important;
+  }
+  
+  .bp-value {
+    font-size: 110rpx !important;
+  }
+  
+  .bp-slash {
+    font-size: 76rpx !important;
+    margin: 0 12rpx !important;
+  }
+  
+  .bp-unit {
+    font-size: 34rpx !important;
+    margin-left: 16rpx !important;
+  }
+  
+  .pulse-inline {
+    margin-left: 32rpx !important;
+    padding-left: 32rpx !important;
+  }
+  
+  .pulse-value-inline {
+    font-size: 60rpx !important;
+  }
+  
+  .pulse-unit-inline {
+    font-size: 28rpx !important;
+  }
+  
+  .card-status {
+    padding: 10rpx 20rpx !important;
+    border-radius: 20rpx !important;
+  }
+  
+  .card-status-text {
+    font-size: 30rpx !important;
+  }
+  
+  /* 血压差异放大（保留显示，对老年人也有用） */
+  .bp-diff-inline {
+    margin-top: 12rpx !important;
+  }
+  
+  .bp-diff-label {
+    font-size: 30rpx !important;
+  }
+  
+  .bp-diff-text {
+    font-size: 30rpx !important;
+  }
+  
+  .bp-diff-separator {
+    font-size: 26rpx !important;
+  }
+  
+  /* 隐藏分享按钮（简化操作） */
+  .share-btn {
+    display: none !important;
+  }
+  
+  .empty-bp {
+    font-size: 100rpx !important;
+  }
+  
+  .empty-bp-hint {
+    font-size: 36rpx !important;
+  }
+  
+  /* ===== 五、本周概览简化 ===== */
+  .summary-card {
+    margin: 0 30rpx 24rpx !important;
+    padding: 32rpx !important;
+    border-radius: 32rpx !important;
+  }
+  
+  .summary-title {
+    font-size: 38rpx !important;
+  }
+  
+  .summary-count {
+    font-size: 30rpx !important;
+  }
+  
+  .avg-label {
+    font-size: 30rpx !important;
+    margin-bottom: 10rpx !important;
+  }
+  
+  .avg-number {
+    font-size: 68rpx !important;
+  }
+  
+  .avg-slash {
+    font-size: 48rpx !important;
+    margin: 0 10rpx !important;
+  }
+  
+  .avg-unit {
+    font-size: 30rpx !important;
+    margin-left: 14rpx !important;
+  }
+  
+  .summary-status {
+    padding: 22rpx 32rpx !important;
+    border-radius: 24rpx !important;
+  }
+  
+  .status-emoji {
+    font-size: 56rpx !important;
+    margin-bottom: 6rpx !important;
+  }
+  
+  .status-text {
+    font-size: 32rpx !important;
+  }
+  
+  .summary-empty-text {
+    font-size: 34rpx !important;
+  }
+  
+  .summary-empty-hint {
+    font-size: 28rpx !important;
+  }
+  
+  /* ===== 六、隐藏"我的组"快捷入口（简化首页） ===== */
+  .groups-shortcut {
+    display: none !important;
+  }
+  
+  /* ===== 七、记录列表简化 ===== */
+  .records-section {
+    margin: 30rpx 30rpx 0 30rpx !important;
+  }
+  
+  .records-card {
+    padding: 32rpx !important;
+    border-radius: 32rpx !important;
+  }
+  
+  .section-title {
+    font-size: 38rpx !important;
+    margin-bottom: 24rpx !important;
+  }
+  
+  .section-subtitle {
+    font-size: 30rpx !important;
+  }
+  
+  /* 隐藏数据日历按钮（简化操作） */
+  .calendar-trigger-btn {
+    display: none !important;
+  }
+  
+  .filter-hint {
+    padding: 16rpx 24rpx !important;
+    margin-bottom: 20rpx !important;
+  }
+  
+  .filter-hint-text {
+    font-size: 30rpx !important;
+  }
+  
+  .filter-hint-clear {
+    font-size: 28rpx !important;
+  }
+  
+  /* 日期分组 */
+  .date-group {
+    &:not(:last-child) {
+      margin-bottom: 24rpx !important;
+    }
+  }
+  
+  .date-header {
+    margin-bottom: 16rpx !important;
+    padding: 0 8rpx !important;
+  }
+  
+  .date-label {
+    font-size: 34rpx !important;
+  }
+  
+  .date-count {
+    font-size: 28rpx !important;
+    padding: 4rpx 16rpx !important;
+  }
+  
+  /* 记录项 - 简化布局 */
+  .record-item {
+    padding: 24rpx 8rpx 24rpx 0 !important;
+  }
+  
+  .record-top {
+    margin-bottom: 12rpx !important;
+  }
+  
+  .bp-num {
+    font-size: 72rpx !important;
+  }
+  
+  .bp-divider {
+    font-size: 52rpx !important;
+    margin: 0 6rpx !important;
+  }
+  
+  .pulse-display {
+    gap: 6rpx !important;
+    margin-left: 16rpx !important;
+  }
+  
+  .pulse-icon {
+    width: 28rpx !important;
+    height: 28rpx !important;
+  }
+  
+  .pulse-num {
+    font-size: 34rpx !important;
+  }
+  
+  .status-badge {
+    padding: 8rpx 18rpx !important;
+    border-radius: 16rpx !important;
+  }
+  
+  .badge-text {
+    font-size: 28rpx !important;
+  }
+  
+  .record-middle {
+    margin-bottom: 10rpx !important;
+  }
+  
+  .datetime-text {
+    font-size: 30rpx !important;
+  }
+  
+  .bottom-info-text {
+    font-size: 28rpx !important;
+  }
+  
+  /* 隐藏备注（简化信息） */
+  .record-note-row {
+    display: none !important;
+  }
+  
+  /* 空记录 */
+  .empty-records {
+    padding: 80rpx 48rpx !important;
+  }
+  
+  .empty-icon {
+    width: 100rpx !important;
+    height: 100rpx !important;
+    margin-bottom: 32rpx !important;
+  }
+  
+  .empty-text {
+    font-size: 44rpx !important;
+    margin-bottom: 16rpx !important;
+  }
+  
+  .empty-hint {
+    font-size: 34rpx !important;
+  }
+  
+  /* ===== 八、菜单项放大 + 简化 ===== */
+  .menu-card {
+    border-radius: 36rpx !important;
+    margin-bottom: 40rpx !important;
+  }
+  
+  .menu-item {
+    padding: 44rpx 48rpx !important;
+  }
+  
+  .menu-icon {
+    width: 60rpx !important;
+    height: 60rpx !important;
+    margin-right: 28rpx !important;
+  }
+  
+  .menu-title {
+    font-size: 40rpx !important;
+  }
+  
+  .menu-extra {
+    font-size: 34rpx !important;
+    margin-right: 16rpx !important;
+  }
+  
+  .menu-arrow {
+    font-size: 48rpx !important;
+  }
+  
+  /* ===== 九、统计卡片放大 ===== */
+  .stats-card {
+    padding: 48rpx 28rpx !important;
+    border-radius: 36rpx !important;
+    margin-bottom: 40rpx !important;
+  }
+  
+  .stat-value {
+    font-size: 64rpx !important;
+    margin-bottom: 12rpx !important;
+  }
+  
+  .stat-label {
+    font-size: 32rpx !important;
+  }
+  
+  .stat-divider {
+    height: 72rpx !important;
+  }
+  
+  /* ===== 十、弹窗样式放大 ===== */
+  .modal-content {
+    padding: 56rpx !important;
+    border-radius: 36rpx !important;
+  }
+  
+  .modal-title {
+    font-size: 46rpx !important;
+    margin-bottom: 56rpx !important;
+  }
+  
+  .modal-buttons {
+    gap: 28rpx !important;
+  }
+  
+  .modal-btn {
+    font-size: 40rpx !important;
+    height: 108rpx !important;
+    border-radius: 54rpx !important;
+  }
+  
+  .nickname-field {
+    font-size: 40rpx !important;
+    height: 108rpx !important;
+    border-radius: 20rpx !important;
+    padding: 0 28rpx !important;
+    margin-bottom: 48rpx !important;
+  }
+  
+  .avatar-picker {
+    margin: 0 auto 48rpx !important;
+  }
+  
+  .avatar-preview {
+    width: 180rpx !important;
+    height: 180rpx !important;
+  }
+  
+  .avatar-hint {
+    font-size: 30rpx !important;
+    margin-top: 20rpx !important;
+  }
+  
+  /* ===== 十一、退出按钮放大 ===== */
+  .logout-btn {
+    padding: 40rpx !important;
+    border-radius: 36rpx !important;
+  }
+  
+  .logout-text {
+    font-size: 40rpx !important;
+  }
+  
+  /* ===== 十二、版本号 ===== */
+  .version-info {
+    padding: 48rpx 0 !important;
+    margin-top: 28rpx !important;
+  }
+  
+  .version-text {
+    font-size: 32rpx !important;
+  }
+  
+  /* ===== 十三、分析中遮罩 ===== */
+  .analyze-content {
+    padding: 72rpx 96rpx !important;
+    border-radius: 36rpx !important;
+  }
+  
+  .analyze-text {
+    font-size: 44rpx !important;
+  }
+  
+  /* ===== 十四、识别结果弹窗 ===== */
+  .result-modal {
+    width: 660rpx !important;
+    border-radius: 36rpx !important;
+  }
+  
+  .modal-header {
+    padding: 48rpx !important;
+  }
+  
+  .modal-close {
+    font-size: 56rpx !important;
+    width: 56rpx !important;
+    height: 56rpx !important;
+  }
+  
+  .modal-body {
+    padding: 48rpx !important;
+  }
+  
+  .result-values {
+    margin-bottom: 48rpx !important;
+  }
+  
+  .result-number {
+    font-size: 88rpx !important;
+    margin-bottom: 12rpx !important;
+  }
+  
+  .result-label {
+    font-size: 32rpx !important;
+  }
+  
+  .result-separator {
+    font-size: 68rpx !important;
+    margin: 0 24rpx !important;
+  }
+  
+  .result-item.pulse {
+    margin-left: 48rpx !important;
+  }
+  
+  /* 左右手选择放大 */
+  .hand-selector {
+    margin: 40rpx 0 !important;
+    gap: 32rpx !important;
+  }
+  
+  .hand-option {
+    font-size: 38rpx !important;
+    padding: 24rpx 64rpx !important;
+    border-radius: 40rpx !important;
+  }
+  
+  /* 隐藏备注输入（简化操作） */
+  .note-section {
+    display: none !important;
+  }
+  
+  .modal-actions {
+    gap: 28rpx !important;
+  }
+  
+  /* ===== 十五、底部 TabBar 相关 ===== */
+  .bottom-spacer {
+    height: 120rpx !important;
+  }
+}
+
 /* 蓝色渐变背景 */
 .bg-gradient-blue {
   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);

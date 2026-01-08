@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { View, Text, Image, Button, Input, Textarea } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, getUserInfo, silentLogin, uploadAvatar } from '../../lib/auth'
 import { getRecords, BPRecord, addRecordsBatch } from '../../lib/supabase'
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
+import { FontSizeMode, getCurrentFontSizeMode, setFontSizeMode, getFontSizeModeClass, applyFontSizeMode } from '../../lib/settings'
+import FontSizeModeModal from '../../components/FontSizeModeModal'
 import * as XLSX from 'xlsx'
 import './index.scss'
 // @ts-ignore
@@ -18,6 +20,8 @@ import iconImport from '../../assets/icons/intray.png'
 import iconClock from '../../assets/icons/clock.png'
 // @ts-ignore
 import iconShare from '../../assets/icons/share.png'
+// @ts-ignore
+import iconMode from '../../assets/icons/mode.png'
 // 群二维码图片 - 请将你的微信群二维码图片放在 assets/icons/ 目录下，命名为 group-qrcode.png
 // 如果图片不存在，可以注释掉下面这行，并在弹窗中使用网络图片URL
 let groupQrcode: string | undefined
@@ -37,6 +41,10 @@ export default function Profile() {
   const [tempAvatar, setTempAvatar] = useState('')
   const [tempNickname, setTempNickname] = useState('')
   const [records, setRecords] = useState<BPRecord[]>([])
+
+  // 字体模式相关状态
+  const [fontSizeMode, setFontSizeModeState] = useState<FontSizeMode>('normal')
+  const [showFontModeModal, setShowFontModeModal] = useState(false)
 
   // 数据导入相关状态
   const [showImportModal, setShowImportModal] = useState(false)
@@ -132,6 +140,10 @@ export default function Profile() {
   }
 
   useLoad(async () => {
+    // 初始化字体模式
+    const currentMode = getCurrentFontSizeMode()
+    setFontSizeModeState(currentMode)
+
     // 测试模式下直接加载测试数据
     if (USE_TEST_DATA) {
       setRecords(getTestData())
@@ -160,6 +172,19 @@ export default function Profile() {
     }
 
   })
+
+  // 监听字体模式变化
+  useEffect(() => {
+    const handleFontModeChange = (mode: FontSizeMode) => {
+      setFontSizeModeState(mode)
+    }
+
+    Taro.eventCenter.on('fontSizeModeChanged', handleFontModeChange)
+
+    return () => {
+      Taro.eventCenter.off('fontSizeModeChanged', handleFontModeChange)
+    }
+  }, [])
 
   // 页面每次显示时刷新数据
   useDidShow(() => {
@@ -738,16 +763,54 @@ export default function Profile() {
     }
   }
 
-  const menuItems = [
-    { title: '我的组', icon: iconGroups, onClick: goToGroups },
-    { title: '数据导入', icon: iconImport, onClick: openImportModal },
-    { title: '数据导出', icon: iconExport, onClick: showDevTip },
-    { title: '提醒设置', icon: iconClock, onClick: showDevTip },
-    { title: '交流群', icon: iconShare, onClick: openGroupModal },
+  // 打开字体模式设置弹窗
+  const openFontModeModal = () => {
+    setShowFontModeModal(true)
+  }
+
+  // 处理字体模式选择
+  const handleFontModeSelect = async (mode: FontSizeMode) => {
+    setFontSizeModeState(mode)
+    setShowFontModeModal(false)
+
+    // 保存设置（本地 + 服务器）
+    if (openid) {
+      await setFontSizeMode(openid, mode)
+    } else {
+      // 未登录时仅应用到本地
+      applyFontSizeMode(mode)
+    }
+
+    Taro.showToast({
+      title: mode === 'elder' ? '已切换到关怀模式' : '已切换到标准模式',
+      icon: 'success'
+    })
+  }
+
+  // 根据字体模式决定显示哪些菜单项
+  // 关怀模式下只显示核心功能，减少选项
+  const allMenuItems = [
+    { title: '我的组', icon: iconGroups, onClick: goToGroups, showInElder: false },
+    { title: '数据导入', icon: iconImport, onClick: openImportModal, showInElder: false },
+    { title: '数据导出', icon: iconExport, onClick: showDevTip, showInElder: false },
+    // { title: '提醒设置', icon: iconClock, onClick: showDevTip, showInElder: true },
+    {
+      title: '显示模式',
+      icon: iconMode,
+      onClick: openFontModeModal,
+      extra: fontSizeMode === 'elder' ? '关怀模式' : '标准模式',
+      showInElder: true
+    },
+    { title: '交流群', icon: iconShare, onClick: openGroupModal, showInElder: false },
   ]
 
+  // 关怀模式下过滤菜单项
+  const menuItems = fontSizeMode === 'elder'
+    ? allMenuItems.filter(item => item.showInElder)
+    : allMenuItems
+
   return (
-    <View className='page'>
+    <View className={`page ${getFontSizeModeClass(fontSizeMode)}`}>
       {/* 用户信息卡片 */}
       <View className='user-card' onClick={!isProfileComplete ? onClickLogin : undefined}>
         <Image
@@ -828,6 +891,7 @@ export default function Profile() {
           <View key={index} className='menu-item' onClick={item.onClick}>
             <Image className='menu-icon' src={item.icon} mode='aspectFit' />
             <Text className='menu-title'>{item.title}</Text>
+            {item.extra && <Text className='menu-extra'>{item.extra}</Text>}
             <Text className='menu-arrow'>›</Text>
           </View>
         ))}
@@ -1103,6 +1167,15 @@ export default function Profile() {
       <View className='version-info'>
         <Text className='version-text'>v1.9.2</Text>
       </View>
+
+      {/* 字体模式选择弹窗 */}
+      <FontSizeModeModal
+        visible={showFontModeModal}
+        onSelect={handleFontModeSelect}
+        onClose={() => setShowFontModeModal(false)}
+        title='选择显示模式'
+        showClose
+      />
     </View>
   )
 }

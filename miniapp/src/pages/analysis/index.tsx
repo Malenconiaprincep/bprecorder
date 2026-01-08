@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { View, Text, Image } from '@tarojs/components'
-import { useLoad } from '@tarojs/taro'
+import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { getRecords, BPRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
+import { FontSizeMode, getCurrentFontSizeMode, getFontSizeModeClass } from '../../lib/settings'
 import './index.scss'
 // @ts-ignore
 import iconChart from '../../assets/icons/chart.png'
@@ -41,10 +42,34 @@ export default function AnalysisPage() {
   const [records, setRecords] = useState<BPRecord[]>([])
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week')
   const [selectedPoint, setSelectedPoint] = useState<SelectedPoint | null>(null)
+  const [fontSizeMode, setFontSizeMode] = useState<FontSizeMode>('normal')
 
   useLoad(() => {
+    // 初始化字体模式
+    setFontSizeMode(getCurrentFontSizeMode())
     fetchRecords()
   })
+  
+  // 页面显示时同步字体模式
+  useDidShow(() => {
+    const currentMode = getCurrentFontSizeMode()
+    if (currentMode !== fontSizeMode) {
+      setFontSizeMode(currentMode)
+    }
+  })
+  
+  // 监听字体模式变化
+  useEffect(() => {
+    const handleFontModeChange = (mode: FontSizeMode) => {
+      setFontSizeMode(mode)
+    }
+    
+    Taro.eventCenter.on('fontSizeModeChanged', handleFontModeChange)
+    
+    return () => {
+      Taro.eventCenter.off('fontSizeModeChanged', handleFontModeChange)
+    }
+  }, [])
 
   const fetchRecords = async () => {
     // 使用测试数据
@@ -228,7 +253,7 @@ export default function AnalysisPage() {
   }, [chartData, timeRange])
 
   return (
-    <View className='analysis-page'>
+    <View className={`analysis-page ${getFontSizeModeClass(fontSizeMode)}`}>
       {/* 时间范围切换 */}
       <View className='time-tabs'>
         <View
