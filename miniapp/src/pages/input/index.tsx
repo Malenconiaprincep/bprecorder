@@ -83,12 +83,15 @@ export default function InputPage() {
       if (params.pulse) setPulse(params.pulse)
       if (params.hand) setHand(params.hand as 'left' | 'right')
       if (params.note) {
-        const decodedNote = decodeURIComponent(params.note)
-        setNote(decodedNote)
-        // 如果有备注内容，自动展开
-        if (decodedNote) {
-          setNoteExpanded(true)
+        // 微信小程序的 URL 参数需要手动解码
+        try {
+          setNote(decodeURIComponent(params.note))
+        } catch (e) {
+          // 如果解码失败，直接使用原值
+          setNote(params.note)
         }
+        // 如果有备注内容，自动展开
+        setNoteExpanded(true)
       }
       // 如果有recorded_at参数，填充日期时间
       if (params.recorded_at) {

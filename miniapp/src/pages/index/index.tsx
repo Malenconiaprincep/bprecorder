@@ -533,7 +533,7 @@ export default function Index() {
             diastolic: String(record.diastolic),
             pulse: String(record.pulse),
             hand: record.hand || '',
-            note: encodeURIComponent(record.note || '')
+            note: record.note || ''
           })
           Taro.navigateTo({ url: `/pages/input/index?${params.toString()}` })
         } else if (res.tapIndex === 1) {
