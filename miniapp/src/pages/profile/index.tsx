@@ -22,18 +22,6 @@ import iconClock from '../../assets/icons/clock.png'
 import iconShare from '../../assets/icons/share.png'
 // @ts-ignore
 import iconMode from '../../assets/icons/mode.png'
-// 群二维码图片 - 请将你的微信群二维码图片放在 assets/icons/ 目录下，命名为 group-qrcode.png
-// 如果图片不存在，可以注释掉下面这行，并在弹窗中使用网络图片URL
-let groupQrcode: string | undefined
-try {
-  // @ts-ignore
-  groupQrcode = require('../../assets/icons/group-qrcode.png')
-} catch (e) {
-  // 图片不存在，使用占位符或网络URL
-  // groupQrcode = 'https://your-domain.com/qrcode.png' // 可以在这里填写网络图片URL
-  groupQrcode = undefined
-}
-
 export default function Profile() {
   const [wxUser, setWxUser] = useState<WxUserInfo | null>(null)
   const [openid, setOpenid] = useState<string>('')
@@ -71,16 +59,13 @@ export default function Profile() {
   // 联系方式配置
   const CONTACT_CONFIG = {
     // 方式1: 微信号（推荐，永久有效）
-    wechatId: 'Free2dom2017', // 填写你的微信号，例如：'BPRecorder2024'
+    wechatId: 'Free2dom2017',
 
     // 方式2: 群号（如果知道群号）
-    groupNumber: '', // 填写群号，例如：'123456789'
+    groupNumber: '',
 
-    // 方式3: 后端接口获取二维码（推荐，可以定期更新）
-    qrcodeApiUrl: '', // 例如：'https://your-api.com/api/qrcode'
-
-    // 方式4: 使用小程序客服消息（推荐，最简单）
-    useCustomerService: true, // 设置为 true 会显示客服消息按钮
+    // 方式3: 使用小程序客服消息（推荐，最简单）
+    useCustomerService: true,
   }
 
   // 判断是否已完善资料（有头像和昵称）
@@ -721,46 +706,9 @@ export default function Profile() {
     }
   }
 
-  // 复制群号
-  const copyGroupNumber = () => {
-    if (CONTACT_CONFIG.groupNumber) {
-      Taro.setClipboardData({
-        data: CONTACT_CONFIG.groupNumber,
-        success: () => {
-          Taro.showToast({ title: '已复制群号', icon: 'success' })
-        }
-      })
-    }
-  }
-
-  // 从后端获取二维码
-  const [qrcodeUrl, setQrcodeUrl] = useState<string | undefined>(groupQrcode)
-  const [loadingQrcode, setLoadingQrcode] = useState(false)
-
-  const fetchQrcodeFromApi = async () => {
-    if (!CONTACT_CONFIG.qrcodeApiUrl) return
-
-    setLoadingQrcode(true)
-    try {
-      // 这里可以调用你的后端接口获取最新的二维码
-      // const res = await Taro.request({ url: CONTACT_CONFIG.qrcodeApiUrl })
-      // setQrcodeUrl(res.data.qrcodeUrl)
-
-      // 示例：如果接口返回图片URL
-      // setQrcodeUrl(res.data.url)
-    } catch (e) {
-      console.error('获取二维码失败:', e)
-    } finally {
-      setLoadingQrcode(false)
-    }
-  }
-
-  // 打开弹窗时，如果有API配置，尝试获取最新二维码
+  // 打开交流群弹窗
   const openGroupModal = () => {
     setShowGroupModal(true)
-    if (CONTACT_CONFIG.qrcodeApiUrl) {
-      fetchQrcodeFromApi()
-    }
   }
 
   // 打开字体模式设置弹窗
@@ -1109,46 +1057,6 @@ export default function Profile() {
                     <Text className='contact-info-label'>微信号：</Text>
                     <Text className='contact-info-value'>{CONTACT_CONFIG.wechatId}</Text>
                     <View className='copy-btn' onClick={copyWechatId}>
-                      <Text className='copy-btn-text'>复制</Text>
-                    </View>
-                  </View>
-                </View>
-              )}
-
-              {/* 方式3: 群二维码（可能有时效性） */}
-              {(qrcodeUrl || groupQrcode) && (
-                <View className='contact-method'>
-                  {(CONTACT_CONFIG.useCustomerService || CONTACT_CONFIG.wechatId) && <View className='divider-line' />}
-                  <Text className='contact-method-title'>方式三：扫码加群</Text>
-                  <Text className='contact-method-desc'>二维码可能有时效性，建议优先使用前两种方式</Text>
-                  {loadingQrcode ? (
-                    <View className='qrcode-container'>
-                      <Text className='qrcode-loading'>加载中...</Text>
-                    </View>
-                  ) : (
-                    <View className='qrcode-container'>
-                      <Image
-                        className='qrcode-image'
-                        src={qrcodeUrl || groupQrcode}
-                        mode='aspectFit'
-                        showMenuByLongpress
-                      />
-                      <Text className='qrcode-hint'>长按二维码保存图片</Text>
-                    </View>
-                  )}
-                </View>
-              )}
-
-              {/* 方式4: 群号（如果知道） */}
-              {CONTACT_CONFIG.groupNumber && (
-                <View className='contact-method'>
-                  {(CONTACT_CONFIG.useCustomerService || CONTACT_CONFIG.wechatId || qrcodeUrl) && <View className='divider-line' />}
-                  <Text className='contact-method-title'>方式四：群号</Text>
-                  <Text className='contact-method-desc'>复制群号后，在微信中搜索加入</Text>
-                  <View className='contact-info-row'>
-                    <Text className='contact-info-label'>群号：</Text>
-                    <Text className='contact-info-value'>{CONTACT_CONFIG.groupNumber}</Text>
-                    <View className='copy-btn' onClick={copyGroupNumber}>
                       <Text className='copy-btn-text'>复制</Text>
                     </View>
                   </View>
