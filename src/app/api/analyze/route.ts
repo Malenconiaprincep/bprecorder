@@ -4,12 +4,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from "axios";
 
 // 支持的模型类型
-type ModelType = 'qwen' | 'gemini' | 'anyrouter';
+type ModelType = 'qwen' | 'gemini' | 'anyrouter' | 'zai';
 
 // 获取要使用的模型（通过环境变量配置，默认为 gemini）
 const getModelType = (): ModelType => {
   const modelType = process.env.AI_MODEL?.toLowerCase();
-  return (modelType === 'qwen' || modelType === 'gemini' || modelType === 'anyrouter') ? modelType : 'gemini';
+  return (modelType === 'qwen' || modelType === 'gemini' || modelType === 'anyrouter' || modelType === 'zai') ? modelType : 'gemini';
 };
 
 // 获取 Gemini API 密钥列表（支持多个备用密钥）
@@ -83,6 +83,31 @@ const getAnyRouterApiKeys = (): string[] => {
   // 也支持逗号分隔的格式（ANYROUTER_API_KEYS=key1,key2,key3）
   if (process.env.ANYROUTER_API_KEYS) {
     const commaSeparatedKeys = process.env.ANYROUTER_API_KEYS.split(',').map(k => k.trim()).filter(k => k);
+    keys.push(...commaSeparatedKeys);
+  }
+
+  return keys;
+};
+
+// 获取 Z.ai API 密钥列表（支持多个备用密钥）
+const getZaiApiKeys = (): string[] => {
+  const keys: string[] = [];
+
+  // 主密钥
+  if (process.env.ZAI_API_KEY) {
+    keys.push(process.env.ZAI_API_KEY);
+  }
+
+  // 备用密钥（ZAI_API_KEY_1, ZAI_API_KEY_2, ...）
+  let i = 1;
+  while (process.env[`ZAI_API_KEY_${i}`]) {
+    keys.push(process.env[`ZAI_API_KEY_${i}`]!);
+    i++;
+  }
+
+  // 也支持逗号分隔的格式（ZAI_API_KEYS=key1,key2,key3）
+  if (process.env.ZAI_API_KEYS) {
+    const commaSeparatedKeys = process.env.ZAI_API_KEYS.split(',').map(k => k.trim()).filter(k => k);
     keys.push(...commaSeparatedKeys);
   }
 
@@ -182,7 +207,7 @@ async function analyzeWithQwenWithFallback(imageBase64: string, mimeType: string
 // 使用 Gemini 2.5 Flash 模型分析（使用指定的 API 密钥）
 async function analyzeWithGemini(imageBase64: string, mimeType: string, apiKey: string): Promise<any> {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const prompt = `
     Analyze this image of a blood pressure monitor. 
@@ -361,6 +386,105 @@ async function analyzeWithAnyRouterWithFallback(imageBase64: string, mimeType: s
   throw lastError || new Error("All AnyRouter API keys failed");
 }
 
+// 使用 Z.ai 平台分析（使用指定的 API 密钥）
+async function analyzeWithZai(imageBase64: string, mimeType: string, apiKey: string): Promise<any> {
+  const baseURL = process.env.ZAI_BASE_URL || "https://api.z.ai/api/paas/v4";
+  const modelName = process.env.ZAI_MODEL || "glm-4.6v";
+
+  console.log('Z.ai API config:', {
+    baseURL,
+    apiKey: apiKey.substring(0, 10) + '...',
+    model: modelName
+  });
+
+  const prompt = `
+    Analyze this image of a blood pressure monitor. 
+    Extract the systolic (high), diastolic (low), and pulse (heart rate) numbers. 
+    Return ONLY a raw JSON object with keys: "systolic", "diastolic", "pulse". 
+    All values should be integers. 
+    If you cannot clearly see a screen with these numbers, return {"error": "Unable to read display"}.
+    Do not include markdown formatting like \`\`\`json.
+  `;
+
+  const dataUrl = `data:${mimeType};base64,${imageBase64}`;
+
+  const options = {
+    method: 'POST',
+    url: `${baseURL}/chat/completions`,
+    headers: {
+      'Authorization': `Bearer ${apiKey}`
+    },
+    data: {
+      model: modelName,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "image_url",
+              image_url: { url: dataUrl },
+            },
+          ],
+        },
+      ],
+      max_tokens: 500,
+    },
+    timeout: 60000,
+  };
+
+  const response = await axios(options);
+  const text = response.data.choices[0]?.message?.content;
+  if (!text) {
+    throw new Error("Empty response from Z.ai");
+  }
+
+  console.log('Z.ai response text:', text);
+  return parseAIResponse(text);
+}
+
+// 使用 Z.ai 平台分析（自动尝试多个备用密钥）
+async function analyzeWithZaiWithFallback(imageBase64: string, mimeType: string): Promise<any> {
+  const apiKeys = getZaiApiKeys();
+  if (apiKeys.length === 0) {
+    throw new Error("ZAI_API_KEY is missing");
+  }
+
+  console.log(`Calling Z.ai API with ${apiKeys.length} key(s)...`);
+
+  let lastError: any = null;
+  for (let i = 0; i < apiKeys.length; i++) {
+    try {
+      const result = await analyzeWithZai(imageBase64, mimeType, apiKeys[i]);
+      if (i > 0) {
+        console.log(`Z.ai succeeded with fallback key ${i + 1}`);
+      }
+      return result;
+    } catch (error: any) {
+      lastError = error;
+      const isRateLimitError =
+        error.status === 429 ||
+        error.code === 429 ||
+        error.statusCode === 429 ||
+        error.message?.includes('429') ||
+        error.message?.toLowerCase().includes('too many requests') ||
+        error.message?.toLowerCase().includes('rate limit') ||
+        error.message?.toLowerCase().includes('quota exceeded') ||
+        error.message?.toLowerCase().includes('resource exhausted');
+
+      if (isRateLimitError && i < apiKeys.length - 1) {
+        console.log(`Z.ai API key ${i + 1} rate limited (429), trying next key...`);
+        continue;
+      }
+      if (!isRateLimitError || i === apiKeys.length - 1) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError || new Error("All Z.ai API keys failed");
+}
+
 // 解析 AI 响应为 JSON
 function parseAIResponse(text: string): any {
   const cleanText = text.replace(/```json|```/g, '').trim();
@@ -400,6 +524,8 @@ export async function POST(req: NextRequest) {
         result = await analyzeWithQwenWithFallback(base64Image, mimeType);
       } else if (modelType === 'anyrouter') {
         result = await analyzeWithAnyRouterWithFallback(base64Image, mimeType);
+      } else if (modelType === 'zai') {
+        result = await analyzeWithZaiWithFallback(base64Image, mimeType);
       } else {
         throw new Error(`Unknown model type: ${modelType}`);
       }
@@ -409,8 +535,8 @@ export async function POST(req: NextRequest) {
       console.error(`${modelType} model failed:`, error.message);
       console.log(`Trying fallback models...`);
 
-      // 按优先级顺序尝试其他模型：gemini -> anyrouter -> qwen
-      const fallbackModels: ModelType[] = (['gemini', 'anyrouter', 'qwen'] as ModelType[]).filter(m => m !== modelType);
+      // 按优先级顺序尝试其他模型：gemini -> zai -> anyrouter -> qwen
+      const fallbackModels: ModelType[] = (['gemini', 'zai', 'anyrouter', 'qwen'] as ModelType[]).filter(m => m !== modelType);
 
       for (const fallbackModel of fallbackModels) {
         try {
@@ -423,6 +549,9 @@ export async function POST(req: NextRequest) {
           } else if (fallbackModel === 'anyrouter') {
             result = await analyzeWithAnyRouterWithFallback(base64Image, mimeType);
             console.log(`Fallback to AnyRouter succeeded`);
+          } else if (fallbackModel === 'zai') {
+            result = await analyzeWithZaiWithFallback(base64Image, mimeType);
+            console.log(`Fallback to Z.ai succeeded`);
           }
           return NextResponse.json(result);
         } catch (fallbackError: any) {
