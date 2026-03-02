@@ -45,34 +45,33 @@ export default function AnalysisPage() {
   const [fontSizeMode, setFontSizeMode] = useState<FontSizeMode>('normal')
 
   useLoad(() => {
-    // 初始化字体模式
     setFontSizeMode(getCurrentFontSizeMode())
     fetchRecords()
   })
-  
-  // 页面显示时同步字体模式
+
+  // 页面显示时重新拉取数据并同步字体模式
   useDidShow(() => {
+    fetchRecords()
     const currentMode = getCurrentFontSizeMode()
     if (currentMode !== fontSizeMode) {
       setFontSizeMode(currentMode)
     }
   })
-  
+
   // 监听字体模式变化
   useEffect(() => {
     const handleFontModeChange = (mode: FontSizeMode) => {
       setFontSizeMode(mode)
     }
-    
+
     Taro.eventCenter.on('fontSizeModeChanged', handleFontModeChange)
-    
+
     return () => {
       Taro.eventCenter.off('fontSizeModeChanged', handleFontModeChange)
     }
   }, [])
 
   const fetchRecords = async () => {
-    // 使用测试数据
     if (USE_TEST_DATA) {
       setRecords(getTestData())
       return
