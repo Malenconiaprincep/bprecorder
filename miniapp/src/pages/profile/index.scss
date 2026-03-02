@@ -322,6 +322,32 @@
   line-height: 1.5;
 }
 
+.export-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  margin-bottom: 40rpx;
+}
+
+.export-shortcut-btn {
+  padding: 28rpx 32rpx;
+  background: #f1f5f9;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  color: #1e293b;
+  text-align: center;
+  transition: background 0.2s;
+}
+
+.export-shortcut-btn:active:not(.disabled) {
+  background: #e2e8f0;
+}
+
+.export-shortcut-btn.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .export-range {
   display: flex;
   flex-direction: column;
@@ -429,7 +455,6 @@
   box-sizing: border-box;
   font-family: monospace;
   /* 确保输入框可以滚动到可视区域 */
-  scroll-into-view: true;
 }
 
 .import-format-hint {
@@ -1024,94 +1049,94 @@
 .page.elder-mode {
   padding: 30rpx !important;
   padding-bottom: 200rpx !important;
-  
+
   /* 用户卡片放大 */
   .user-card {
     padding: 40rpx !important;
     border-radius: 32rpx !important;
     margin-bottom: 30rpx !important;
   }
-  
+
   .avatar-img-display {
     width: 120rpx !important;
     height: 120rpx !important;
     margin-right: 32rpx !important;
   }
-  
+
   .user-name {
     font-size: 42rpx !important;
     margin-bottom: 10rpx !important;
   }
-  
+
   .user-desc {
     font-size: 30rpx !important;
   }
-  
+
   /* 统计卡片放大 */
   .stats-card {
     padding: 44rpx 24rpx !important;
     border-radius: 32rpx !important;
     margin-bottom: 30rpx !important;
   }
-  
+
   .stat-value {
     font-size: 56rpx !important;
     margin-bottom: 10rpx !important;
   }
-  
+
   .stat-label {
     font-size: 28rpx !important;
   }
-  
+
   .stat-divider {
     height: 64rpx !important;
   }
-  
+
   /* 菜单项放大 */
   .menu-card {
     border-radius: 32rpx !important;
     margin-bottom: 30rpx !important;
   }
-  
+
   .menu-item {
     padding: 40rpx 44rpx !important;
   }
-  
+
   .menu-icon {
     width: 56rpx !important;
     height: 56rpx !important;
     margin-right: 28rpx !important;
   }
-  
+
   .menu-title {
     font-size: 38rpx !important;
   }
-  
+
   .menu-extra {
     font-size: 32rpx !important;
     margin-right: 16rpx !important;
   }
-  
+
   .menu-arrow {
     font-size: 44rpx !important;
   }
-  
+
   /* 退出按钮放大 */
   .logout-btn {
     padding: 38rpx !important;
     border-radius: 32rpx !important;
   }
-  
+
   .logout-text {
     font-size: 38rpx !important;
   }
-  
+
   /* 版本号 */
   .version-info {
     padding: 44rpx 0 !important;
     margin-top: 24rpx !important;
   }
-  
+
   .version-text {
     font-size: 30rpx !important;
   }

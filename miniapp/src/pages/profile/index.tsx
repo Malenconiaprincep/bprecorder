@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { View, Text, Image, Button, Input, Textarea, Picker } from '@tarojs/components'
+import { View, Text, Image, Button, Input, Textarea } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, getUserInfo, silentLogin, uploadAvatar } from '../../lib/auth'
 import { getRecords, getRecordsInRange, BPRecord, addRecordsBatch } from '../../lib/supabase'
@@ -340,6 +340,19 @@ export default function Profile() {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
   }
 
+  // 快捷方式：近一个月 / 近三个月 / 近半年 / 近一年
+  const getRangeForShortcut = (type: '1m' | '3m' | '6m' | '1y') => {
+    const end = new Date()
+    const start = new Date()
+    const days = type === '1m' ? 30 : type === '3m' ? 90 : type === '6m' ? 182 : 365
+    start.setDate(start.getDate() - days)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return {
+      start: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
+      end: `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`
+    }
+  }
+
   const openExportModal = () => {
     if (!hasOpenid) {
       Taro.showToast({ title: '请先登录', icon: 'none' })
@@ -351,13 +364,15 @@ export default function Profile() {
     setShowExportModal(true)
   }
 
-  const handleExport = async () => {
-    if (!exportStart || !exportEnd) {
+  const handleExport = async (overrideStart?: string, overrideEnd?: string) => {
+    const startStr = overrideStart ?? exportStart
+    const endStr = overrideEnd ?? exportEnd
+    if (!startStr || !endStr) {
       Taro.showToast({ title: '请选择开始和结束日期', icon: 'none' })
       return
     }
-    const start = new Date(exportStart + 'T00:00:00.000Z')
-    const end = new Date(exportEnd + 'T23:59:59.999Z')
+    const start = new Date(startStr + 'T00:00:00.000Z')
+    const end = new Date(endStr + 'T23:59:59.999Z')
     if (start.getTime() > end.getTime()) {
       Taro.showToast({ title: '开始日期不能晚于结束日期', icon: 'none' })
       return
@@ -375,11 +390,11 @@ export default function Profile() {
       let list: BPRecord[] = []
       if (USE_TEST_DATA) {
         const testData = getTestData()
-        const startStr = exportStart + 'T'
-        const endStr = exportEnd + 'T'
+        const startPrefix = startStr + 'T'
+        const endPrefix = endStr + 'T'
         list = testData.filter(r => {
           const t = r.recorded_at
-          return t >= startStr && t <= endStr + '23:59:59.999Z'
+          return t >= startPrefix && t <= endPrefix + '23:59:59.999Z'
         })
       } else if (openid) {
         const startISO = start.toISOString()
@@ -424,7 +439,7 @@ export default function Profile() {
       const arrayBuffer = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength)
 
       const fs = Taro.getFileSystemManager()
-      const filePath = `${Taro.env.USER_DATA_PATH}/血压记录_${exportStart}_${exportEnd}.xlsx`
+      const filePath = `${Taro.env.USER_DATA_PATH}/血压记录_${startStr}_${endStr}.xlsx`
       fs.writeFile({
         filePath,
         data: arrayBuffer,
@@ -1114,50 +1129,38 @@ export default function Profile() {
             onClick={(e) => e.stopPropagation()}
           >
             <Text className='modal-title'>数据导出</Text>
-            <Text className='export-tip'>选择导出区间（最多一年），将导出为 Excel 文件</Text>
+            <Text className='export-tip'>快捷方式入口：选择时间范围，将导出为 Excel 文件</Text>
 
-            <View className='export-range'>
-              <View className='export-range-item'>
-                <Text className='export-range-label'>开始日期</Text>
-                <Picker
-                  mode='date'
-                  value={exportStart}
-                  start={getMinStartForExport()}
-                  end={exportEnd || getTodayLocal()}
-                  onChange={(e) => setExportStart(e.detail.value)}
-                >
-                  <View className='export-picker-value'>
-                    <Text>{exportStart || '请选择'}</Text>
-                    <Text className='export-picker-arrow'>›</Text>
-                  </View>
-                </Picker>
+            <View className='export-shortcuts'>
+              <View
+                className={`export-shortcut-btn ${exporting ? 'disabled' : ''}`}
+                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('1m'); handleExport(start, end); }}
+              >
+                <Text>近一个月</Text>
               </View>
-              <View className='export-range-item'>
-                <Text className='export-range-label'>结束日期</Text>
-                <Picker
-                  mode='date'
-                  value={exportEnd}
-                  start={exportStart || '1900-01-01'}
-                  end={getTodayLocal()}
-                  onChange={(e) => setExportEnd(e.detail.value)}
-                >
-                  <View className='export-picker-value'>
-                    <Text>{exportEnd || '请选择'}</Text>
-                    <Text className='export-picker-arrow'>›</Text>
-                  </View>
-                </Picker>
+              <View
+                className={`export-shortcut-btn ${exporting ? 'disabled' : ''}`}
+                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('3m'); handleExport(start, end); }}
+              >
+                <Text>近三个月</Text>
+              </View>
+              <View
+                className={`export-shortcut-btn ${exporting ? 'disabled' : ''}`}
+                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('6m'); handleExport(start, end); }}
+              >
+                <Text>近半年</Text>
+              </View>
+              <View
+                className={`export-shortcut-btn ${exporting ? 'disabled' : ''}`}
+                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('1y'); handleExport(start, end); }}
+              >
+                <Text>近一年</Text>
               </View>
             </View>
 
             <View className='modal-buttons'>
               <View className='modal-btn cancel' onClick={() => !exporting && setShowExportModal(false)}>
                 <Text>取消</Text>
-              </View>
-              <View
-                className={`modal-btn confirm ${exporting ? 'disabled' : ''}`}
-                onClick={exporting ? undefined : handleExport}
-              >
-                <Text>{exporting ? '导出中...' : '导出 Excel'}</Text>
               </View>
             </View>
           </View>
