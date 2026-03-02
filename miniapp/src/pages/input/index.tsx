@@ -3,6 +3,7 @@ import { View, Text, Input, Button, Textarea, Picker } from '@tarojs/components'
 import Taro, { useLoad, useRouter } from '@tarojs/taro'
 import { addRecord, updateRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
+import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import './index.scss'
 
 export default function InputPage() {
@@ -173,6 +174,7 @@ export default function InputPage() {
           Taro.showToast({ title: error, icon: 'none' })
         } else {
           Taro.showToast({ title: '更新成功', icon: 'success' })
+          setAnalysisNeedRefresh(true) // 有数据变更，下次进分析页需拉取
           setTimeout(() => {
             Taro.navigateBack()
           }, 1500)
@@ -195,6 +197,7 @@ export default function InputPage() {
           Taro.showToast({ title: error, icon: 'none' })
         } else {
           Taro.showToast({ title: '保存成功', icon: 'success' })
+          setAnalysisNeedRefresh(true) // 有数据变更，下次进分析页需拉取
           setTimeout(() => {
             Taro.navigateBack()
           }, 1500)

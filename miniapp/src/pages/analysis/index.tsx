@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { View, Text, Image } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { getRecords, BPRecord } from '../../lib/supabase'
+import { consumeAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { getUserInfo } from '../../lib/auth'
 import { FontSizeMode, getCurrentFontSizeMode, getFontSizeModeClass } from '../../lib/settings'
 import './index.scss'
@@ -46,12 +47,13 @@ export default function AnalysisPage() {
 
   useLoad(() => {
     setFontSizeMode(getCurrentFontSizeMode())
-    fetchRecords()
   })
 
-  // 页面显示时重新拉取数据并同步字体模式
+  // 仅当「首次进入」或「首页有数据变更」时拉取，其它切换不拉取
   useDidShow(() => {
-    fetchRecords()
+    if (consumeAnalysisNeedRefresh()) {
+      fetchRecords()
+    }
     const currentMode = getCurrentFontSizeMode()
     if (currentMode !== fontSizeMode) {
       setFontSizeMode(currentMode)

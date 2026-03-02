@@ -5,6 +5,7 @@ import { getRecords, BPRecord, addRecord, deleteRecord } from '../../lib/supabas
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
 import { FontSizeMode, getCurrentFontSizeMode, initFontSizeMode, getFontSizeModeClass, saveLocalFontSizeMode, applyFontSizeMode } from '../../lib/settings'
 import { API_BASE_URL } from '../../utils/api'
+import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { generateShareImage } from '../../utils/shareImage'
 import { getMyGroups, Group } from '../../lib/groups'
 import './index.scss'
@@ -498,6 +499,7 @@ export default function Index() {
         setAnalyzeResult(null)
         setNote('')
         setNoteExpanded(false)
+        setAnalysisNeedRefresh(true) // 首页有数据变更，下次进分析页需拉取
         // 刷新记录列表
         await fetchRecords(userInfo.openid)
       }
@@ -554,6 +556,7 @@ export default function Index() {
               Taro.showToast({ title: error, icon: 'none' })
             } else {
               Taro.showToast({ title: '已删除', icon: 'success' })
+              setAnalysisNeedRefresh(true) // 首页有数据变更，下次进分析页需拉取
               // 刷新列表
               if (userInfo) {
                 fetchRecords(userInfo.openid)
