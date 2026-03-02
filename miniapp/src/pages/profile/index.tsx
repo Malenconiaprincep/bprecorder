@@ -314,7 +314,7 @@ export default function Profile() {
   }
 
   // 导出区间最多一年
-  const MAX_EXPORT_DAYS = 365
+  const MAX_EXPORT_DAYS = 380
 
   const getDefaultExportRange = () => {
     const end = new Date()
@@ -1284,7 +1284,7 @@ export default function Profile() {
       )}
 
       <View className='version-info'>
-        <Text className='version-text'>v2.0.1</Text>
+        <Text className='version-text'>v2.1.1</Text>
       </View>
 
       {/* 字体模式选择弹窗 */}
