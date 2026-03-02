@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { View, Text, Image, Button, Input, Textarea } from '@tarojs/components'
+import { View, Text, Image, Button, Input, Textarea, Picker } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, getUserInfo, silentLogin, uploadAvatar } from '../../lib/auth'
-import { getRecords, BPRecord, addRecordsBatch } from '../../lib/supabase'
+import { getRecords, getRecordsInRange, BPRecord, addRecordsBatch } from '../../lib/supabase'
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import { FontSizeMode, getCurrentFontSizeMode, setFontSizeMode, getFontSizeModeClass, applyFontSizeMode } from '../../lib/settings'
 import FontSizeModeModal from '../../components/FontSizeModeModal'
@@ -56,6 +56,12 @@ export default function Profile() {
 
   // 加入交流群弹窗状态
   const [showGroupModal, setShowGroupModal] = useState(false)
+
+  // 数据导出相关状态
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [exportStart, setExportStart] = useState('')
+  const [exportEnd, setExportEnd] = useState('')
+  const [exporting, setExporting] = useState(false)
   // 联系方式配置
   const CONTACT_CONFIG = {
     // 方式1: 微信号（推荐，永久有效）
@@ -305,6 +311,147 @@ export default function Profile() {
 
   const showDevTip = () => {
     Taro.showToast({ title: '功能开发中，敬请期待', icon: 'none' })
+  }
+
+  // 导出区间最多一年
+  const MAX_EXPORT_DAYS = 365
+
+  const getDefaultExportRange = () => {
+    const end = new Date()
+    const start = new Date()
+    start.setDate(start.getDate() - 30)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return {
+      start: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
+      end: `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`
+    }
+  }
+
+  const getTodayLocal = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+
+  const getMinStartForExport = () => {
+    if (!exportEnd) return '1900-01-01'
+    const d = new Date(exportEnd + 'T12:00:00')
+    d.setDate(d.getDate() - MAX_EXPORT_DAYS)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  }
+
+  const openExportModal = () => {
+    if (!hasOpenid) {
+      Taro.showToast({ title: '请先登录', icon: 'none' })
+      return
+    }
+    const { start, end } = getDefaultExportRange()
+    setExportStart(start)
+    setExportEnd(end)
+    setShowExportModal(true)
+  }
+
+  const handleExport = async () => {
+    if (!exportStart || !exportEnd) {
+      Taro.showToast({ title: '请选择开始和结束日期', icon: 'none' })
+      return
+    }
+    const start = new Date(exportStart + 'T00:00:00.000Z')
+    const end = new Date(exportEnd + 'T23:59:59.999Z')
+    if (start.getTime() > end.getTime()) {
+      Taro.showToast({ title: '开始日期不能晚于结束日期', icon: 'none' })
+      return
+    }
+    const days = Math.ceil((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1
+    if (days > MAX_EXPORT_DAYS) {
+      Taro.showToast({ title: `导出区间不能超过 ${MAX_EXPORT_DAYS} 天（一年）`, icon: 'none', duration: 3000 })
+      return
+    }
+
+    setExporting(true)
+    Taro.showLoading({ title: '正在导出...' })
+
+    try {
+      let list: BPRecord[] = []
+      if (USE_TEST_DATA) {
+        const testData = getTestData()
+        const startStr = exportStart + 'T'
+        const endStr = exportEnd + 'T'
+        list = testData.filter(r => {
+          const t = r.recorded_at
+          return t >= startStr && t <= endStr + '23:59:59.999Z'
+        })
+      } else if (openid) {
+        const startISO = start.toISOString()
+        const endISO = end.toISOString()
+        const { data, error } = await getRecordsInRange(openid, startISO, endISO)
+        if (error) {
+          Taro.hideLoading()
+          setExporting(false)
+          Taro.showToast({ title: error || '获取数据失败', icon: 'none' })
+          return
+        }
+        list = data || []
+      }
+
+      if (list.length === 0) {
+        Taro.hideLoading()
+        setExporting(false)
+        Taro.showToast({ title: '该区间内没有记录', icon: 'none' })
+        return
+      }
+
+      const rows = list.map(r => {
+        const [datePart, timePart] = (r.recorded_at || '').split('T')
+        const date = datePart || ''
+        const time = (timePart || '').slice(0, 8)
+        return {
+          '日期': date,
+          '时间': time,
+          '收缩压': r.systolic,
+          '舒张压': r.diastolic,
+          '脉搏': r.pulse,
+          '左右手': r.hand === 'left' ? '左' : r.hand === 'right' ? '右' : '',
+          '备注': r.note || ''
+        }
+      })
+
+      const ws = XLSX.utils.json_to_sheet(rows)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, '血压记录')
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+      const u8 = wbout instanceof Uint8Array ? wbout : new Uint8Array(wbout)
+      const arrayBuffer = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength)
+
+      const fs = Taro.getFileSystemManager()
+      const filePath = `${Taro.env.USER_DATA_PATH}/血压记录_${exportStart}_${exportEnd}.xlsx`
+      fs.writeFile({
+        filePath,
+        data: arrayBuffer,
+        success: () => {
+          Taro.hideLoading()
+          setExporting(false)
+          setShowExportModal(false)
+          Taro.openDocument({
+            filePath,
+            fileType: 'xlsx',
+            showMenu: true,
+            success: () => Taro.showToast({ title: '导出成功，可点击右上角转发或保存', icon: 'success', duration: 2500 }),
+            fail: (err) => Taro.showToast({ title: '打开文件失败', icon: 'none' })
+          })
+        },
+        fail: (err) => {
+          Taro.hideLoading()
+          setExporting(false)
+          console.error('writeFile error', err)
+          Taro.showToast({ title: '写入文件失败', icon: 'none' })
+        }
+      })
+    } catch (e: any) {
+      Taro.hideLoading()
+      setExporting(false)
+      Taro.showToast({ title: e.message || '导出失败', icon: 'none' })
+    }
   }
 
   const goToGroups = () => {
@@ -740,7 +887,7 @@ export default function Profile() {
   const allMenuItems = [
     { title: '我的组', icon: iconGroups, onClick: goToGroups, showInElder: false },
     { title: '数据导入', icon: iconImport, onClick: openImportModal, showInElder: false },
-    { title: '数据导出', icon: iconExport, onClick: showDevTip, showInElder: false },
+    { title: '数据导出', icon: iconExport, onClick: openExportModal, showInElder: false },
     // { title: '提醒设置', icon: iconClock, onClick: showDevTip, showInElder: true },
     {
       title: '显示模式',
@@ -950,6 +1097,67 @@ export default function Profile() {
                 onClick={importing || !csvText ? undefined : handleConfirmImport}
               >
                 <Text>{importing ? '导入中...' : '导入'}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* 数据导出弹窗 */}
+      {showExportModal && (
+        <View
+          className='modal-mask'
+          onClick={() => !exporting && setShowExportModal(false)}
+        >
+          <View
+            className='import-modal export-modal'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Text className='modal-title'>数据导出</Text>
+            <Text className='export-tip'>选择导出区间（最多一年），将导出为 Excel 文件</Text>
+
+            <View className='export-range'>
+              <View className='export-range-item'>
+                <Text className='export-range-label'>开始日期</Text>
+                <Picker
+                  mode='date'
+                  value={exportStart}
+                  start={getMinStartForExport()}
+                  end={exportEnd || getTodayLocal()}
+                  onChange={(e) => setExportStart(e.detail.value)}
+                >
+                  <View className='export-picker-value'>
+                    <Text>{exportStart || '请选择'}</Text>
+                    <Text className='export-picker-arrow'>›</Text>
+                  </View>
+                </Picker>
+              </View>
+              <View className='export-range-item'>
+                <Text className='export-range-label'>结束日期</Text>
+                <Picker
+                  mode='date'
+                  value={exportEnd}
+                  start={exportStart || '1900-01-01'}
+                  end={getTodayLocal()}
+                  onChange={(e) => setExportEnd(e.detail.value)}
+                >
+                  <View className='export-picker-value'>
+                    <Text>{exportEnd || '请选择'}</Text>
+                    <Text className='export-picker-arrow'>›</Text>
+                  </View>
+                </Picker>
+              </View>
+            </View>
+
+            <View className='modal-buttons'>
+              <View className='modal-btn cancel' onClick={() => !exporting && setShowExportModal(false)}>
+                <Text>取消</Text>
+              </View>
+              <View
+                className={`modal-btn confirm ${exporting ? 'disabled' : ''}`}
+                onClick={exporting ? undefined : handleExport}
+              >
+                <Text>{exporting ? '导出中...' : '导出 Excel'}</Text>
               </View>
             </View>
           </View>

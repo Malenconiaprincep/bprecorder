@@ -314,6 +314,49 @@
   touch-action: pan-y;
 }
 
+/* 数据导出弹窗 */
+.export-modal .export-tip {
+  font-size: 26rpx;
+  color: #64748b;
+  margin-bottom: 32rpx;
+  line-height: 1.5;
+}
+
+.export-range {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  margin-bottom: 40rpx;
+}
+
+.export-range-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.export-range-label {
+  font-size: 28rpx;
+  color: #475569;
+  font-weight: 500;
+}
+
+.export-picker-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  background: #f8fafc;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  color: #1e293b;
+}
+
+.export-picker-arrow {
+  color: #94a3b8;
+  font-size: 32rpx;
+}
+
 /* Tab 切换 */
 .import-tabs {
   display: flex;

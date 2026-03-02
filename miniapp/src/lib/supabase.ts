@@ -89,6 +89,44 @@ export async function getRecords(userId: string): Promise<{ data: BPRecord[] | n
 }
 
 /**
+ * 按日期范围获取用户的血压记录（用于导出，最多支持约一年数据）
+ * @param userId 用户 openid
+ * @param startDate 开始日期 ISO 字符串（含时间，如 2024-01-01T00:00:00.000Z）
+ * @param endDate 结束日期 ISO 字符串（含时间，如 2024-12-31T23:59:59.999Z）
+ */
+export async function getRecordsInRange(
+  userId: string,
+  startDate: string,
+  endDate: string
+): Promise<{ data: BPRecord[] | null; error: string | null }> {
+  const params = new URLSearchParams()
+  params.append('user_id', `eq.${userId}`)
+  params.append('recorded_at', `gte.${startDate}`)
+  params.append('recorded_at', `lte.${endDate}`)
+  params.append('order', 'recorded_at.asc')
+  params.append('limit', '5000')
+
+  const url = `${REST_URL}/bp_records?${params.toString()}`
+
+  try {
+    const res = await Taro.request({
+      url,
+      method: 'GET',
+      header: getHeaders()
+    })
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return { data: res.data as BPRecord[], error: null }
+    }
+    const errorMsg = (res.data as any)?.message || (res.data as any)?.error || `请求失败 (${res.statusCode})`
+    return { data: null, error: errorMsg }
+  } catch (e: any) {
+    console.error('getRecordsInRange error:', e)
+    return { data: null, error: e.message || '网络请求失败' }
+  }
+}
+
+/**
  * 添加血压记录（单个）
  */
 export async function addRecord(record: Omit<BPRecord, 'id' | 'created_at'>): Promise<{ data: BPRecord | null; error: string | null }> {
