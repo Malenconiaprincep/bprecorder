@@ -6,6 +6,35 @@ import { getUserInfo } from '../../lib/auth'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import './index.scss'
 
+/** 测量时间选择器分钟步长 */
+const TIME_STEP_MINUTES = 5
+
+/** 将时刻对齐到步长；跨天则落在当天 23:55（日期列表不含明天） */
+function snapToTimeStep(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number
+): { date: string; time: string } {
+  let h = hour
+  let m = Math.round(minute / TIME_STEP_MINUTES) * TIME_STEP_MINUTES
+  if (m >= 60) {
+    m = 0
+    h += 1
+  }
+  if (h >= 24) {
+    return {
+      date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      time: '23:55'
+    }
+  }
+  return {
+    date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+    time: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  }
+}
+
 export default function InputPage() {
   const router = useRouter()
   const [systolic, setSystolic] = useState('')
@@ -21,17 +50,13 @@ export default function InputPage() {
   // 日期时间状态，默认值为当前时间
   const getCurrentDateTime = () => {
     const now = new Date()
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, '0')
-    const day = String(now.getDate()).padStart(2, '0')
-    const hours = now.getHours()
-    const minutes = now.getMinutes()
-    // 将分钟数四舍五入到最近的15分钟
-    const roundedMinutes = Math.round(minutes / 15) * 15
-    return {
-      date: `${year}-${month}-${day}`,
-      time: `${String(hours).padStart(2, '0')}:${String(roundedMinutes).padStart(2, '0')}`
-    }
+    return snapToTimeStep(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      now.getDate(),
+      now.getHours(),
+      now.getMinutes()
+    )
   }
 
   const [selectedDate, setSelectedDate] = useState(getCurrentDateTime().date)
@@ -52,11 +77,11 @@ export default function InputPage() {
     return options
   }, [])
 
-  // 生成时间选项（24小时，每15分钟一个选项）
+  // 生成时间选项（24 小时，每 5 分钟一个选项）
   const timeOptions = useMemo(() => {
     const options: string[] = []
     for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+      for (let minute = 0; minute < 60; minute += TIME_STEP_MINUTES) {
         const h = String(hour).padStart(2, '0')
         const m = String(minute).padStart(2, '0')
         options.push(`${h}:${m}`)
@@ -97,15 +122,15 @@ export default function InputPage() {
       // 如果有recorded_at参数，填充日期时间
       if (params.recorded_at) {
         const date = new Date(params.recorded_at)
-        const year = date.getFullYear()
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const day = String(date.getDate()).padStart(2, '0')
-        const hours = String(date.getHours()).padStart(2, '0')
-        const minutes = String(date.getMinutes()).padStart(2, '0')
-        // 将分钟数四舍五入到最近的15分钟
-        const roundedMinutes = Math.round(parseInt(minutes) / 15) * 15
-        setSelectedDate(`${year}-${month}-${day}`)
-        setSelectedTime(`${hours}:${String(roundedMinutes).padStart(2, '0')}`)
+        const snapped = snapToTimeStep(
+          date.getFullYear(),
+          date.getMonth() + 1,
+          date.getDate(),
+          date.getHours(),
+          date.getMinutes()
+        )
+        setSelectedDate(snapped.date)
+        setSelectedTime(snapped.time)
       }
     }
   })

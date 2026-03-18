@@ -17,6 +17,7 @@ export default function CameraPage() {
   } | null>(null)
   const [note, setNote] = useState('')
   const [noteExpanded, setNoteExpanded] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const handleChooseImage = async () => {
     try {
@@ -47,6 +48,7 @@ export default function CameraPage() {
 
   const handleSave = async () => {
     if (!result) return
+    if (saving) return
 
     const userInfo = getUserInfo()
     if (!userInfo) {
@@ -54,6 +56,7 @@ export default function CameraPage() {
       return
     }
 
+    setSaving(true)
     try {
       const { error } = await addRecord({
         user_id: userInfo.openid,
@@ -66,6 +69,7 @@ export default function CameraPage() {
 
       if (error) {
         Taro.showToast({ title: error, icon: 'none' })
+        setSaving(false)
       } else {
         Taro.showToast({ title: '保存成功', icon: 'success' })
         setTimeout(() => {
@@ -74,6 +78,7 @@ export default function CameraPage() {
       }
     } catch (e) {
       Taro.showToast({ title: '保存失败', icon: 'none' })
+      setSaving(false)
     }
   }
 
@@ -160,8 +165,11 @@ export default function CameraPage() {
                 <View className='action-btn retry-btn' onClick={reset}>
                   <Text>重新拍照</Text>
                 </View>
-                <View className='action-btn save-btn' onClick={handleSave}>
-                  <Text>保存记录</Text>
+                <View
+                  className={`action-btn save-btn ${saving ? 'disabled' : ''}`}
+                  onClick={handleSave}
+                >
+                  <Text>{saving ? '保存中...' : '保存记录'}</Text>
                 </View>
               </View>
             </View>

@@ -113,6 +113,7 @@ export default function Index() {
     pulse: number
   } | null>(null)
   const [showResultModal, setShowResultModal] = useState(false)
+  const [savingRecord, setSavingRecord] = useState(false)
   const [selectedHand, setSelectedHand] = useState<'left' | 'right'>('left')
   const [note, setNote] = useState('')
   const [noteExpanded, setNoteExpanded] = useState(false)
@@ -463,7 +464,9 @@ export default function Index() {
       Taro.showToast({ title: '请先登录', icon: 'none' })
       return
     }
+    if (savingRecord) return
 
+    setSavingRecord(true)
     const recordedAt = new Date().toISOString()
 
     try {
@@ -505,6 +508,8 @@ export default function Index() {
       }
     } catch (e) {
       Taro.showToast({ title: '保存失败', icon: 'none' })
+    } finally {
+      setSavingRecord(false)
     }
   }
 
@@ -903,8 +908,11 @@ export default function Index() {
                 <View className='modal-btn cancel-btn' onClick={handleCloseModal}>
                   <Text>取消</Text>
                 </View>
-                <View className='modal-btn save-btn' onClick={handleSaveRecord}>
-                  <Text>保存记录</Text>
+                <View
+                  className={`modal-btn save-btn ${savingRecord ? 'disabled' : ''}`}
+                  onClick={savingRecord ? undefined : handleSaveRecord}
+                >
+                  <Text>{savingRecord ? '保存中...' : '保存记录'}</Text>
                 </View>
               </View>
             </View>
