@@ -140,3 +140,29 @@ export function getFontSizeModeClass(mode?: FontSizeMode): string {
   return currentMode === 'elder' ? 'elder-mode' : ''
 }
 
+// ========== 默认测量手臂（拍照识别 / 手动输入 共用本地存储） ==========
+
+const PREFERRED_MEASURE_HAND_KEY = 'bp_preferred_measure_hand'
+
+export type PreferredMeasureHand = 'left' | 'right'
+
+export function getPreferredMeasureHand(): PreferredMeasureHand {
+  try {
+    const v = Taro.getStorageSync(PREFERRED_MEASURE_HAND_KEY)
+    if (v === 'left' || v === 'right') {
+      return v
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  return 'left'
+}
+
+export function savePreferredMeasureHand(hand: PreferredMeasureHand): void {
+  try {
+    Taro.setStorageSync(PREFERRED_MEASURE_HAND_KEY, hand)
+  } catch (e) {
+    console.error('Failed to save preferred measure hand:', e)
+  }
+}
+

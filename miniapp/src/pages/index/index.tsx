@@ -3,7 +3,7 @@ import { View, Text, Image, ScrollView, Canvas, Button, Textarea } from '@tarojs
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { getRecords, BPRecord, addRecord, deleteRecord } from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
-import { FontSizeMode, getCurrentFontSizeMode, initFontSizeMode, getFontSizeModeClass, saveLocalFontSizeMode, applyFontSizeMode } from '../../lib/settings'
+import { FontSizeMode, getCurrentFontSizeMode, initFontSizeMode, getFontSizeModeClass, saveLocalFontSizeMode, applyFontSizeMode, getPreferredMeasureHand, savePreferredMeasureHand } from '../../lib/settings'
 import { API_BASE_URL } from '../../utils/api'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { generateShareImage } from '../../utils/shareImage'
@@ -89,7 +89,7 @@ export default function Index() {
   } | null>(null)
   const [showResultModal, setShowResultModal] = useState(false)
   const [savingRecord, setSavingRecord] = useState(false)
-  const [selectedHand, setSelectedHand] = useState<'left' | 'right'>('left')
+  const [selectedHand, setSelectedHand] = useState<'left' | 'right'>(() => getPreferredMeasureHand())
   const [note, setNote] = useState('')
   const [noteExpanded, setNoteExpanded] = useState(false)
   const [shareImageUrl, setShareImageUrl] = useState<string>('')
@@ -166,6 +166,27 @@ export default function Index() {
     return { systolic: avgSystolic, diastolic: avgDiastolic, count: weekRecords.length }
   }, [records])
 
+  // 连续打卡天数（与「我的」页统计一致，按本地自然日）
+  const consecutiveDays = useMemo(() => {
+    if (records.length === 0) return 0
+    const uniqueDays = new Set(records.map(r => r.recorded_at.split('T')[0]))
+    const sortedDays = Array.from(uniqueDays).sort((a, b) => b.localeCompare(a))
+    let streak = 0
+    const pad = (n: number) => String(n).padStart(2, '0')
+    for (let i = 0; i < sortedDays.length; i++) {
+      const expected = new Date()
+      expected.setHours(0, 0, 0, 0)
+      expected.setDate(expected.getDate() - i)
+      const key = `${expected.getFullYear()}-${pad(expected.getMonth() + 1)}-${pad(expected.getDate())}`
+      if (sortedDays[i] === key) {
+        streak++
+      } else {
+        break
+      }
+    }
+    return streak
+  }, [records])
+
   // 标记是否已初始化，避免重复调用
   const [initialized, setInitialized] = useState(false)
 
@@ -186,12 +207,23 @@ export default function Index() {
     }
   }, [])
 
+  // 每次识别出结果时，用当前存储的默认手臂（含「我的」里刚改的）
+  React.useEffect(() => {
+    if (analyzeResult) {
+      setSelectedHand(getPreferredMeasureHand())
+    }
+  }, [analyzeResult])
+
   // 页面每次显示时刷新数据（从输入页返回时，跳过首次）
   useDidShow(() => {
     // 每次显示页面时同步字体模式（解决从设置页面返回后样式不更新的问题）
     const currentMode = getCurrentFontSizeMode()
     if (currentMode !== fontSizeMode) {
       setFontSizeModeState(currentMode)
+    }
+
+    if (!showResultModal) {
+      setSelectedHand(getPreferredMeasureHand())
     }
 
     // 检查是否有从日历页面返回的选中日期
@@ -480,6 +512,7 @@ export default function Index() {
         setAnalysisNeedRefresh(true) // 首页有数据变更，下次进分析页需拉取
         // 刷新记录列表
         await fetchRecords(userInfo.openid)
+        savePreferredMeasureHand(selectedHand)
       }
     } catch (e) {
       Taro.showToast({ title: '保存失败', icon: 'none' })
@@ -581,6 +614,11 @@ export default function Index() {
 
         {/* 今日血压卡片 */}
         <View className='bp-card'>
+          {consecutiveDays > 0 && (
+            <View className='bp-card-streak'>
+              <Text className='bp-card-streak-text'>已连续打卡 {consecutiveDays} 天</Text>
+            </View>
+          )}
           <View className='card-header'>
             <View className='card-title'><Image className='title-icon' src={iconHeart} mode='aspectFit' /><Text>最新血压</Text></View>
             <View className='card-header-right'>
@@ -604,14 +642,22 @@ export default function Index() {
 
           {latestRecord ? (
             <View className='card-body'>
-              <View className='bp-row'>
-                <Text className='bp-value'>{latestRecord.systolic}</Text>
-                <Text className='bp-slash'>/</Text>
-                <Text className='bp-value'>{latestRecord.diastolic}</Text>
-                <Text className='bp-unit'>mmHg</Text>
-                <View className='pulse-inline'>
-                  <Text className='pulse-value-inline'>{latestRecord.pulse}</Text>
-                  <Text className='pulse-unit-inline'>bpm</Text>
+              <View className='bp-main-metrics'>
+                <View className='bp-metric-block'>
+                  <View className='bp-numbers-row'>
+                    <Text className='bp-value'>{latestRecord.systolic}</Text>
+                    <Text className='bp-slash'>/</Text>
+                    <Text className='bp-value'>{latestRecord.diastolic}</Text>
+                  </View>
+                  <Text className='bp-unit'>mmHg</Text>
+                </View>
+                <View className='bp-metric-divider' />
+                <View className='bp-metric-block bp-metric-pulse'>
+                  <View className='bp-numbers-row pulse-numbers-row'>
+                    <Text className='pulse-value-inline'>{latestRecord.pulse}</Text>
+                    <Text className='pulse-unit-inline'>bpm</Text>
+                  </View>
+                  <Text className='bp-pulse-label'>心率</Text>
                 </View>
               </View>
               <View className='bp-info-row'>
@@ -845,13 +891,19 @@ export default function Index() {
               <View className='hand-selector'>
                 <View
                   className={`hand-option ${selectedHand === 'left' ? 'active' : ''}`}
-                  onClick={() => setSelectedHand('left')}
+                  onClick={() => {
+                    setSelectedHand('left')
+                    savePreferredMeasureHand('left')
+                  }}
                 >
                   <Text>左手</Text>
                 </View>
                 <View
                   className={`hand-option ${selectedHand === 'right' ? 'active' : ''}`}
-                  onClick={() => setSelectedHand('right')}
+                  onClick={() => {
+                    setSelectedHand('right')
+                    savePreferredMeasureHand('right')
+                  }}
                 >
                   <Text>右手</Text>
                 </View>

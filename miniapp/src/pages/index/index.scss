@@ -69,10 +69,27 @@
   position: relative;
   z-index: 1;
   margin: 0 30rpx 24rpx;
-  padding: 32rpx;
+  padding: 28rpx 32rpx 32rpx;
   background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
   border-radius: 32rpx;
   box-shadow: 0 16rpx 48rpx rgba(74, 168, 232, 0.3);
+}
+
+/* 连续打卡：融入卡片顶栏，不再单独飘在背景上 */
+.bp-card-streak {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: -4rpx 0 18rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.22);
+}
+
+.bp-card-streak-text {
+  font-size: 24rpx;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.5rpx;
 }
 
 .card-header {
@@ -97,16 +114,16 @@
 }
 
 .card-status {
-  padding: 8rpx 20rpx;
-  border-radius: 20rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
 }
 
 .share-btn {
-  padding: 8rpx 20rpx !important;
+  padding: 8rpx 22rpx !important;
   margin: 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 20rpx !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-radius: 999rpx !important;
   height: auto !important;
   line-height: 1.2 !important;
   min-width: auto !important;
@@ -125,7 +142,29 @@
   justify-content: center;
 }
 
-/* 血压状态条：渐变清透，绿→蓝→琥珀→橙→珊瑚，避免灰褐 */
+/* 最新血压卡片内：白底胶囊 + 彩色字，蓝底上对比清晰 */
+.bp-card .card-status.ideal,
+.bp-card .card-status.low,
+.bp-card .card-status.normal,
+.bp-card .card-status.prehigh,
+.bp-card .card-status.high-1,
+.bp-card .card-status.high-2,
+.bp-card .card-status.high-3 {
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.06);
+}
+
+.card-status-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  padding: 0 4rpx;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+/* 列表等其它场景仍用渐变底 + 白字（若用到 card-status） */
 .card-status.ideal {
   background: linear-gradient(135deg, #14b885 0%, #0d9f6e 100%);
 }
@@ -138,7 +177,6 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* 琥珀略加深，保证白字可读 */
 .card-status.prehigh {
   background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
 }
@@ -155,15 +193,43 @@
   background: linear-gradient(135deg, #d85750 0%, #c23d36 100%);
 }
 
-.card-status-text {
-  font-size: 24rpx;
-  font-weight: 600;
+/* 渐变状态标签默认白字；下方 bp-card 内用更高优先级覆盖为彩色字 */
+.card-status.ideal .card-status-text,
+.card-status.low .card-status-text,
+.card-status.normal .card-status-text,
+.card-status.prehigh .card-status-text,
+.card-status.high-1 .card-status-text,
+.card-status.high-2 .card-status-text,
+.card-status.high-3 .card-status-text {
   color: #ffffff;
-  line-height: 1.35;
-  text-align: center;
-  padding: 0 8rpx;
-  max-width: 100%;
-  word-break: break-word;
+}
+
+.bp-card .card-status.ideal .card-status-text {
+  color: #047857;
+}
+
+.bp-card .card-status.low .card-status-text {
+  color: #0e7490;
+}
+
+.bp-card .card-status.normal .card-status-text {
+  color: #15803d;
+}
+
+.bp-card .card-status.prehigh .card-status-text {
+  color: #a16207;
+}
+
+.bp-card .card-status.high-1 .card-status-text {
+  color: #c2410c;
+}
+
+.bp-card .card-status.high-2 .card-status-text {
+  color: #be123c;
+}
+
+.bp-card .card-status.high-3 .card-status-text {
+  color: #9f1239;
 }
 
 .card-icon {
@@ -174,51 +240,91 @@
   text-align: center;
 }
 
-.bp-row {
+/* 血压 + 心率：左右对称两块，中间竖线 */
+.bp-main-metrics {
   display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: 32rpx;
+  margin-bottom: 12rpx;
+}
+
+.bp-metric-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  min-width: 200rpx;
+}
+
+.bp-metric-pulse {
+  min-width: 160rpx;
+}
+
+.bp-numbers-row {
+  display: flex;
+  flex-direction: row;
   align-items: baseline;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 0;
-  margin-bottom: 8rpx;
+}
+
+.pulse-numbers-row {
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.bp-metric-divider {
+  width: 2rpx;
+  align-self: stretch;
+  min-height: 108rpx;
+  margin-top: 8rpx;
+  background: rgba(255, 255, 255, 0.28);
+  flex-shrink: 0;
 }
 
 .bp-value {
   font-size: 96rpx;
   font-weight: bold;
   color: #ffffff;
+  line-height: 1;
 }
 
 .bp-slash {
   font-size: 64rpx;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0 10rpx;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0 8rpx;
+  line-height: 1;
 }
 
 .bp-unit {
-  font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.8);
-  margin-left: 16rpx;
-}
-
-.pulse-inline {
-  display: flex;
-  align-items: baseline;
-  margin-left: 32rpx;
-  padding-left: 32rpx;
-  border-left: 1rpx solid rgba(255, 255, 255, 0.2);
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 500;
+  letter-spacing: 1rpx;
+  margin-left: 0;
 }
 
 .pulse-value-inline {
-  font-size: 52rpx;
+  font-size: 72rpx;
   font-weight: bold;
   color: #ffffff;
+  line-height: 1;
 }
 
 .pulse-unit-inline {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 500;
+  margin-left: 0;
+}
+
+.bp-pulse-label {
   font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.75);
-  margin-left: 6rpx;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 500;
+  margin-top: 2rpx;
 }
 
 .bp-info-row {
@@ -1192,12 +1298,28 @@
     height: 56rpx;
     margin-right: 12rpx;
   }
-  
+
+  .bp-card-streak-text {
+    font-size: 30rpx;
+  }
+
   /* 血压卡片 */
   .bp-card {
     margin: 0 30rpx 24rpx;
-    padding: 36rpx;
+    padding: 32rpx 36rpx 36rpx;
     border-radius: 32rpx;
+  }
+
+  .bp-main-metrics {
+    gap: 36rpx;
+  }
+
+  .bp-metric-block {
+    min-width: 220rpx;
+  }
+
+  .bp-metric-divider {
+    min-height: 120rpx;
   }
   
   .card-title {
@@ -1210,13 +1332,6 @@
     margin-right: 14rpx;
   }
   
-  /* 血压行整体布局 - 让血压和心率在同一行 */
-  .bp-row {
-    flex-wrap: nowrap;
-    justify-content: center;
-    align-items: baseline;
-  }
-  
   .bp-value {
     font-size: 100rpx;
   }
@@ -1227,23 +1342,19 @@
   }
   
   .bp-unit {
-    font-size: 32rpx;
-    margin-left: 12rpx;
-  }
-  
-  .pulse-inline {
-    margin-left: 28rpx;
-    padding-left: 28rpx;
-    border-left: 2rpx solid rgba(255, 255, 255, 0.3);
+    font-size: 28rpx;
   }
   
   .pulse-value-inline {
-    font-size: 56rpx;
+    font-size: 80rpx;
   }
   
   .pulse-unit-inline {
-    font-size: 24rpx;
-    margin-left: 6rpx;
+    font-size: 26rpx;
+  }
+
+  .bp-pulse-label {
+    font-size: 26rpx;
   }
   
   .card-status {

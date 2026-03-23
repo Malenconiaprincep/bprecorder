@@ -4,6 +4,7 @@ import Taro, { useLoad, useRouter } from '@tarojs/taro'
 import { addRecord, updateRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
+import { getPreferredMeasureHand, savePreferredMeasureHand } from '../../lib/settings'
 import './index.scss'
 
 /** 测量时间选择器分钟步长 */
@@ -132,6 +133,8 @@ export default function InputPage() {
         setSelectedDate(snapped.date)
         setSelectedTime(snapped.time)
       }
+    } else {
+      setHand(getPreferredMeasureHand())
     }
   })
 
@@ -198,6 +201,9 @@ export default function InputPage() {
         if (error) {
           Taro.showToast({ title: error, icon: 'none' })
         } else {
+          if (hand === 'left' || hand === 'right') {
+            savePreferredMeasureHand(hand)
+          }
           Taro.showToast({ title: '更新成功', icon: 'success' })
           setAnalysisNeedRefresh(true) // 有数据变更，下次进分析页需拉取
           setTimeout(() => {
@@ -221,6 +227,9 @@ export default function InputPage() {
         if (error) {
           Taro.showToast({ title: error, icon: 'none' })
         } else {
+          if (hand === 'left' || hand === 'right') {
+            savePreferredMeasureHand(hand)
+          }
           Taro.showToast({ title: '保存成功', icon: 'success' })
           setAnalysisNeedRefresh(true) // 有数据变更，下次进分析页需拉取
           setTimeout(() => {
@@ -294,14 +303,22 @@ export default function InputPage() {
           <View className='hand-selector'>
             <View
               className={`hand-option ${hand === 'left' ? 'active' : ''}`}
-              onClick={() => setHand(hand === 'left' ? '' : 'left')}
+              onClick={() => {
+                const next = hand === 'left' ? '' : 'left'
+                setHand(next)
+                if (next) savePreferredMeasureHand(next)
+              }}
             >
               <Text className='hand-icon'>🤚</Text>
               <Text className='hand-text'>左手</Text>
             </View>
             <View
               className={`hand-option ${hand === 'right' ? 'active' : ''}`}
-              onClick={() => setHand(hand === 'right' ? '' : 'right')}
+              onClick={() => {
+                const next = hand === 'right' ? '' : 'right'
+                setHand(next)
+                if (next) savePreferredMeasureHand(next)
+              }}
             >
               <Text className='hand-icon'>✋</Text>
               <Text className='hand-text'>右手</Text>
