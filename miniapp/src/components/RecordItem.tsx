@@ -1,35 +1,9 @@
-import React from 'react'
 import { View, Text, Image } from '@tarojs/components'
 import { BPRecord } from '../lib/supabase'
+import { getBPStatus } from '../utils/bpStatus'
 // @ts-ignore
 import iconHeart from '../assets/icons/heart.png'
 import './RecordItem.scss'
-
-// 血压状态判断（按医学标准）
-const getBPStatus = (systolic: number, diastolic: number) => {
-  // 3级高血压（重度）
-  if (systolic >= 180 || diastolic >= 110) {
-    return { label: '3级高血压', color: 'high-3', emoji: '🆘' }
-  }
-  // 2级高血压（中/重度）
-  if (systolic >= 160 || diastolic >= 100) {
-    return { label: '2级高血压', color: 'high-2', emoji: '😰' }
-  }
-  // 1级高血压（轻度）
-  if (systolic >= 140 || diastolic >= 90) {
-    return { label: '1级高血压', color: 'high-1', emoji: '😟' }
-  }
-  // 前期高血压
-  if (systolic >= 130) {
-    return { label: '前期高血压', color: 'prehigh', emoji: '😐' }
-  }
-  // 正常血压
-  if (systolic >= 120 || diastolic >= 80) {
-    return { label: '正常', color: 'normal', emoji: '🙂' }
-  }
-  // 理想血压
-  return { label: '理想', color: 'ideal', emoji: '😊' }
-}
 
 // 格式化日期时间用于记录项显示
 const formatRecordDateTime = (isoString: string) => {

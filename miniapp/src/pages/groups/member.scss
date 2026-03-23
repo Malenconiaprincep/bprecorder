@@ -213,8 +213,13 @@
 }
 
 .status-badge.ideal {
-  background: #dcfce7;
-  color: #16a34a;
+  background: #d1fae5;
+  color: #047857;
+}
+
+.status-badge.low {
+  background: #cffafe;
+  color: #0e7490;
 }
 
 .status-badge.normal {
@@ -224,22 +229,22 @@
 
 .status-badge.prehigh {
   background: #fef3c7;
-  color: #d97706;
+  color: #a16207;
 }
 
 .status-badge.high-1 {
   background: #ffedd5;
-  color: #ea580c;
+  color: #c2410c;
 }
 
 .status-badge.high-2 {
-  background: #fee2e2;
-  color: #dc2626;
+  background: #ffe4e6;
+  color: #be123c;
 }
 
 .status-badge.high-3 {
-  background: #fecaca;
-  color: #b91c1c;
+  background: #fecdd3;
+  color: #9f1239;
 }
 
 .badge-text {

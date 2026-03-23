@@ -475,39 +475,42 @@
 .status-tag {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 92%;
   padding: 12rpx 24rpx;
   border-radius: 24rpx;
   margin-top: 8rpx;
+  text-align: center;
+  line-height: 1.4;
 }
 
-/* 理想血压 - 深绿 */
 .status-tag.ideal {
-  background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%);
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
 }
 
-/* 正常血压 - 浅绿 */
+.status-tag.low {
+  background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+}
+
 .status-tag.normal {
   background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
 }
 
-/* 前期高血压 - 黄色 */
 .status-tag.prehigh {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
 }
 
-/* 1级高血压 - 橙色 */
 .status-tag.high-1 {
-  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
 }
 
-/* 2级高血压 - 红色 */
 .status-tag.high-2 {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
 }
 
-/* 3级高血压 - 深红 */
 .status-tag.high-3 {
-  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+  background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%);
 }
 
 .status-text {
@@ -516,15 +519,19 @@
 }
 
 .status-tag.ideal .status-text {
-  color: #15803d;
+  color: #047857;
+}
+
+.status-tag.low .status-text {
+  color: #0e7490;
 }
 
 .status-tag.normal .status-text {
-  color: #16a34a;
+  color: #15803d;
 }
 
 .status-tag.prehigh .status-text {
-  color: #b45309;
+  color: #a16207;
 }
 
 .status-tag.high-1 .status-text {
@@ -532,11 +539,11 @@
 }
 
 .status-tag.high-2 .status-text {
-  color: #dc2626;
+  color: #be123c;
 }
 
 .status-tag.high-3 .status-text {
-  color: #991b1b;
+  color: #9f1239;
 }
 
 /* 底部占位 - 已通过 padding-bottom 实现 */

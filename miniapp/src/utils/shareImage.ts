@@ -1,4 +1,5 @@
 import Taro from '@tarojs/taro'
+import { getBPStatus, type BPStatusColor } from './bpStatus'
 
 /**
  * 生成血压记录分享图片
@@ -71,10 +72,11 @@ export async function generateShareImage(
     const status = getBPStatus(systolic, diastolic)
     const statusY = bpY + 180
     ctx.setFillStyle(getStatusColor(status.color))
-    ctx.fillRect(canvasWidth / 2 - 100, statusY - 30, 200, 60)
+    const barW = Math.min(340, Math.max(200, status.label.length * 28 + 40))
+    ctx.fillRect(canvasWidth / 2 - barW / 2, statusY - 30, barW, 60)
     ctx.setFillStyle('#ffffff')
-    ctx.setFontSize(36)
-    ctx.fillText(status.label, canvasWidth / 2, statusY + 10)
+    ctx.setFontSize(status.label.length > 8 ? 28 : 32)
+    ctx.fillText(status.label, canvasWidth / 2, statusY + 8)
 
     // 底部提示
     ctx.setFillStyle('#94a3b8')
@@ -102,38 +104,17 @@ export async function generateShareImage(
 }
 
 /**
- * 获取血压状态
+ * 分享图状态条背景色（与小程序分级一致）
  */
-function getBPStatus(systolic: number, diastolic: number) {
-  if (systolic >= 180 || diastolic >= 110) {
-    return { label: '3级高血压', color: 'high-3' }
-  }
-  if (systolic >= 160 || diastolic >= 100) {
-    return { label: '2级高血压', color: 'high-2' }
-  }
-  if (systolic >= 140 || diastolic >= 90) {
-    return { label: '1级高血压', color: 'high-1' }
-  }
-  if (systolic >= 130) {
-    return { label: '前期高血压', color: 'prehigh' }
-  }
-  if (systolic >= 120 || diastolic >= 80) {
-    return { label: '正常', color: 'normal' }
-  }
-  return { label: '理想', color: 'ideal' }
-}
-
-/**
- * 获取状态颜色
- */
-function getStatusColor(colorType: string): string {
-  const colorMap: { [key: string]: string } = {
-    'high-3': '#dc2626',    // 红色
-    'high-2': '#ea580c',    // 橙红色
-    'high-1': '#f59e0b',    // 橙色
-    'prehigh': '#eab308',   // 黄色
-    'normal': '#22c55e',    // 绿色
-    'ideal': '#3b82f6'      // 蓝色
+function getStatusColor(colorType: BPStatusColor): string {
+  // 与首页大卡片同系渐变中取主色，白字对比足够
+  const colorMap: Record<BPStatusColor, string> = {
+    ideal: '#0d9f6e',
+    low: '#14a3b8',
+    prehigh: '#ca8a04',
+    'high-1': '#ea7c2e',
+    'high-2': '#e85d5d',
+    'high-3': '#c23d36'
   }
   return colorMap[colorType] || '#64748b'
 }

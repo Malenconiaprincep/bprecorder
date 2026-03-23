@@ -14,16 +14,7 @@ import iconList from '../../assets/icons/list.png'
 import iconShare from '../../assets/icons/share.png'
 // @ts-ignore
 import iconHeart from '../../assets/icons/heart.png'
-
-// 血压状态判断
-const getBPStatus = (systolic: number, diastolic: number) => {
-  if (systolic >= 180 || diastolic >= 110) return { label: '3级高血压', color: 'high-3' }
-  if (systolic >= 160 || diastolic >= 100) return { label: '2级高血压', color: 'high-2' }
-  if (systolic >= 140 || diastolic >= 90) return { label: '1级高血压', color: 'high-1' }
-  if (systolic >= 130) return { label: '前期高血压', color: 'prehigh' }
-  if (systolic >= 120 || diastolic >= 80) return { label: '正常', color: 'normal' }
-  return { label: '理想', color: 'ideal' }
-}
+import { getBPStatus } from '../../utils/bpStatus'
 
 // 格式化时间
 const formatTime = (isoString: string) => {

@@ -5,33 +5,8 @@ import { getRecords, BPRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import RecordItem from '../../components/RecordItem'
+import { getBPStatus, isBPNeedAttention } from '../../utils/bpStatus'
 import './index.scss'
-
-// 血压状态判断（按医学标准）
-const getBPStatus = (systolic: number, diastolic: number) => {
-  // 3级高血压（重度）
-  if (systolic >= 180 || diastolic >= 110) {
-    return { label: '3级高血压', color: 'high-3', emoji: '🆘' }
-  }
-  // 2级高血压（中/重度）
-  if (systolic >= 160 || diastolic >= 100) {
-    return { label: '2级高血压', color: 'high-2', emoji: '😰' }
-  }
-  // 1级高血压（轻度）
-  if (systolic >= 140 || diastolic >= 90) {
-    return { label: '1级高血压', color: 'high-1', emoji: '😟' }
-  }
-  // 前期高血压
-  if (systolic >= 130) {
-    return { label: '前期高血压', color: 'prehigh', emoji: '😐' }
-  }
-  // 正常血压
-  if (systolic >= 120 || diastolic >= 80) {
-    return { label: '正常', color: 'normal', emoji: '🙂' }
-  }
-  // 理想血压
-  return { label: '理想', color: 'ideal', emoji: '😊' }
-}
 
 // 格式化日期为易读格式
 const formatDateLabel = (isoString: string) => {
@@ -78,7 +53,7 @@ export default function Calendar() {
       info[dateKey].count++
       // 判断是否有异常血压（高血压）
       const status = getBPStatus(r.systolic, r.diastolic)
-      if (status.color !== 'normal' && status.color !== 'ideal') {
+      if (isBPNeedAttention(status)) {
         info[dateKey].hasAbnormal = true
       }
     })
@@ -125,7 +100,7 @@ export default function Calendar() {
     return days
   }, [currentMonth, dateRecordInfo])
 
-  // 切换月份
+  // 切换月份：取消已选日期，避免仍显示上一月的某日数据
   const changeMonth = (direction: 'prev' | 'next') => {
     const newMonth = new Date(currentMonth)
     if (direction === 'prev') {
@@ -133,6 +108,8 @@ export default function Calendar() {
     } else {
       newMonth.setMonth(newMonth.getMonth() + 1)
     }
+    setSelectedDate(null)
+    hasAutoSelectedRef.current = false
     setCurrentMonth(newMonth)
   }
 
@@ -198,24 +175,26 @@ export default function Calendar() {
     }
   }
 
-  // 数据加载完成后，如果今天有数据且没有选中日期，自动选中今天
+  // 当前展示月份包含「今天」且今天有记录时，自动选中今天（翻月后会因 ref 重置再次生效）
   useEffect(() => {
-    // 只在首次加载数据时自动选中今天，避免重复触发
-    if (records.length > 0 && !hasAutoSelectedRef.current && selectedDate === null) {
-      const today = new Date()
-      const todayYear = today.getFullYear()
-      const todayMonth = today.getMonth()
-      const todayDay = today.getDate()
-      const todayKey = `${todayYear}-${String(todayMonth + 1).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`
+    if (records.length === 0 || selectedDate !== null || hasAutoSelectedRef.current) return
 
-      // 检查今天是否有记录
-      const todayRecordInfo = dateRecordInfo[todayKey]
-      if (todayRecordInfo && todayRecordInfo.count > 0) {
-        setSelectedDate(todayKey)
-        hasAutoSelectedRef.current = true
-      }
+    const today = new Date()
+    const todayYear = today.getFullYear()
+    const todayMonth = today.getMonth()
+    const todayDay = today.getDate()
+    const todayKey = `${todayYear}-${String(todayMonth + 1).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`
+
+    const cy = currentMonth.getFullYear()
+    const cm = currentMonth.getMonth()
+    if (todayYear !== cy || todayMonth !== cm) return
+
+    const todayRecordInfo = dateRecordInfo[todayKey]
+    if (todayRecordInfo && todayRecordInfo.count > 0) {
+      setSelectedDate(todayKey)
+      hasAutoSelectedRef.current = true
     }
-  }, [records, dateRecordInfo, selectedDate])
+  }, [records, dateRecordInfo, selectedDate, currentMonth])
 
   return (
     <ScrollView className='calendar-page' scrollY enhanced showScrollbar={false}>

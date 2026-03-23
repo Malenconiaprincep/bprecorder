@@ -27,6 +27,7 @@ const formatDateDisplay = (dateStr: string, type: 'week' | 'month') => {
 
 // 测试数据
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
+import { getBPStatus } from '../../utils/bpStatus'
 
 // 选中点的类型
 interface SelectedPoint {
@@ -206,22 +207,6 @@ export default function AnalysisPage() {
 
     return { systolic: avgSys, diastolic: avgDia, count: totalCount, days: validData.length }
   }, [chartData])
-
-  // 判断血压状态（按医学标准）
-  const getBPStatus = (sys: number, dia: number) => {
-    // 3级高血压（重度）
-    if (sys >= 180 || dia >= 110) return { label: '3级高血压', color: 'high-3' }
-    // 2级高血压（中/重度）
-    if (sys >= 160 || dia >= 100) return { label: '2级高血压', color: 'high-2' }
-    // 1级高血压（轻度）
-    if (sys >= 140 || dia >= 90) return { label: '1级高血压', color: 'high-1' }
-    // 前期高血压
-    if (sys >= 130) return { label: '前期高血压', color: 'prehigh' }
-    // 正常血压
-    if (sys >= 120 || dia >= 80) return { label: '正常', color: 'normal' }
-    // 理想血压
-    return { label: '理想', color: 'ideal' }
-  }
 
   // 计算平滑趋势线（用于30天视图）- 只保留有数据的点
   const smoothTrendLine = useMemo(() => {

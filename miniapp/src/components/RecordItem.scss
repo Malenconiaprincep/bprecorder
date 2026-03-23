@@ -78,9 +78,12 @@
   position: absolute;
   top: 0;
   right: 0;
-  padding: 4rpx 14rpx;
+  max-width: 58%;
+  padding: 6rpx 12rpx;
   border-radius: 14rpx;
-  font-size: 24rpx;
+  font-size: 22rpx;
+  text-align: right;
+  line-height: 1.35;
 }
 
 /* 中间：日期时间和左右手信息 */
@@ -119,7 +122,11 @@
 }
 
 .status-badge.ideal {
-  background: #bbf7d0;
+  background: #d1fae5;
+}
+
+.status-badge.low {
+  background: #cffafe;
 }
 
 .status-badge.normal {
@@ -131,32 +138,38 @@
 }
 
 .status-badge.high-1 {
-  background: #fed7aa;
+  background: #ffedd5;
 }
 
 .status-badge.high-2 {
-  background: #fee2e2;
+  background: #ffe4e6;
 }
 
 .status-badge.high-3 {
-  background: #fecaca;
+  background: #fecdd3;
 }
 
 .badge-text {
-  font-size: 24rpx;
+  font-size: 22rpx;
   font-weight: 600;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .status-badge.ideal .badge-text {
-  color: #15803d;
+  color: #047857;
+}
+
+.status-badge.low .badge-text {
+  color: #0e7490;
 }
 
 .status-badge.normal .badge-text {
-  color: #16a34a;
+  color: #15803d;
 }
 
 .status-badge.prehigh .badge-text {
-  color: #b45309;
+  color: #a16207;
 }
 
 .status-badge.high-1 .badge-text {
@@ -164,10 +177,10 @@
 }
 
 .status-badge.high-2 .badge-text {
-  color: #dc2626;
+  color: #be123c;
 }
 
 .status-badge.high-3 .badge-text {
-  color: #991b1b;
+  color: #9f1239;
 }
 
