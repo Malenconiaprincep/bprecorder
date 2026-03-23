@@ -220,59 +220,6 @@
   background: #e2e8f0;
 }
 
-/* 默认测量手臂 */
-.preference-card {
-  background: #ffffff;
-  border-radius: 32rpx;
-  margin-bottom: 30rpx;
-  padding: 28rpx 32rpx 32rpx;
-}
-
-.preference-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #1e293b;
-  display: block;
-  margin-bottom: 8rpx;
-}
-
-.preference-desc {
-  font-size: 24rpx;
-  color: #94a3b8;
-  line-height: 1.45;
-  display: block;
-  margin-bottom: 24rpx;
-}
-
-.preference-hand-row {
-  display: flex;
-  gap: 20rpx;
-}
-
-.preference-hand-btn {
-  flex: 1;
-  padding: 22rpx 24rpx;
-  text-align: center;
-  border-radius: 16rpx;
-  background: #f1f5f9;
-  border: 2rpx solid transparent;
-}
-
-.preference-hand-btn.active {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: #3b82f6;
-}
-
-.preference-hand-text {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.preference-hand-btn.active .preference-hand-text {
-  color: #2563eb;
-}
-
 /* 菜单卡片 */
 .menu-card {
   background: #ffffff;
@@ -1143,27 +1090,6 @@
 
   .stat-divider {
     height: 64rpx !important;
-  }
-
-  .preference-card {
-    padding: 32rpx 36rpx 36rpx !important;
-  }
-
-  .preference-title {
-    font-size: 36rpx !important;
-  }
-
-  .preference-desc {
-    font-size: 28rpx !important;
-    margin-bottom: 28rpx !important;
-  }
-
-  .preference-hand-btn {
-    padding: 28rpx 24rpx !important;
-  }
-
-  .preference-hand-text {
-    font-size: 34rpx !important;
   }
 
   /* 菜单项放大 */

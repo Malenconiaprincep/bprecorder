@@ -4,7 +4,7 @@ import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, getUserInfo, silentLogin, uploadAvatar } from '../../lib/auth'
 import { getRecords, getRecordsInRange, BPRecord, addRecordsBatch } from '../../lib/supabase'
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
-import { FontSizeMode, getCurrentFontSizeMode, setFontSizeMode, getFontSizeModeClass, applyFontSizeMode, getPreferredMeasureHand, savePreferredMeasureHand, type PreferredMeasureHand } from '../../lib/settings'
+import { FontSizeMode, getCurrentFontSizeMode, setFontSizeMode, getFontSizeModeClass, applyFontSizeMode } from '../../lib/settings'
 import FontSizeModeModal from '../../components/FontSizeModeModal'
 import * as XLSX from 'xlsx'
 import './index.scss'
@@ -33,9 +33,6 @@ export default function Profile() {
   // 字体模式相关状态
   const [fontSizeMode, setFontSizeModeState] = useState<FontSizeMode>('normal')
   const [showFontModeModal, setShowFontModeModal] = useState(false)
-
-  /** 默认测量手臂（与首页识别、手动输入共用存储） */
-  const [preferredHand, setPreferredHand] = useState<PreferredMeasureHand>(() => getPreferredMeasureHand())
 
   // 数据导入相关状态
   const [showImportModal, setShowImportModal] = useState(false)
@@ -137,7 +134,6 @@ export default function Profile() {
     // 初始化字体模式
     const currentMode = getCurrentFontSizeMode()
     setFontSizeModeState(currentMode)
-    setPreferredHand(getPreferredMeasureHand())
 
     // 测试模式下直接加载测试数据
     if (USE_TEST_DATA) {
@@ -183,7 +179,6 @@ export default function Profile() {
 
   // 页面每次显示时刷新数据
   useDidShow(() => {
-    setPreferredHand(getPreferredMeasureHand())
     if (USE_TEST_DATA) return
 
     const userInfo = getUserInfo()
@@ -1000,32 +995,6 @@ export default function Profile() {
         </View>
       )}
 
-      {/* 默认测量手臂 */}
-      <View className='preference-card'>
-        <Text className='preference-title'>默认测量手臂</Text>
-        <Text className='preference-desc'>拍照识别、手动输入会默认选这一侧，也可在记录时临时修改</Text>
-        <View className='preference-hand-row'>
-          <View
-            className={`preference-hand-btn ${preferredHand === 'left' ? 'active' : ''}`}
-            onClick={() => {
-              setPreferredHand('left')
-              savePreferredMeasureHand('left')
-            }}
-          >
-            <Text className='preference-hand-text'>左手</Text>
-          </View>
-          <View
-            className={`preference-hand-btn ${preferredHand === 'right' ? 'active' : ''}`}
-            onClick={() => {
-              setPreferredHand('right')
-              savePreferredMeasureHand('right')
-            }}
-          >
-            <Text className='preference-hand-text'>右手</Text>
-          </View>
-        </View>
-      </View>
-
       {/* 菜单列表 */}
       <View className='menu-card'>
         {menuItems.map((item, index) => (
@@ -1315,7 +1284,7 @@ export default function Profile() {
       )}
 
       <View className='version-info'>
-        <Text className='version-text'>v2.3.0</Text>
+        <Text className='version-text'>v2.3.1</Text>
       </View>
 
       {/* 字体模式选择弹窗 */}
