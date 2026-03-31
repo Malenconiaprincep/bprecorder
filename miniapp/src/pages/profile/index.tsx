@@ -429,7 +429,7 @@ export default function Profile() {
       } else if (openid) {
         const startISO = start.toISOString()
         const endISO = end.toISOString()
-        const { data, error } = await getRecordsInRange('oCFn_4ivGNnuzMytpVprEcT7ROaU', startISO, endISO)
+        const { data, error } = await getRecordsInRange(openid, startISO, endISO)
 
         console.log('data', data)
 
