@@ -146,7 +146,8 @@ const PREFERRED_MEASURE_HAND_KEY = 'bp_preferred_measure_hand'
 
 export type PreferredMeasureHand = 'left' | 'right'
 
-export function getPreferredMeasureHand(): PreferredMeasureHand {
+/** 无本地记录时返回 null，不再默认左手，避免未选择也写入数据库 hand */
+export function getPreferredMeasureHand(): PreferredMeasureHand | null {
   try {
     const v = Taro.getStorageSync(PREFERRED_MEASURE_HAND_KEY)
     if (v === 'left' || v === 'right') {
@@ -155,7 +156,7 @@ export function getPreferredMeasureHand(): PreferredMeasureHand {
   } catch (e) {
     /* ignore */
   }
-  return 'left'
+  return null
 }
 
 export function savePreferredMeasureHand(hand: PreferredMeasureHand): void {
@@ -163,6 +164,14 @@ export function savePreferredMeasureHand(hand: PreferredMeasureHand): void {
     Taro.setStorageSync(PREFERRED_MEASURE_HAND_KEY, hand)
   } catch (e) {
     console.error('Failed to save preferred measure hand:', e)
+  }
+}
+
+export function clearPreferredMeasureHand(): void {
+  try {
+    Taro.removeStorageSync(PREFERRED_MEASURE_HAND_KEY)
+  } catch (e) {
+    /* ignore */
   }
 }
 

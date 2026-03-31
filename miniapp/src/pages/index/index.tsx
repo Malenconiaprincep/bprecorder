@@ -3,7 +3,7 @@ import { View, Text, Image, ScrollView, Canvas, Button, Textarea } from '@tarojs
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { getRecords, BPRecord, addRecord, deleteRecord } from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
-import { FontSizeMode, getCurrentFontSizeMode, initFontSizeMode, getFontSizeModeClass, saveLocalFontSizeMode, applyFontSizeMode, getPreferredMeasureHand, savePreferredMeasureHand } from '../../lib/settings'
+import { FontSizeMode, getCurrentFontSizeMode, initFontSizeMode, getFontSizeModeClass, saveLocalFontSizeMode, applyFontSizeMode, getPreferredMeasureHand, savePreferredMeasureHand, clearPreferredMeasureHand } from '../../lib/settings'
 import { API_BASE_URL } from '../../utils/api'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { generateShareImage } from '../../utils/shareImage'
@@ -89,7 +89,7 @@ export default function Index() {
   } | null>(null)
   const [showResultModal, setShowResultModal] = useState(false)
   const [savingRecord, setSavingRecord] = useState(false)
-  const [selectedHand, setSelectedHand] = useState<'left' | 'right'>(() => getPreferredMeasureHand())
+  const [selectedHand, setSelectedHand] = useState<'left' | 'right' | ''>(() => getPreferredMeasureHand() ?? '')
   const [note, setNote] = useState('')
   const [noteExpanded, setNoteExpanded] = useState(false)
   const [shareImageUrl, setShareImageUrl] = useState<string>('')
@@ -207,10 +207,10 @@ export default function Index() {
     }
   }, [])
 
-  // 每次识别出结果时，用当前存储的默认手臂（含「我的」里刚改的）
+  // 每次识别出结果时，用本地已保存的手臂偏好（无则不高亮、保存时不写 hand）
   React.useEffect(() => {
     if (analyzeResult) {
-      setSelectedHand(getPreferredMeasureHand())
+      setSelectedHand(getPreferredMeasureHand() ?? '')
     }
   }, [analyzeResult])
 
@@ -223,7 +223,7 @@ export default function Index() {
     }
 
     if (!showResultModal) {
-      setSelectedHand(getPreferredMeasureHand())
+      setSelectedHand(getPreferredMeasureHand() ?? '')
     }
 
     // 检查是否有从日历页面返回的选中日期
@@ -483,7 +483,7 @@ export default function Index() {
         diastolic: analyzeResult.diastolic,
         pulse: analyzeResult.pulse,
         recorded_at: recordedAt,
-        hand: selectedHand,
+        hand: selectedHand === 'left' || selectedHand === 'right' ? selectedHand : undefined,
         note: note || undefined
       })
 
@@ -512,7 +512,9 @@ export default function Index() {
         setAnalysisNeedRefresh(true) // 首页有数据变更，下次进分析页需拉取
         // 刷新记录列表
         await fetchRecords(userInfo.openid)
-        savePreferredMeasureHand(selectedHand)
+        if (selectedHand === 'left' || selectedHand === 'right') {
+          savePreferredMeasureHand(selectedHand)
+        }
       }
     } catch (e) {
       Taro.showToast({ title: '保存失败', icon: 'none' })
@@ -892,8 +894,10 @@ export default function Index() {
                 <View
                   className={`hand-option ${selectedHand === 'left' ? 'active' : ''}`}
                   onClick={() => {
-                    setSelectedHand('left')
-                    savePreferredMeasureHand('left')
+                    const next = selectedHand === 'left' ? '' : 'left'
+                    setSelectedHand(next)
+                    if (next === 'left') savePreferredMeasureHand('left')
+                    else clearPreferredMeasureHand()
                   }}
                 >
                   <Text>左手</Text>
@@ -901,8 +905,10 @@ export default function Index() {
                 <View
                   className={`hand-option ${selectedHand === 'right' ? 'active' : ''}`}
                   onClick={() => {
-                    setSelectedHand('right')
-                    savePreferredMeasureHand('right')
+                    const next = selectedHand === 'right' ? '' : 'right'
+                    setSelectedHand(next)
+                    if (next === 'right') savePreferredMeasureHand('right')
+                    else clearPreferredMeasureHand()
                   }}
                 >
                   <Text>右手</Text>

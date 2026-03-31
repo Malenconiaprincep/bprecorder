@@ -4,7 +4,7 @@ import Taro, { useLoad, useRouter } from '@tarojs/taro'
 import { addRecord, updateRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
-import { getPreferredMeasureHand, savePreferredMeasureHand } from '../../lib/settings'
+import { getPreferredMeasureHand, savePreferredMeasureHand, clearPreferredMeasureHand } from '../../lib/settings'
 import './index.scss'
 
 /** 测量时间选择器分钟步长 */
@@ -134,7 +134,7 @@ export default function InputPage() {
         setSelectedTime(snapped.time)
       }
     } else {
-      setHand(getPreferredMeasureHand())
+      setHand(getPreferredMeasureHand() ?? '')
     }
   })
 
@@ -306,7 +306,8 @@ export default function InputPage() {
               onClick={() => {
                 const next = hand === 'left' ? '' : 'left'
                 setHand(next)
-                if (next) savePreferredMeasureHand(next)
+                if (next === 'left') savePreferredMeasureHand('left')
+                else clearPreferredMeasureHand()
               }}
             >
               <Text className='hand-icon'>🤚</Text>
@@ -317,7 +318,8 @@ export default function InputPage() {
               onClick={() => {
                 const next = hand === 'right' ? '' : 'right'
                 setHand(next)
-                if (next) savePreferredMeasureHand(next)
+                if (next === 'right') savePreferredMeasureHand('right')
+                else clearPreferredMeasureHand()
               }}
             >
               <Text className='hand-icon'>✋</Text>

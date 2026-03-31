@@ -22,6 +22,37 @@ import iconClock from '../../assets/icons/clock.png'
 import iconShare from '../../assets/icons/share.png'
 // @ts-ignore
 import iconMode from '../../assets/icons/mode.png'
+
+/** 用户选择的日期按东八区「当天」起止，转为 Date 供查询（避免误用 UTC 午夜导致漏/多数据） */
+function exportRangeToBoundsCST(startStr: string, endStr: string): { start: Date; end: Date } {
+  return {
+    start: new Date(`${startStr}T00:00:00+08:00`),
+    end: new Date(`${endStr}T23:59:59.999+08:00`)
+  }
+}
+
+/** 将 ISO 记录时间格式化为东八区日期与时间（导出 Excel） */
+function formatRecordedAtAsiaShanghai(iso: string): { date: string; time: string } {
+  if (!iso) return { date: '', time: '' }
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return { date: '', time: '' }
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).formatToParts(d)
+  const v = (t: Intl.DateTimeFormatPartTypes) => parts.find(p => p.type === t)?.value ?? ''
+  return {
+    date: `${v('year')}-${v('month')}-${v('day')}`,
+    time: `${v('hour')}:${v('minute')}:${v('second')}`
+  }
+}
+
 export default function Profile() {
   const [wxUser, setWxUser] = useState<WxUserInfo | null>(null)
   const [openid, setOpenid] = useState<string>('')
@@ -371,8 +402,7 @@ export default function Profile() {
       Taro.showToast({ title: '请选择开始和结束日期', icon: 'none' })
       return
     }
-    const start = new Date(startStr + 'T00:00:00.000Z')
-    const end = new Date(endStr + 'T23:59:59.999Z')
+    const { start, end } = exportRangeToBoundsCST(startStr, endStr)
     if (start.getTime() > end.getTime()) {
       Taro.showToast({ title: '开始日期不能晚于结束日期', icon: 'none' })
       return
@@ -390,16 +420,19 @@ export default function Profile() {
       let list: BPRecord[] = []
       if (USE_TEST_DATA) {
         const testData = getTestData()
-        const startPrefix = startStr + 'T'
-        const endPrefix = endStr + 'T'
+        const rangeStart = start.getTime()
+        const rangeEnd = end.getTime()
         list = testData.filter(r => {
-          const t = r.recorded_at
-          return t >= startPrefix && t <= endPrefix + '23:59:59.999Z'
+          const t = new Date(r.recorded_at).getTime()
+          return !Number.isNaN(t) && t >= rangeStart && t <= rangeEnd
         })
       } else if (openid) {
         const startISO = start.toISOString()
         const endISO = end.toISOString()
-        const { data, error } = await getRecordsInRange(openid, startISO, endISO)
+        const { data, error } = await getRecordsInRange('oCFn_4ivGNnuzMytpVprEcT7ROaU', startISO, endISO)
+
+        console.log('data', data)
+
         if (error) {
           Taro.hideLoading()
           setExporting(false)
@@ -417,9 +450,7 @@ export default function Profile() {
       }
 
       const rows = list.map(r => {
-        const [datePart, timePart] = (r.recorded_at || '').split('T')
-        const date = datePart || ''
-        const time = (timePart || '').slice(0, 8)
+        const { date, time } = formatRecordedAtAsiaShanghai(r.recorded_at || '')
         return {
           '日期': date,
           '时间': time,
@@ -1284,7 +1315,7 @@ export default function Profile() {
       )}
 
       <View className='version-info'>
-        <Text className='version-text'>v2.3.1</Text>
+        <Text className='version-text'>v2.3.2</Text>
       </View>
 
       {/* 字体模式选择弹窗 */}
