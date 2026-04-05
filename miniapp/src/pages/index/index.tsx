@@ -714,11 +714,20 @@ export default function Index() {
               <Text className='summary-empty-hint'>坚持每天测量，了解血压趋势</Text>
             </View>
           )}
+          <View
+            className='summary-report-entry'
+            onClick={() => Taro.navigateTo({ url: '/pages/weekly-report/index' })}
+          >
+            <View className='summary-report-entry-left'>
+              <Text className='summary-report-entry-text'>本周总结</Text>
+              <Text className='summary-report-entry-sub'>详细统计 · 可分享</Text>
+            </View>
+            <Text className='summary-report-entry-arrow'>›</Text>
+          </View>
         </View>
 
-        {/* 我的组快捷入口 - 始终显示 */}
+        {/* 我的组快捷入口 - 本周概览与测量记录之间 */}
         <View className='groups-shortcut' onClick={() => {
-          // 如果只有一个组，直接进入组详情；否则进入组列表
           if (myGroups.length === 1) {
             Taro.navigateTo({ url: `/pages/groups/detail?id=${myGroups[0].id}` })
           } else {

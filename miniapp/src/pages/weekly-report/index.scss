@@ -1,0 +1,228 @@
+page {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.weekly-summary-root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.weekly-summary-page {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background: #f0f6ff;
+  padding-bottom: 48rpx;
+}
+
+.weekly-summary-page .content {
+  padding: 20rpx 28rpx 0;
+}
+
+.weekly-summary-page .empty-card {
+  margin-top: 0;
+  padding: 56rpx 36rpx;
+  background: #ffffff;
+  border-radius: 28rpx;
+  text-align: center;
+  border: 1rpx solid #e2e8f0;
+}
+
+.weekly-summary-page .empty-title {
+  font-size: 32rpx;
+  color: #475569;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.weekly-summary-page .empty-hint {
+  font-size: 26rpx;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.weekly-summary-page .hero-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 28rpx;
+  padding: 28rpx 32rpx 32rpx;
+  margin-bottom: 20rpx;
+  border: 1rpx solid #e2e8f0;
+  box-shadow: 0 4rpx 24rpx rgba(15, 23, 42, 0.04);
+}
+
+.weekly-summary-page .hero-meta {
+  font-size: 24rpx;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.weekly-summary-page .hero-label {
+  font-size: 26rpx;
+  color: #64748b;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.weekly-summary-page .card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 24rpx 28rpx;
+  margin-bottom: 20rpx;
+  border: 1rpx solid #e8eef4;
+  box-shadow: 0 2rpx 16rpx rgba(15, 23, 42, 0.03);
+}
+
+.weekly-summary-page .card-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.weekly-summary-page .avg-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.weekly-summary-page .avg-sys {
+  font-size: 64rpx;
+  font-weight: 700;
+  color: #ea580c;
+  line-height: 1;
+}
+
+.weekly-summary-page .avg-slash {
+  font-size: 44rpx;
+  color: #cbd5e1;
+}
+
+.weekly-summary-page .avg-dia {
+  font-size: 64rpx;
+  font-weight: 700;
+  color: #2563eb;
+  line-height: 1;
+}
+
+.weekly-summary-page .avg-unit {
+  font-size: 24rpx;
+  color: #94a3b8;
+  margin-left: 8rpx;
+}
+
+.weekly-summary-page .avg-status {
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  color: #059669;
+}
+
+.weekly-summary-page .stat-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx 28rpx;
+}
+
+.weekly-summary-page .stat-item {
+  min-width: 42%;
+}
+
+.weekly-summary-page .stat-label {
+  font-size: 24rpx;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.weekly-summary-page .stat-value {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.weekly-summary-page .stat-value.highlight {
+  color: #2563eb;
+}
+
+.weekly-summary-page .stat-value.warn {
+  color: #c2410c;
+}
+
+.weekly-summary-page .bucket-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f1f5f9;
+  font-size: 28rpx;
+  color: #475569;
+}
+
+.weekly-summary-page .bucket-row:last-child {
+  border-bottom: none;
+}
+
+.weekly-summary-page .bucket-count {
+  color: #94a3b8;
+  font-size: 26rpx;
+}
+
+.weekly-summary-page .extreme-block {
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.weekly-summary-page .share-bar {
+  margin-top: 12rpx;
+  margin-bottom: 8rpx;
+  padding: 20rpx 0 8rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.weekly-summary-page .share-bar-hint {
+  font-size: 22rpx;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.weekly-summary-page .disclaimer-footer {
+  display: block;
+  font-size: 22rpx;
+  color: #94a3b8;
+  line-height: 1.5;
+  text-align: center;
+  margin-top: 4rpx;
+  margin-bottom: 8rpx;
+  padding: 0 8rpx;
+}
+
+.weekly-summary-page .share-friend-btn {
+  margin: 0;
+  padding: 0 48rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #2563eb;
+  background: #ffffff;
+  border: 1rpx solid #bfdbfe;
+  border-radius: 999rpx;
+}
+
+.weekly-summary-page .share-friend-btn::after {
+  border: none;
+}

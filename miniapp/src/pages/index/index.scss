@@ -591,6 +591,53 @@
   color: #9f1239;
 }
 
+.summary-report-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28rpx;
+  padding: 22rpx 26rpx;
+  background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+  border-radius: 22rpx;
+  border: 1rpx solid #93c5fd;
+  box-shadow: 0 4rpx 16rpx rgba(37, 99, 235, 0.08);
+}
+
+.summary-report-entry:active {
+  opacity: 0.92;
+  transform: scale(0.99);
+}
+
+.summary-report-entry-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-report-entry-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1d4ed8;
+  letter-spacing: 0.5rpx;
+}
+
+.summary-report-entry-sub {
+  font-size: 24rpx;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.summary-report-entry-arrow {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-size: 40rpx;
+  color: #2563eb;
+  font-weight: 400;
+  line-height: 1;
+}
+
 /* 记录列表区域 */
 .records-section {
   margin: 30rpx 30rpx 0 30rpx;
@@ -979,7 +1026,7 @@
   color: #1e293b;
 }
 
-/* 我的组快捷入口 */
+/* 我的组快捷入口（首页：本周概览与测量记录之间） */
 .groups-shortcut {
   position: relative;
   z-index: 1;

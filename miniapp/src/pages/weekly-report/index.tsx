@@ -1,0 +1,215 @@
+import { useState, useMemo, useEffect } from 'react'
+import { View, Text, ScrollView, Canvas, Button } from '@tarojs/components'
+import { useLoad, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
+import { getRecords, type BPRecord } from '../../lib/supabase'
+import { silentLogin, getUserInfo } from '../../lib/auth'
+import { USE_TEST_DATA, getTestData } from '../../utils/testData'
+import { computeWeeklyReport } from '../../utils/weeklyReport'
+import { getBPStatus } from '../../utils/bpStatus'
+import { generateWeeklyReportImage } from '../../utils/weeklyReportImage'
+import './index.scss'
+
+const CANVAS_W = 750
+const CANVAS_H = 820
+
+function formatShortDateTime(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+export default function WeeklyReportPage() {
+  const [records, setRecords] = useState<BPRecord[]>([])
+  const [shareImagePath, setShareImagePath] = useState('')
+
+  const stats = useMemo(() => computeWeeklyReport(records), [records])
+
+  const loadRecords = async () => {
+    if (USE_TEST_DATA) {
+      setRecords(getTestData())
+      return
+    }
+    let openid: string | undefined
+    const stored = getUserInfo()
+    if (stored?.openid) {
+      openid = stored.openid
+    } else {
+      const result = await silentLogin()
+      if (result.success && result.userInfo?.openid) {
+        openid = result.userInfo.openid
+      }
+    }
+    if (!openid) return
+    try {
+      const { data, error } = await getRecords(openid)
+      if (!error && data) setRecords(data)
+    } catch (e) {
+      console.error('weekly-report loadRecords', e)
+    }
+  }
+
+  useLoad(() => {
+    void loadRecords()
+  })
+
+  useEffect(() => {
+    if (!stats) {
+      setShareImagePath('')
+      return
+    }
+    const timer = setTimeout(() => {
+      generateWeeklyReportImage(stats)
+        .then(setShareImagePath)
+        .catch(() => setShareImagePath(''))
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [stats])
+
+  useShareAppMessage(() => {
+    if (!stats) {
+      return {
+        title: '本周血压总结',
+        path: '/pages/weekly-report/index'
+      }
+    }
+    return {
+      title: `近7天平均 ${stats.avgSystolic}/${stats.avgDiastolic} mmHg，共测${stats.count}次`,
+      path: '/pages/weekly-report/index',
+      imageUrl: shareImagePath || ''
+    }
+  })
+
+  useShareTimeline(() => {
+    if (!stats) {
+      return { title: '本周血压总结' }
+    }
+    return {
+      title: `近7天血压：${stats.avgSystolic}/${stats.avgDiastolic}，${stats.count}次测量`,
+      imageUrl: shareImagePath || ''
+    }
+  })
+
+  const avgStatus = stats ? getBPStatus(stats.avgSystolic, stats.avgDiastolic) : null
+
+  return (
+    <View className='weekly-summary-root'>
+      <ScrollView className='weekly-summary-page' scrollY enhanced showScrollbar={false}>
+        <View className='content'>
+          {!stats ? (
+            <View className='empty-card'>
+              <Text className='empty-title'>近 7 天暂无记录</Text>
+              <Text className='empty-hint'>坚持测量后，这里会显示本周小结与分享图</Text>
+            </View>
+          ) : (
+            <>
+              <View className='hero-card'>
+                <Text className='hero-meta'>{stats.rangeLabel} · 共 {stats.count} 次</Text>
+                <Text className='hero-label'>平均血压</Text>
+                <View className='avg-row'>
+                  <Text className='avg-sys'>{stats.avgSystolic}</Text>
+                  <Text className='avg-slash'>/</Text>
+                  <Text className='avg-dia'>{stats.avgDiastolic}</Text>
+                  <Text className='avg-unit'>mmHg</Text>
+                </View>
+                {avgStatus && (
+                  <Text className='avg-status'>
+                    {avgStatus.emoji} {avgStatus.label}
+                  </Text>
+                )}
+              </View>
+
+              <View className='card'>
+                <Text className='card-title'>概览</Text>
+                <View className='stat-grid'>
+                  <View className='stat-item'>
+                    <Text className='stat-label'>测量次数</Text>
+                    <Text className='stat-value highlight'>{stats.count}</Text>
+                  </View>
+                  <View className='stat-item'>
+                    <Text className='stat-label'>心率均值</Text>
+                    <Text className='stat-value'>{stats.avgPulse} bpm</Text>
+                  </View>
+                  <View className='stat-item'>
+                    <Text className='stat-label'>正常（理想）</Text>
+                    <Text className='stat-value'>{stats.normalCount} 次</Text>
+                  </View>
+                  <View className='stat-item'>
+                    <Text className='stat-label'>需关注</Text>
+                    <Text className={`stat-value ${stats.abnormalCount > 0 ? 'warn' : ''}`}>
+                      {stats.abnormalCount} 次
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View className='card'>
+                <Text className='card-title'>分级统计</Text>
+                <View className='bucket-row'>
+                  <Text>偏低</Text>
+                  <Text className='bucket-count'>{stats.lowCount} 次</Text>
+                </View>
+                <View className='bucket-row'>
+                  <Text>稍高</Text>
+                  <Text className='bucket-count'>{stats.prehighCount} 次</Text>
+                </View>
+                <View className='bucket-row'>
+                  <Text>高血压（多测几天）</Text>
+                  <Text className='bucket-count'>{stats.high1Count} 次</Text>
+                </View>
+                <View className='bucket-row'>
+                  <Text>明显偏高（看医生）</Text>
+                  <Text className='bucket-count'>{stats.high3Count} 次</Text>
+                </View>
+              </View>
+
+              <View className='card'>
+                <Text className='card-title'>时段分布</Text>
+                {stats.timeBuckets.map(b => (
+                  <View key={b.label} className='bucket-row'>
+                    <Text>{b.label}</Text>
+                    <Text className='bucket-count'>{b.count} 次</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View className='card'>
+                <Text className='card-title'>极值</Text>
+                <View className='extreme-block'>
+                  <Text>
+                    最高 {stats.maxRecord.systolic}/{stats.maxRecord.diastolic} mmHg（
+                    {formatShortDateTime(stats.maxRecord.recorded_at)}）
+                  </Text>
+                </View>
+                <View className='extreme-block'>
+                  <Text>
+                    最低 {stats.minRecord.systolic}/{stats.minRecord.diastolic} mmHg（
+                    {formatShortDateTime(stats.minRecord.recorded_at)}）
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
+
+          <View className='share-bar'>
+            <Button className='share-friend-btn' openType='share' size='mini'>
+              分享给好友
+            </Button>
+            <Text className='share-bar-hint'>朋友圈：点右上角 ···</Text>
+          </View>
+          <Text className='disclaimer-footer'>近 7 天记录整理，仅供参考，不替代诊疗。</Text>
+        </View>
+      </ScrollView>
+
+      <Canvas
+        canvasId='weeklyReportCanvas'
+        style={{
+          width: `${CANVAS_W}px`,
+          height: `${CANVAS_H}px`,
+          position: 'fixed',
+          left: '-2000px',
+          top: '0'
+        }}
+      />
+    </View>
+  )
+}
