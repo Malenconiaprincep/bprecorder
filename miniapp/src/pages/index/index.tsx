@@ -1,7 +1,15 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import { View, Text, Image, ScrollView, Canvas, Button, Textarea } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
-import { getRecords, BPRecord, addRecord, deleteRecord } from '../../lib/supabase'
+import {
+  getRecordsPage,
+  getBpRecordsCount,
+  getRecordsForHomeStats,
+  HOME_LIST_PAGE_SIZE,
+  BPRecord,
+  addRecord,
+  deleteRecord
+} from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
 import { FontSizeMode, getCurrentFontSizeMode, initFontSizeMode, getFontSizeModeClass, saveLocalFontSizeMode, applyFontSizeMode, getPreferredMeasureHand, savePreferredMeasureHand, clearPreferredMeasureHand } from '../../lib/settings'
 import { API_BASE_URL } from '../../utils/api'
@@ -79,7 +87,14 @@ const formatRecordDateTime = (isoString: string) => {
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 
 export default function Index() {
-  const [records, setRecords] = useState<BPRecord[]>([])
+  /** 首页列表：分页加载，仅用于测量记录区块展示 */
+  const [listRecords, setListRecords] = useState<BPRecord[]>([])
+  /** 近 180 天数据：本周概览、连续打卡（与列表分页无关） */
+  const [statsRecords, setStatsRecords] = useState<BPRecord[]>([])
+  const [recordsTotal, setRecordsTotal] = useState(0)
+  const [listHasMore, setListHasMore] = useState(false)
+  const [listLoadingMore, setListLoadingMore] = useState(false)
+  const listLoadGuardRef = useRef(false)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzeResult, setAnalyzeResult] = useState<{
@@ -99,8 +114,8 @@ export default function Index() {
   // 字体模式状态
   const [fontSizeMode, setFontSizeModeState] = useState<FontSizeMode>('normal')
 
-  const latestRecord = records.length > 0 ? records[0] : null
-  const previousRecord = records.length > 1 ? records[1] : null
+  const latestRecord = listRecords.length > 0 ? listRecords[0] : null
+  const previousRecord = listRecords.length > 1 ? listRecords[1] : null
 
   // 计算血压差
   const bpDifference = useMemo(() => {
@@ -117,7 +132,7 @@ export default function Index() {
     const groups: { dateLabel: string; dateKey: string; records: BPRecord[] }[] = []
     const groupMap: { [key: string]: BPRecord[] } = {}
 
-    records.forEach(r => {
+    listRecords.forEach(r => {
       const dateKey = r.recorded_at.split('T')[0]
       if (!groupMap[dateKey]) {
         groupMap[dateKey] = []
@@ -140,7 +155,7 @@ export default function Index() {
     })
 
     return groups
-  }, [records])
+  }, [listRecords])
 
   // 根据选中的日期筛选记录
   const filteredGroupedRecords = useMemo(() => {
@@ -150,26 +165,28 @@ export default function Index() {
     return groupedRecords.filter(group => group.dateKey === selectedDate)
   }, [groupedRecords, selectedDate])
 
-  // 计算本周平均值
+  const statsSource = statsRecords.length > 0 ? statsRecords : listRecords
+
+  // 计算本周平均值（依赖统计数据集，不全依赖列表分页）
   const weeklyAverage = useMemo(() => {
-    if (records.length === 0) return null
+    if (statsSource.length === 0) return null
 
     const now = new Date()
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-    const weekRecords = records.filter(r => new Date(r.recorded_at) >= weekAgo)
+    const weekRecords = statsSource.filter(r => new Date(r.recorded_at) >= weekAgo)
     if (weekRecords.length === 0) return null
 
     const avgSystolic = Math.round(weekRecords.reduce((sum, r) => sum + r.systolic, 0) / weekRecords.length)
     const avgDiastolic = Math.round(weekRecords.reduce((sum, r) => sum + r.diastolic, 0) / weekRecords.length)
 
     return { systolic: avgSystolic, diastolic: avgDiastolic, count: weekRecords.length }
-  }, [records])
+  }, [statsSource])
 
   // 连续打卡天数（与「我的」页统计一致，按本地自然日）
   const consecutiveDays = useMemo(() => {
-    if (records.length === 0) return 0
-    const uniqueDays = new Set(records.map(r => r.recorded_at.split('T')[0]))
+    if (statsSource.length === 0) return 0
+    const uniqueDays = new Set(statsSource.map(r => r.recorded_at.split('T')[0]))
     const sortedDays = Array.from(uniqueDays).sort((a, b) => b.localeCompare(a))
     let streak = 0
     const pad = (n: number) => String(n).padStart(2, '0')
@@ -185,7 +202,7 @@ export default function Index() {
       }
     }
     return streak
-  }, [records])
+  }, [statsSource])
 
   // 标记是否已初始化，避免重复调用
   const [initialized, setInitialized] = useState(false)
@@ -290,7 +307,11 @@ export default function Index() {
 
     // 测试模式直接加载测试数据
     if (USE_TEST_DATA) {
-      setRecords(getTestData())
+      const all = getTestData()
+      setRecordsTotal(all.length)
+      setListRecords(all.slice(0, HOME_LIST_PAGE_SIZE))
+      setStatsRecords(all)
+      setListHasMore(all.length > HOME_LIST_PAGE_SIZE)
       setInitialized(true)
       return
     }
@@ -337,19 +358,77 @@ export default function Index() {
   }
 
   const fetchRecords = async (userId: string) => {
-    // 使用测试数据
+    listLoadGuardRef.current = false
     if (USE_TEST_DATA) {
-      setRecords(getTestData())
+      const all = getTestData()
+      setRecordsTotal(all.length)
+      setListRecords(all.slice(0, HOME_LIST_PAGE_SIZE))
+      setStatsRecords(all)
+      setListHasMore(all.length > HOME_LIST_PAGE_SIZE)
       return
     }
 
     try {
-      const { data, error } = await getRecords(userId)
-      if (!error && data) {
-        setRecords(data)
+      const [countRes, pageRes, statsRes] = await Promise.all([
+        getBpRecordsCount(userId),
+        getRecordsPage(userId, 0),
+        getRecordsForHomeStats(userId)
+      ])
+      if (!countRes.error) {
+        setRecordsTotal(countRes.count)
+      }
+      if (pageRes.data && !pageRes.error) {
+        setListRecords(pageRes.data)
+        setListHasMore(pageRes.hasMore)
+      } else {
+        setListRecords([])
+        setListHasMore(false)
+      }
+      if (statsRes.data && !statsRes.error) {
+        setStatsRecords(statsRes.data)
+      } else {
+        setStatsRecords([])
       }
     } catch (e) {
       console.error('Failed to fetch records', e)
+    }
+  }
+
+  const loadMoreRecords = async () => {
+    if (USE_TEST_DATA) {
+      const all = getTestData()
+      setListRecords(prev => {
+        if (prev.length >= all.length) {
+          setListHasMore(false)
+          return prev
+        }
+        const next = all.slice(0, prev.length + HOME_LIST_PAGE_SIZE)
+        setListHasMore(next.length < all.length)
+        return next
+      })
+      return
+    }
+    if (!userInfo?.openid || listLoadingMore || !listHasMore || listLoadGuardRef.current) return
+    listLoadGuardRef.current = true
+    setListLoadingMore(true)
+    try {
+      const offset = listRecords.length
+      const { data, error, hasMore } = await getRecordsPage(userInfo.openid, offset)
+      if (!error && data?.length) {
+        setListRecords(prev => {
+          const ids = new Set(prev.map(r => r.id).filter((id): id is number => id != null))
+          const extra = data.filter(r => r.id == null || !ids.has(r.id))
+          return [...prev, ...extra]
+        })
+        setListHasMore(hasMore)
+      } else if (!error && (!data || data.length === 0)) {
+        setListHasMore(false)
+      }
+    } catch (e) {
+      console.error('loadMoreRecords', e)
+    } finally {
+      setListLoadingMore(false)
+      listLoadGuardRef.current = false
     }
   }
 
@@ -598,7 +677,14 @@ export default function Index() {
         disableScroll
       />
 
-      <ScrollView className={`page ${getFontSizeModeClass(fontSizeMode)}`} scrollY enhanced showScrollbar={false}>
+      <ScrollView
+        className={`page ${getFontSizeModeClass(fontSizeMode)}`}
+        scrollY
+        enhanced
+        showScrollbar={false}
+        lowerThreshold={120}
+        onScrollToLower={() => void loadMoreRecords()}
+      >
         {/* 顶部蓝色弧形背景 */}
         <View className='bg-curve' />
 
@@ -758,11 +844,11 @@ export default function Index() {
             <View className='section-title'>
               <Image className='title-icon' src={iconList} mode='aspectFit' />
               <Text>测量记录</Text>
-              {groupedRecords.length > 0 && (
-                <Text className='section-subtitle'>共 {groupedRecords.reduce((sum, g) => sum + g.records.length, 0)} 条</Text>
+              {recordsTotal > 0 && (
+                <Text className='section-subtitle'>共 {recordsTotal} 条</Text>
               )}
               {/* 数据日历按钮 */}
-              {groupedRecords.length > 0 && (
+              {recordsTotal > 0 && (
                 <View className='calendar-trigger-btn' onClick={() => {
                   Taro.navigateTo({ url: '/pages/calendar/index' })
                 }}>
@@ -855,6 +941,13 @@ export default function Index() {
                     </View>
                   ))}
                 </View>
+                {!selectedDate && listRecords.length > 0 && (
+                  <View className='records-load-footer'>
+                    <Text className='records-load-footer-text'>
+                      {listLoadingMore ? '加载中…' : listHasMore ? '继续下滑加载更多' : '已加载全部记录'}
+                    </Text>
+                  </View>
+                )}
               </>
             )}
           </View>

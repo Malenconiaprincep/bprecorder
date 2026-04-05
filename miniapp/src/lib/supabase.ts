@@ -75,8 +75,11 @@ export interface BPRecord {
   created_at?: string
 }
 
+/** 首页测量记录列表每页条数 */
+export const HOME_LIST_PAGE_SIZE = 10
+
 /**
- * 获取用户的血压记录
+ * 获取用户的血压记录（其它页/analysis 等仍用；限制 50 条）
  */
 export async function getRecords(userId: string): Promise<{ data: BPRecord[] | null; error: string | null }> {
   return request<BPRecord[]>('/bp_records', {
@@ -86,6 +89,75 @@ export async function getRecords(userId: string): Promise<{ data: BPRecord[] | n
       limit: '50'
     }
   })
+}
+
+/**
+ * 分页拉取记录（首页列表）；多取 1 条用于判断 hasMore
+ */
+export async function getRecordsPage(
+  userId: string,
+  offset: number,
+  pageSize: number = HOME_LIST_PAGE_SIZE
+): Promise<{ data: BPRecord[] | null; error: string | null; hasMore: boolean }> {
+  const lim = pageSize
+  const { data, error } = await request<BPRecord[]>('/bp_records', {
+    params: {
+      user_id: `eq.${userId}`,
+      order: 'recorded_at.desc',
+      limit: String(lim + 1),
+      offset: String(offset)
+    }
+  })
+  if (error || !data) {
+    return { data: null, error, hasMore: false }
+  }
+  const hasMore = data.length > lim
+  const slice = hasMore ? data.slice(0, lim) : data
+  return { data: slice, error: null, hasMore }
+}
+
+/**
+ * 用户血压记录总条数（PostgREST Prefer: count=exact）
+ */
+export async function getBpRecordsCount(userId: string): Promise<{ count: number; error: string | null }> {
+  const url = `${REST_URL}/bp_records?user_id=eq.${encodeURIComponent(userId)}&select=id`
+  try {
+    const res = await Taro.request({
+      url,
+      method: 'GET',
+      header: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        Prefer: 'count=exact'
+      }
+    })
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      const h = res.header as Record<string, string> | undefined
+      const range = h?.['content-range'] ?? h?.['Content-Range'] ?? ''
+      const m = typeof range === 'string' ? range.match(/\/(\d+)\s*$/) : null
+      if (m) {
+        return { count: parseInt(m[1], 10), error: null }
+      }
+      if (Array.isArray(res.data)) {
+        return { count: res.data.length, error: null }
+      }
+      return { count: 0, error: null }
+    }
+    return { count: 0, error: 'count 请求失败' }
+  } catch (e: any) {
+    return { count: 0, error: e.message || '网络错误' }
+  }
+}
+
+/** 首页统计用：近 N 天内的记录（本周均值、连续打卡），与列表分页无关 */
+const HOME_STATS_RANGE_DAYS = 180
+
+export async function getRecordsForHomeStats(
+  userId: string
+): Promise<{ data: BPRecord[] | null; error: string | null }> {
+  const end = new Date()
+  const start = new Date(end.getTime() - HOME_STATS_RANGE_DAYS * 24 * 60 * 60 * 1000)
+  return getRecordsInRange(userId, start.toISOString(), end.toISOString())
 }
 
 /**
