@@ -34,6 +34,9 @@ import iconList from '../../assets/icons/list.png'
 import iconShare from '../../assets/icons/share.png'
 // @ts-ignore
 import iconGroups from '../../assets/icons/groups.png'
+// 活动横幅图 assets/promo/promo-banner.png
+// @ts-ignore
+import promoBanner from '../../assets/promo/promo-banner.png'
 
 // 格式化时间为易读格式
 const formatTime = (isoString: string) => {
@@ -770,6 +773,18 @@ export default function Index() {
               <Text className='empty-bp-hint'>暂无记录，点击上方按钮开始测量</Text>
             </View>
           )}
+        </View>
+
+        {/* 活动入口：横幅图占位，点击进入活动页 */}
+        <View
+          className='home-promo-entry'
+          onClick={() => Taro.navigateTo({ url: '/pages/promo-activity/index' })}
+        >
+          <Image
+            className='home-promo-entry-img'
+            src={promoBanner}
+            mode='aspectFill'
+          />
         </View>
 
         {/* 本周概览卡片 */}

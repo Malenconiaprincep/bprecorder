@@ -25,10 +25,9 @@ export interface WxUserInfo {
  */
 export async function silentLogin(): Promise<{ success: boolean; userInfo?: UserInfo; token?: string; error?: string }> {
   try {
-    // 检查是否已有存储的用户信息（有真实 openid）
+    // 已有 openid 且本地仍有 JWT 时可直接返回；缺 token 时必须再走 wx-login，否则需 JWT 的接口（如活动）会 401
     const existingUser = getUserInfo()
-    if (existingUser && !existingUser.openid.startsWith('wx_')) {
-      // 已有真实 openid，直接返回
+    if (existingUser && !existingUser.openid.startsWith('wx_') && getToken()) {
       return { success: true, userInfo: existingUser, token: getToken() || undefined }
     }
 

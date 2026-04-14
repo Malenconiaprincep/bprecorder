@@ -424,6 +424,21 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+/* 首页活动入口横幅（图：assets/promo/promo-banner.png） */
+.home-promo-entry {
+  margin: 0 30rpx 24rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  height: 200rpx;
+  box-shadow: 0 8rpx 28rpx rgba(14, 165, 233, 0.15);
+}
+
+.home-promo-entry-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 /* 本周概览卡片 */
 .summary-card {
   margin: 0 30rpx 24rpx;

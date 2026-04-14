@@ -13,6 +13,8 @@ import DEFAULT_AVATAR from '../../assets/icons/avatar.png'
 // @ts-ignore
 import iconGroups from '../../assets/icons/groups.png'
 // @ts-ignore
+import iconChart from '../../assets/icons/chart.png'
+// @ts-ignore
 import iconExport from '../../assets/icons/tray.png'
 // @ts-ignore
 import iconImport from '../../assets/icons/intray.png'
@@ -338,6 +340,14 @@ export default function Profile() {
     setWxUser(null)
     setOpenid('')
     Taro.showToast({ title: '已退出登录', icon: 'success' })
+  }
+
+  const goPromoActivity = () => {
+    if (!hasOpenid) {
+      Taro.showToast({ title: '请先登录', icon: 'none' })
+      return
+    }
+    Taro.navigateTo({ url: '/pages/promo-activity/index' })
   }
 
   const showDevTip = () => {
@@ -931,6 +941,7 @@ export default function Profile() {
   // 根据字体模式决定显示哪些菜单项
   // 关怀模式下只显示核心功能，减少选项
   const allMenuItems = [
+    { title: '活动中心', icon: iconChart, onClick: goPromoActivity, showInElder: true },
     { title: '我的组', icon: iconGroups, onClick: goToGroups, showInElder: false },
     { title: '数据导入', icon: iconImport, onClick: openImportModal, showInElder: false },
     { title: '数据导出', icon: iconExport, onClick: openExportModal, showInElder: false },
