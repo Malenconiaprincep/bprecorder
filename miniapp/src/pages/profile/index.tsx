@@ -1326,7 +1326,7 @@ export default function Profile() {
       )}
 
       <View className='version-info'>
-        <Text className='version-text'>v2.3.2</Text>
+        <Text className='version-text'>v2.4.0</Text>
       </View>
 
       {/* 字体模式选择弹窗 */}
