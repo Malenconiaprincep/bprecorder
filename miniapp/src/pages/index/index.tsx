@@ -38,6 +38,15 @@ import iconGroups from '../../assets/icons/groups.png'
 // @ts-ignore
 import promoBanner from '../../assets/promo/promo-banner.png'
 
+/** 本地时区自然日 YYYY-MM-DD（勿用 ISO 的 `T` 前片段或 toISOString 的日期，那是 UTC 日历日） */
+const getLocalDateKey = (input: string | Date): string => {
+  const d = typeof input === 'string' ? new Date(input) : new Date(input.getTime())
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 // 格式化时间为易读格式
 const formatTime = (isoString: string) => {
   const date = new Date(isoString)
@@ -55,16 +64,16 @@ const formatTime = (isoString: string) => {
   return `${period} ${displayHour}:${minutes}`
 }
 
-// 格式化日期为易读格式
+// 格式化日期为易读格式（与列表分组一致，均按本地自然日）
 const formatDateLabel = (isoString: string) => {
   const date = new Date(isoString)
   const today = new Date()
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
 
-  const dateStr = isoString.split('T')[0]
-  const todayStr = today.toISOString().split('T')[0]
-  const yesterdayStr = yesterday.toISOString().split('T')[0]
+  const dateStr = getLocalDateKey(isoString)
+  const todayStr = getLocalDateKey(today)
+  const yesterdayStr = getLocalDateKey(yesterday)
 
   if (dateStr === todayStr) return '今天'
   if (dateStr === yesterdayStr) return '昨天'
@@ -136,7 +145,7 @@ export default function Index() {
     const groupMap: { [key: string]: BPRecord[] } = {}
 
     listRecords.forEach(r => {
-      const dateKey = r.recorded_at.split('T')[0]
+      const dateKey = getLocalDateKey(r.recorded_at)
       if (!groupMap[dateKey]) {
         groupMap[dateKey] = []
       }
@@ -189,7 +198,7 @@ export default function Index() {
   // 连续打卡天数（与「我的」页统计一致，按本地自然日）
   const consecutiveDays = useMemo(() => {
     if (statsSource.length === 0) return 0
-    const uniqueDays = new Set(statsSource.map(r => r.recorded_at.split('T')[0]))
+    const uniqueDays = new Set(statsSource.map(r => getLocalDateKey(r.recorded_at)))
     const sortedDays = Array.from(uniqueDays).sort((a, b) => b.localeCompare(a))
     let streak = 0
     const pad = (n: number) => String(n).padStart(2, '0')
