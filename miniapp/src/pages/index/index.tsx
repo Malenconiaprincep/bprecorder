@@ -84,17 +84,6 @@ const formatDateLabel = (isoString: string) => {
   return `${month}月${day}日 ${weekDays[date.getDay()]}`
 }
 
-// 格式化日期时间用于记录项显示
-const formatRecordDateTime = (isoString: string) => {
-  const date = new Date(isoString)
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
-  const hours = date.getHours().toString().padStart(2, '0')
-  const minutes = date.getMinutes().toString().padStart(2, '0')
-  return `${month}月${day}日 ${weekDays[date.getDay()]} ${hours}:${minutes}`
-}
-
 // 测试数据
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 
@@ -919,7 +908,7 @@ export default function Index() {
                         const isLastGroup = groupIdx === filteredGroupedRecords.length - 1
                         // 显示分割线：如果不是（组内最后一个 且 最后一个组）
                         const showDivider = !(isLastInGroup && isLastGroup)
-                        const dateTime = formatRecordDateTime(record.recorded_at)
+                        const timeLabel = formatTime(record.recorded_at)
                         return (
                           <View
                             key={record.id || idx}
@@ -944,9 +933,9 @@ export default function Index() {
                               </View>
                             </View>
 
-                            {/* 中间：日期时间和左右手信息 */}
+                            {/* 中间：仅时刻（日期见分组标题） */}
                             <View className='record-middle'>
-                              <Text className='datetime-text'>{dateTime}</Text>
+                              <Text className='datetime-text'>{timeLabel}</Text>
                               {record.hand && (
                                 <Text className='bottom-info-text'>
                                   {record.hand === 'left' ? '左' : '右'}臂
