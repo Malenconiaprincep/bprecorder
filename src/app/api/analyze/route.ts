@@ -17,7 +17,7 @@ const getModelType = (): ModelType => {
   ) {
     return modelType;
   }
-  return 'sub2api';
+  return 'qwen';
 };
 
 // 获取 Gemini API 密钥列表（支持多个备用密钥）
