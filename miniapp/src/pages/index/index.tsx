@@ -84,6 +84,50 @@ const formatDateLabel = (isoString: string) => {
   return `${month}月${day}日 ${weekDays[date.getDay()]}`
 }
 
+/** 真机直连 DashScope OpenAI 兼容接口（与 src/app/api/analyze/route.ts 中 Qwen 调用一致） */
+const QWEN_COMPAT_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
+const QWEN_VL_MODEL = 'qwen-vl-max'
+const BP_IMAGE_PROMPT = `
+    Analyze this image of a blood pressure monitor. 
+    Extract the systolic (high), diastolic (low), and pulse (heart rate) numbers. 
+    Return ONLY a raw JSON object with keys: "systolic", "diastolic", "pulse". 
+    All values should be integers. 
+    If you cannot clearly see a screen with these numbers, return {"error": "Unable to read display"}.
+    Do not include markdown formatting like \`\`\`json.
+  `.trim()
+
+function stripJsonFences(s: string): string {
+  let t = s.trim()
+  const fence = /^```(?:json)?\s*\n?([\s\S]*?)\n?```$/i
+  const m = t.match(fence)
+  if (m) return m[1].trim()
+  return t
+}
+
+function parseBpAnalyzeFromModelText(text: string): Record<string, unknown> {
+  const cleanText = stripJsonFences(text.trim()).replace(/```json|```/g, '').trim()
+  return JSON.parse(cleanText) as Record<string, unknown>
+}
+
+function guessMimeFromPath(filePath: string): string {
+  const lower = filePath.toLowerCase()
+  if (lower.endsWith('.png')) return 'image/png'
+  if (lower.endsWith('.webp')) return 'image/webp'
+  if (lower.endsWith('.gif')) return 'image/gif'
+  return 'image/jpeg'
+}
+
+function readFileBase64(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    Taro.getFileSystemManager().readFile({
+      filePath,
+      encoding: 'base64',
+      success: (r) => resolve(r.data as string),
+      fail: reject
+    })
+  })
+}
+
 // 测试数据
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 
@@ -489,37 +533,38 @@ export default function Index() {
 
         const tempFilePath = res.tempFilePaths[0]
 
-        // 开始分析
         setAnalyzing(true)
-        await analyzeImage(tempFilePath)
+        const isDevtools = Taro.getSystemInfoSync().platform === 'devtools'
+        if (isDevtools) {
+          await analyzeImageUpload(tempFilePath)
+        } else {
+          await analyzeImageQwenDirect(tempFilePath)
+        }
       } catch (e) {
         console.log('User cancelled or error:', e)
       }
     })
   }
 
-  const analyzeImage = async (filePath: string) => {
+  /** 微信开发者工具：multipart 上传至本站 /api/analyze（服务端 Qwen） */
+  const analyzeImageUpload = async (filePath: string) => {
     try {
-      // 上传图片到 analyze API
       const uploadRes = await Taro.uploadFile({
         url: `${API_BASE_URL}/api/analyze`,
         filePath: filePath,
-        name: 'file',
-        header: {
-          'Content-Type': 'multipart/form-data'
-        }
+        name: 'file'
       })
 
       if (uploadRes.statusCode !== 200) {
         throw new Error('上传失败')
       }
 
-      const result = JSON.parse(uploadRes.data)
+      const result =
+        typeof uploadRes.data === 'string' ? JSON.parse(uploadRes.data) : uploadRes.data
 
-      // 检查是否有错误
       if (result.error) {
         Taro.showToast({
-          title: result.error || '识别失败',
+          title: typeof result.error === 'string' ? result.error : '识别失败',
           icon: 'none',
           duration: 2000
         })
@@ -527,16 +572,115 @@ export default function Index() {
         return
       }
 
-      // 显示识别结果
       setAnalyzeResult({
-        systolic: result.systolic,
-        diastolic: result.diastolic,
-        pulse: result.pulse
+        systolic: result.systolic as number,
+        diastolic: result.diastolic as number,
+        pulse: result.pulse as number
       })
       setShowResultModal(true)
       setAnalyzing(false)
     } catch (e: any) {
       console.error('Analyze error:', e)
+      Taro.showToast({
+        title: e.message || '识别失败，请重试',
+        icon: 'none',
+        duration: 2000
+      })
+      setAnalyzing(false)
+    }
+  }
+
+  /** 真机：拉取 DashScope key 后直连千问 VL（需在小程序后台配置 request 合法域名 dashscope.aliyuncs.com） */
+  const analyzeImageQwenDirect = async (filePath: string) => {
+    try {
+      const keyRes = await Taro.request<{ apiKey?: string; error?: string }>({
+        url: `${API_BASE_URL}/api/analyze/key`,
+        method: 'GET'
+      })
+
+      if (keyRes.statusCode !== 200 || !(keyRes.data as { apiKey?: string })?.apiKey) {
+        const msg =
+          (keyRes.data as { error?: string })?.error || '无法获取识别密钥'
+        throw new Error(msg)
+      }
+
+      const apiKey = (keyRes.data as { apiKey: string }).apiKey
+      const base64Data = await readFileBase64(filePath)
+      const mimeType = guessMimeFromPath(filePath)
+      const dataUrl = `data:${mimeType};base64,${base64Data}`
+
+      const aiRes = await Taro.request({
+        url: QWEN_COMPAT_URL,
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`
+        },
+        data: {
+          model: QWEN_VL_MODEL,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: BP_IMAGE_PROMPT },
+                {
+                  type: 'image_url',
+                  image_url: { url: dataUrl }
+                }
+              ]
+            }
+          ],
+          max_tokens: 500
+        },
+        timeout: 60000
+      })
+
+      if (aiRes.statusCode !== 200) {
+        const raw = aiRes.data as Record<string, unknown> | string
+        let detail = '识别请求失败'
+        if (raw && typeof raw === 'object') {
+          const errObj = raw as { error?: { message?: string }; message?: string }
+          detail = errObj.error?.message || errObj.message || JSON.stringify(raw).slice(0, 200)
+        } else if (typeof raw === 'string') {
+          detail = raw.slice(0, 200)
+        }
+        throw new Error(detail)
+      }
+
+      const payload = aiRes.data as {
+        choices?: Array<{ message?: { content?: string } }>
+      }
+      const text = payload?.choices?.[0]?.message?.content
+      if (!text || typeof text !== 'string') {
+        throw new Error('模型无有效返回')
+      }
+
+      let parsed: Record<string, unknown>
+      try {
+        parsed = parseBpAnalyzeFromModelText(text)
+      } catch {
+        throw new Error('解析识别结果失败')
+      }
+
+      if (parsed.error) {
+        Taro.showToast({
+          title: typeof parsed.error === 'string' ? parsed.error : '识别失败',
+          icon: 'none',
+          duration: 2000
+        })
+        setAnalyzing(false)
+        return
+      }
+
+      setAnalyzeResult({
+        systolic: parsed.systolic as number,
+        diastolic: parsed.diastolic as number,
+        pulse: parsed.pulse as number
+      })
+      setShowResultModal(true)
+      setAnalyzing(false)
+    } catch (e: any) {
+      console.error('Analyze error (Qwen direct):', e)
       Taro.showToast({
         title: e.message || '识别失败，请重试',
         icon: 'none',

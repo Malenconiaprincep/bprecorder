@@ -3,23 +3,6 @@ import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from "axios";
 
-// 支持的模型类型（主路径与 fallback 尝试顺序均为 sub2api -> qwen -> gemini -> anyrouter）
-type ModelType = 'sub2api' | 'qwen' | 'gemini' | 'anyrouter';
-
-// 获取要使用的模型（通过环境变量配置，默认为 gemini）
-const getModelType = (): ModelType => {
-  const modelType = process.env.AI_MODEL?.toLowerCase();
-  if (
-    modelType === 'sub2api' ||
-    modelType === 'qwen' ||
-    modelType === 'gemini' ||
-    modelType === 'anyrouter'
-  ) {
-    return modelType;
-  }
-  return 'qwen';
-};
-
 // 获取 Gemini API 密钥列表（支持多个备用密钥）
 const getGeminiApiKeys = (): string[] => {
   const keys: string[] = [];
@@ -649,74 +632,45 @@ function parseAIResponse(text: string): any {
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
+    const contentType = req.headers.get('content-type') || '';
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-    }
+    let base64Image: string;
+    let mimeType: string;
 
-    console.log(`[${new Date().toISOString()}] Received file: ${file.name}, size: ${file.size}, type: ${file.type}`);
-
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const base64Image = buffer.toString('base64');
-    const mimeType = file.type || 'image/jpeg';
-
-    // 根据环境变量选择模型
-    const modelType = getModelType();
-    console.log(`Using AI model: ${modelType}`);
-
-    let result;
-    try {
-      if (modelType === 'sub2api') {
-        result = await analyzeWithSub2Api(base64Image, mimeType);
-      } else if (modelType === 'qwen') {
-        result = await analyzeWithQwenWithFallback(base64Image, mimeType);
-      } else if (modelType === 'gemini') {
-        result = await analyzeWithGeminiWithFallback(base64Image, mimeType);
-      } else if (modelType === 'anyrouter') {
-        result = await analyzeWithAnyRouterWithFallback(base64Image, mimeType);
-      } else {
-        throw new Error(`Unknown model type: ${modelType}`);
+    if (contentType.includes('application/json')) {
+      const body = await req.json();
+      let raw = body?.imageBase64;
+      if (typeof raw !== 'string' || !raw.length) {
+        return NextResponse.json({ error: 'imageBase64 required' }, { status: 400 });
       }
-      return NextResponse.json(result);
-    } catch (error: any) {
-      // 主模型失败：按 sub2api -> qwen -> gemini -> anyrouter 尝试（跳过主模型、无 SUB2API_KEY 时跳过 sub2api）
-      console.error(`${modelType} model failed:`, error.message);
-      console.log(`Trying fallback models...`);
+      mimeType = typeof body?.mimeType === 'string' && body.mimeType ? body.mimeType : 'image/jpeg';
 
-      const fallbackOrder: ModelType[] = ['sub2api', 'qwen', 'gemini', 'anyrouter'];
-      const fallbackModels = fallbackOrder.filter((m) => {
-        if (m === modelType) return false;
-        if (m === 'sub2api' && !process.env.SUB2API_KEY?.trim()) return false;
-        return true;
-      });
+      const dataUrlMatch = /^data:([^;]+);base64,(.+)$/i.exec(raw.trim());
+      if (dataUrlMatch) {
+        mimeType = dataUrlMatch[1];
+        raw = dataUrlMatch[2];
+      }
+      base64Image = raw.replace(/\s/g, '');
 
-      for (const fallbackModel of fallbackModels) {
-        try {
-          if (fallbackModel === 'sub2api') {
-            result = await analyzeWithSub2Api(base64Image, mimeType);
-            console.log(`Fallback to Sub2API succeeded`);
-          } else if (fallbackModel === 'qwen') {
-            result = await analyzeWithQwenWithFallback(base64Image, mimeType);
-            console.log(`Fallback to Qwen succeeded`);
-          } else if (fallbackModel === 'gemini') {
-            result = await analyzeWithGeminiWithFallback(base64Image, mimeType);
-            console.log(`Fallback to Gemini succeeded`);
-          } else if (fallbackModel === 'anyrouter') {
-            result = await analyzeWithAnyRouterWithFallback(base64Image, mimeType);
-            console.log(`Fallback to AnyRouter succeeded`);
-          }
-          return NextResponse.json(result);
-        } catch (fallbackError: any) {
-          console.error(`Fallback model ${fallbackModel} also failed:`, fallbackError.message);
-          continue;
-        }
+      console.log(`[${new Date().toISOString()}] Received JSON image, mime: ${mimeType}, b64 length: ${base64Image.length}`);
+    } else {
+      const formData = await req.formData();
+      const file = formData.get('file') as File | null;
+
+      if (!file) {
+        return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
       }
 
-      throw new Error(`All models failed. Primary: ${error.message}`);
+      console.log(`[${new Date().toISOString()}] Received file: ${file.name}, size: ${file.size}, type: ${file.type}`);
+
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      base64Image = buffer.toString('base64');
+      mimeType = file.type || 'image/jpeg';
     }
+
+    const result = await analyzeWithQwenWithFallback(base64Image, mimeType);
+    return NextResponse.json(result);
 
   } catch (error: any) {
     console.error(`[${new Date().toISOString()}] Error processing image:`, error);
