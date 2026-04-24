@@ -75,8 +75,11 @@ export interface BPRecord {
   created_at?: string
 }
 
-/** 首页测量记录列表每页条数 */
+/** 首页测量记录列表每页条数（分页接口默认，其它场景可用） */
 export const HOME_LIST_PAGE_SIZE = 10
+
+/** 首页「最近记录」固定条数（单次请求，不做懒加载） */
+export const HOME_RECENT_RECORDS_LIMIT = 7
 
 /**
  * 获取用户的血压记录（其它页/analysis 等仍用；限制 50 条）
@@ -87,6 +90,22 @@ export async function getRecords(userId: string): Promise<{ data: BPRecord[] | n
       user_id: `eq.${userId}`,
       order: 'recorded_at.desc',
       limit: '50'
+    }
+  })
+}
+
+/**
+ * 首页最近记录等：按时间倒序仅取前 limit 条（不多取）
+ */
+export async function getRecordsRecent(
+  userId: string,
+  limit: number
+): Promise<{ data: BPRecord[] | null; error: string | null }> {
+  return request<BPRecord[]>('/bp_records', {
+    params: {
+      user_id: `eq.${userId}`,
+      order: 'recorded_at.desc',
+      limit: String(limit)
     }
   })
 }

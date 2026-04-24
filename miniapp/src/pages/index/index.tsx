@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useRef } from 'react'
+import React, { useState, useMemo } from 'react'
 import { View, Text, Image, ScrollView, Canvas, Button, Textarea } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import {
-  getRecordsPage,
+  getRecordsRecent,
   getRecordsForHomeStats,
-  HOME_LIST_PAGE_SIZE,
+  HOME_RECENT_RECORDS_LIMIT,
   BPRecord,
   addRecord,
   deleteRecord
@@ -132,13 +132,10 @@ function readFileBase64(filePath: string): Promise<string> {
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 
 export default function Index() {
-  /** 首页列表：分页加载，仅用于测量记录区块展示 */
+  /** 首页「最近记录」：仅展示最近若干条，完整列表见全部记录页 */
   const [listRecords, setListRecords] = useState<BPRecord[]>([])
-  /** 近 180 天数据：本周概览、连续打卡（与列表分页无关） */
+  /** 近 7 天数据：本周概览、连续打卡（与列表条数无关） */
   const [statsRecords, setStatsRecords] = useState<BPRecord[]>([])
-  const [listHasMore, setListHasMore] = useState(false)
-  const [listLoadingMore, setListLoadingMore] = useState(false)
-  const listLoadGuardRef = useRef(false)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzeResult, setAnalyzeResult] = useState<{
@@ -346,9 +343,8 @@ export default function Index() {
     // 测试模式直接加载测试数据
     if (USE_TEST_DATA) {
       const all = getTestData()
-      setListRecords(all.slice(0, HOME_LIST_PAGE_SIZE))
+      setListRecords(all.slice(0, HOME_RECENT_RECORDS_LIMIT))
       setStatsRecords(all)
-      setListHasMore(all.length > HOME_LIST_PAGE_SIZE)
       setInitialized(true)
       return
     }
@@ -395,26 +391,22 @@ export default function Index() {
   }
 
   const fetchRecords = async (userId: string) => {
-    listLoadGuardRef.current = false
     if (USE_TEST_DATA) {
       const all = getTestData()
-      setListRecords(all.slice(0, HOME_LIST_PAGE_SIZE))
+      setListRecords(all.slice(0, HOME_RECENT_RECORDS_LIMIT))
       setStatsRecords(all)
-      setListHasMore(all.length > HOME_LIST_PAGE_SIZE)
       return
     }
 
     try {
-      const [pageRes, statsRes] = await Promise.all([
-        getRecordsPage(userId, 0),
+      const [recentRes, statsRes] = await Promise.all([
+        getRecordsRecent(userId, HOME_RECENT_RECORDS_LIMIT),
         getRecordsForHomeStats(userId)
       ])
-      if (pageRes.data && !pageRes.error) {
-        setListRecords(pageRes.data)
-        setListHasMore(pageRes.hasMore)
+      if (recentRes.data && !recentRes.error) {
+        setListRecords(recentRes.data)
       } else {
         setListRecords([])
-        setListHasMore(false)
       }
       if (statsRes.data && !statsRes.error) {
         setStatsRecords(statsRes.data)
@@ -423,44 +415,6 @@ export default function Index() {
       }
     } catch (e) {
       console.error('Failed to fetch records', e)
-    }
-  }
-
-  const loadMoreRecords = async () => {
-    if (USE_TEST_DATA) {
-      const all = getTestData()
-      setListRecords(prev => {
-        if (prev.length >= all.length) {
-          setListHasMore(false)
-          return prev
-        }
-        const next = all.slice(0, prev.length + HOME_LIST_PAGE_SIZE)
-        setListHasMore(next.length < all.length)
-        return next
-      })
-      return
-    }
-    if (!userInfo?.openid || listLoadingMore || !listHasMore || listLoadGuardRef.current) return
-    listLoadGuardRef.current = true
-    setListLoadingMore(true)
-    try {
-      const offset = listRecords.length
-      const { data, error, hasMore } = await getRecordsPage(userInfo.openid, offset)
-      if (!error && data?.length) {
-        setListRecords(prev => {
-          const ids = new Set(prev.map(r => r.id).filter((id): id is number => id != null))
-          const extra = data.filter(r => r.id == null || !ids.has(r.id))
-          return [...prev, ...extra]
-        })
-        setListHasMore(hasMore)
-      } else if (!error && (!data || data.length === 0)) {
-        setListHasMore(false)
-      }
-    } catch (e) {
-      console.error('loadMoreRecords', e)
-    } finally {
-      setListLoadingMore(false)
-      listLoadGuardRef.current = false
     }
   }
 
@@ -817,8 +771,6 @@ export default function Index() {
         scrollY
         enhanced
         showScrollbar={false}
-        lowerThreshold={120}
-        onScrollToLower={() => void loadMoreRecords()}
       >
         {/* 顶部蓝色弧形背景 */}
         <View className='bg-curve' />
@@ -1038,13 +990,13 @@ export default function Index() {
           <View className='records-card'>
             <View className='section-title'>
               <Image className='title-icon' src={iconList} mode='aspectFit' />
-              <Text>测量记录</Text>
-              {/* 数据日历按钮：有本页数据或仍有更多分页时显示（避免额外 count 请求） */}
-              {(listRecords.length > 0 || listHasMore) && (
+              <Text>最近记录</Text>
+              {/* 有最近记录时提供完整列表入口 */}
+              {listRecords.length > 0 && (
                 <View className='calendar-trigger-btn' onClick={() => {
                   Taro.navigateTo({ url: '/pages/calendar/index' })
                 }}>
-                  <Text className='calendar-trigger-text'>数据日历</Text>
+                  <Text className='calendar-trigger-text'>查看全部记录</Text>
                   {selectedDate && (
                     <Text className='calendar-trigger-badge'>已筛选</Text>
                   )}
@@ -1133,13 +1085,6 @@ export default function Index() {
                     </View>
                   ))}
                 </View>
-                {!selectedDate && listRecords.length > 0 && (
-                  <View className='records-load-footer'>
-                    <Text className='records-load-footer-text'>
-                      {listLoadingMore ? '加载中…' : listHasMore ? '继续下滑加载更多' : '已加载全部记录'}
-                    </Text>
-                  </View>
-                )}
               </>
             )}
           </View>

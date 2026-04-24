@@ -260,39 +260,40 @@ export default function AnalysisPage() {
         </View>
       </View>
 
-      <View className='hand-tabs'>
-        <View
-          className={`hand-tab ${handFilter === 'all' ? 'active' : ''}`}
-          onClick={() => { setHandFilter('all'); setSelectedPoint(null) }}
-        >
-          <Text>全部</Text>
-        </View>
-        <View
-          className={`hand-tab ${handFilter === 'left' ? 'active' : ''}`}
-          onClick={() => { setHandFilter('left'); setSelectedPoint(null) }}
-        >
-          <Text>左手</Text>
-        </View>
-        <View
-          className={`hand-tab ${handFilter === 'right' ? 'active' : ''}`}
-          onClick={() => { setHandFilter('right'); setSelectedPoint(null) }}
-        >
-          <Text>右手</Text>
-        </View>
-      </View>
-
       {/* 图表卡片 */}
       <View className='chart-card'>
         <View className='chart-header'>
-          <View className='chart-title'><Image className='chart-title-icon' src={iconChart} mode='aspectFit' /><Text>血压趋势</Text></View>
-          <View className='chart-legend'>
-            <View className='legend-item'>
-              <View className='legend-dot systolic' />
-              <Text className='legend-text'>收缩压</Text>
+          <View className='chart-header-row'>
+            <View className='chart-title'><Image className='chart-title-icon' src={iconChart} mode='aspectFit' /><Text>血压趋势</Text></View>
+            <View className='chart-legend'>
+              <View className='legend-item'>
+                <View className='legend-dot systolic' />
+                <Text className='legend-text'>收缩压</Text>
+              </View>
+              <View className='legend-item'>
+                <View className='legend-dot diastolic' />
+                <Text className='legend-text'>舒张压</Text>
+              </View>
             </View>
-            <View className='legend-item'>
-              <View className='legend-dot diastolic' />
-              <Text className='legend-text'>舒张压</Text>
+          </View>
+          <View className='chart-hand-chips'>
+            <View
+              className={`chart-hand-chip ${handFilter === 'all' ? 'active' : ''}`}
+              onClick={() => { setHandFilter('all'); setSelectedPoint(null) }}
+            >
+              <Text>全部</Text>
+            </View>
+            <View
+              className={`chart-hand-chip ${handFilter === 'left' ? 'active' : ''}`}
+              onClick={() => { setHandFilter('left'); setSelectedPoint(null) }}
+            >
+              <Text>左手</Text>
+            </View>
+            <View
+              className={`chart-hand-chip ${handFilter === 'right' ? 'active' : ''}`}
+              onClick={() => { setHandFilter('right'); setSelectedPoint(null) }}
+            >
+              <Text>右手</Text>
             </View>
           </View>
         </View>

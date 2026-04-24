@@ -1,5 +1,5 @@
 export default definePageConfig({
-  navigationBarTitleText: '数据日历',
+  navigationBarTitleText: '全部记录',
   navigationBarBackgroundColor: '#e8f4ff',
   navigationBarTextStyle: 'black',
   enablePullDownRefresh: false
