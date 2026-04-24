@@ -85,20 +85,42 @@ export async function getMyGroups(userId: string): Promise<{ success: boolean; g
   try {
     // 查询用户加入的组（关联查询）
     const res = await Taro.request({
-      url: `${REST_URL}/bp_group_members?user_id=eq.${userId}&select=role,joined_at,bp_groups(id,name,description,owner_id,invite_code,created_at,updated_at)`,
+      url: `${REST_URL}/bp_group_members?user_id=eq.${userId}&select=role,joined_at,bp_groups(id,name,description,owner_id,invite_code,created_at,updated_at,bp_group_members(count))`,
       method: 'GET',
       header: getHeaders()
     })
 
     if (res.statusCode >= 200 && res.statusCode < 300) {
-      const memberships = res.data || []
+      const raw = res.data
+      const memberships = Array.isArray(raw) ? raw : []
       const groups = memberships
-        .filter((m: any) => m.bp_groups)
-        .map((m: any) => ({
-          ...m.bp_groups,
-          my_role: m.role || 'member',
-          joined_at: m.joined_at
-        }))
+        .filter(
+          (m: any) =>
+            m &&
+            m.bp_groups &&
+            typeof m.bp_groups === 'object' &&
+            !Array.isArray(m.bp_groups)
+        )
+        .map((m: any) => {
+          const g = m.bp_groups
+          const countRow = Array.isArray(g.bp_group_members) ? g.bp_group_members[0] : null
+          const rawCount = countRow?.count
+          const memberCount =
+            typeof rawCount === 'number'
+              ? rawCount
+              : typeof rawCount === 'string'
+                ? parseInt(rawCount, 10)
+                : undefined
+          const parsed =
+            memberCount !== undefined && !Number.isNaN(memberCount) ? memberCount : undefined
+          const { bp_group_members: _c, ...rest } = g
+          return {
+            ...rest,
+            member_count: parsed,
+            my_role: m.role || 'member',
+            joined_at: m.joined_at
+          }
+        })
       return { success: true, groups }
     }
     return { success: false, error: res.data?.message || '获取失败' }

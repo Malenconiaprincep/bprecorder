@@ -112,7 +112,7 @@
 .chart-legend-bar {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16rpx;
   margin-bottom: 20rpx;
@@ -120,8 +120,10 @@
 
 .chart-legend-items {
   display: flex;
-  flex-direction: column;
-  gap: 10rpx;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8rpx 24rpx;
   flex: 1;
   min-width: 0;
 }
@@ -130,7 +132,6 @@
   font-size: 24rpx;
   color: #94a3b8;
   flex-shrink: 0;
-  padding-top: 2rpx;
 }
 
 .legend-item {

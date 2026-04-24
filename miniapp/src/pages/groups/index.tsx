@@ -5,22 +5,22 @@ import { getUserInfo } from '../../lib/auth'
 import { getMyGroups, createGroup, joinGroup, Group } from '../../lib/groups'
 import './index.scss'
 // @ts-ignore
-import DEFAULT_AVATAR from '../../assets/icons/avatar.png'
+import iconList from '../../assets/icons/list.png'
 // @ts-ignore
 import iconGroups from '../../assets/icons/groups.png'
 // @ts-ignore
-import iconList from '../../assets/icons/list.png'
+import groupsShareBanner from '../../assets/promo/groups-share-banner.png'
 
 export default function Groups() {
   const [groups, setGroups] = useState<Group[]>([])
-  const [isFirstLoad, setIsFirstLoad] = useState(true) // 是否首次加载
+  const [isFirstLoad, setIsFirstLoad] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showJoinModal, setShowJoinModal] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
   const [newGroupDesc, setNewGroupDesc] = useState('')
   const [inviteCode, setInviteCode] = useState('')
   const [userId, setUserId] = useState('')
-  const hasLoadedOnce = useRef(false) // 是否加载过数据
+  const hasLoadedOnce = useRef(false)
 
   useDidShow(() => {
     loadGroups()
@@ -34,8 +34,6 @@ export default function Groups() {
     }
 
     setUserId(userInfo.openid)
-    // 只有首次加载且没有数据时才显示骨架屏，返回时静默刷新
-    // 不需要重置 isFirstLoad
 
     const result = await getMyGroups(userInfo.openid)
     if (result.success && result.groups) {
@@ -113,30 +111,41 @@ export default function Groups() {
 
   const getRoleText = (role?: string) => {
     switch (role) {
-      case 'owner': return '创建者'
-      case 'admin': return '管理员'
-      default: return '成员'
+      case 'owner':
+        return '创建者'
+      case 'admin':
+        return '管理员'
+      default:
+        return '成员'
     }
   }
 
-  // 骨架屏组件
+  const getRoleBadgeClass = (role?: string) => {
+    switch (role) {
+      case 'owner':
+        return 'owner'
+      case 'admin':
+        return 'admin'
+      default:
+        return 'member'
+    }
+  }
+
   const SkeletonCard = () => (
     <View className='group-card skeleton-card'>
-      <View className='group-info'>
-        <View className='skeleton-line skeleton-name' />
+      <View className='group-card-main'>
+        <View className='skeleton-line skeleton-title-row' />
+        <View className='skeleton-line skeleton-meta' />
         <View className='skeleton-line skeleton-desc' />
-        <View className='skeleton-badge' />
       </View>
       <Text className='group-arrow'>›</Text>
     </View>
   )
 
-  // 首次加载时显示骨架屏
   const showSkeleton = isFirstLoad && groups.length === 0
 
   return (
     <View className='page'>
-      {/* 操作按钮 */}
       <View className='actions'>
         <View className='action-btn create' onClick={() => setShowCreateModal(true)}>
           <Text className='action-icon'>+</Text>
@@ -148,9 +157,11 @@ export default function Groups() {
         </View>
       </View>
 
-      {/* 组列表 */}
       <View className='section'>
-        <View className='section-title'><Image className='title-icon' src={iconGroups} mode='aspectFit' /><Text>我的组</Text></View>
+        <View className='section-title'>
+          <Image className='title-icon' src={iconGroups} mode='aspectFit' />
+          <Text className='section-title-text'>我的组</Text>
+        </View>
 
         {showSkeleton ? (
           <View className='group-list'>
@@ -166,26 +177,40 @@ export default function Groups() {
         ) : (
           <View className='group-list'>
             {groups.map(group => (
-              <View key={group.id} className='group-card' onClick={() => goToDetail(group.id)}>
-                <View className='group-info'>
-                  <Text className='group-name'>{group.name}</Text>
-                  {group.description && (
-                    <Text className='group-desc'>{group.description}</Text>
-                  )}
-                  <View className='group-meta'>
-                    <Text className={`role-badge ${group.my_role === 'owner' ? 'owner' : ''}`}>
-                      {getRoleText(group.my_role)}
+                <View key={group.id} className='group-card' onClick={() => goToDetail(group.id)}>
+                  <View className='group-card-main'>
+                    <View className='group-card-title-row'>
+                      <View className='group-title-cluster'>
+                        <Text className='group-name'>{group.name}</Text>
+                        <Text className={`role-badge ${getRoleBadgeClass(group.my_role)}`}>
+                          {getRoleText(group.my_role)}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text className='group-meta-line'>
+                      {group.member_count ?? 0} 成员
+                      <Text className='group-meta-sep'> | </Text>
+                      共享记录
                     </Text>
+                    {!!group.description?.trim() && (
+                      <Text className='group-desc'>{group.description}</Text>
+                    )}
                   </View>
+                  <Text className='group-arrow'>›</Text>
                 </View>
-                <Text className='group-arrow'>›</Text>
-              </View>
             ))}
           </View>
         )}
       </View>
 
-      {/* 创建组弹窗 */}
+      <View className='groups-promo'>
+        <Image
+          className='groups-promo-banner'
+          src={groupsShareBanner}
+          mode='widthFix'
+        />
+      </View>
+
       {showCreateModal && (
         <View className='modal-mask' onClick={() => setShowCreateModal(false)}>
           <View className='modal-content' onClick={e => e.stopPropagation()}>
@@ -214,7 +239,6 @@ export default function Groups() {
         </View>
       )}
 
-      {/* 加入组弹窗 */}
       {showJoinModal && (
         <View className='modal-mask' onClick={() => setShowJoinModal(false)}>
           <View className='modal-content' onClick={e => e.stopPropagation()}>
@@ -240,4 +264,3 @@ export default function Groups() {
     </View>
   )
 }
-
