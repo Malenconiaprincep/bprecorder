@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import type { CSSProperties } from 'react'
 import { View, Text, ScrollView, Image } from '@tarojs/components'
 import Taro, { useDidShow, useReady } from '@tarojs/taro'
@@ -127,6 +127,14 @@ export default function AllRecordsPage() {
   const [calendarMonth, setCalendarMonth] = useState(() => new Date())
   /** 真机 scroll-view 必须给固定高度（px），仅靠 flex:1+height:0 常导致高度为 0 */
   const [mainScrollStyle, setMainScrollStyle] = useState<CSSProperties>({ minHeight: '55vh' })
+  /** 筛选后列表变短时不触发 scrolltolower，用自动补页防止 listHasMore 一直为 true */
+  const autoFillLoadsRef = useRef(0)
+  /** 有筛选时整页可能无匹配，列表高度不变导致无法再次触底；上一页 loadMore 开始时记录的筛选后条数 */
+  const prevLoadingMoreRef = useRef(false)
+  const filteredCountWhenPageLoadStartedRef = useRef<number | null>(null)
+  const recordsLengthWhenPageLoadStartedRef = useRef<number | null>(null)
+  /** 连续「整页无匹配」自动翻页次数上限，防止异常死循环 */
+  const filterEmptyPageChainRef = useRef(0)
 
   useReady(() => {
     try {
@@ -158,6 +166,7 @@ export default function AllRecordsPage() {
       return
     }
     const userId = storedUser.openid
+    autoFillLoadsRef.current = 0
     setLoadingInitial(true)
     setListHasMore(true)
     setRecords([])
@@ -233,6 +242,13 @@ export default function AllRecordsPage() {
     }
   }, [listHasMore, loadingMore, loadingInitial, records.length])
 
+  useEffect(() => {
+    autoFillLoadsRef.current = 0
+    filteredCountWhenPageLoadStartedRef.current = null
+    recordsLengthWhenPageLoadStartedRef.current = null
+    filterEmptyPageChainRef.current = 0
+  }, [statusFilter, dateInterval])
+
   useDidShow(() => {
     void reloadFromServer()
   })
@@ -248,6 +264,52 @@ export default function AllRecordsPage() {
       }),
     [records, statusFilter, dateInterval]
   )
+
+  useEffect(() => {
+    if (USE_TEST_DATA) return
+    if (loadingMore && !loadingInitial) {
+      filteredCountWhenPageLoadStartedRef.current = filteredRecords.length
+      recordsLengthWhenPageLoadStartedRef.current = records.length
+    }
+  }, [loadingMore, loadingInitial, filteredRecords.length, records.length])
+
+  useEffect(() => {
+    if (USE_TEST_DATA) return
+    const wasLoading = prevLoadingMoreRef.current
+    prevLoadingMoreRef.current = loadingMore
+    if (!wasLoading || loadingMore || loadingInitial) return
+    if (!listHasMore || showFilterModal) return
+    if (statusFilter === 'all' && !dateInterval) return
+
+    const rawStart = recordsLengthWhenPageLoadStartedRef.current
+    recordsLengthWhenPageLoadStartedRef.current = null
+    const start = filteredCountWhenPageLoadStartedRef.current
+    filteredCountWhenPageLoadStartedRef.current = null
+    if (start === null || rawStart === null) return
+    if (records.length === rawStart) {
+      filterEmptyPageChainRef.current = 0
+      return
+    }
+
+    const end = filteredRecords.length
+    if (end !== start) {
+      filterEmptyPageChainRef.current = 0
+      return
+    }
+    if (filterEmptyPageChainRef.current >= 40) return
+    filterEmptyPageChainRef.current += 1
+    void loadMore()
+  }, [
+    loadingMore,
+    loadingInitial,
+    records.length,
+    filteredRecords.length,
+    listHasMore,
+    showFilterModal,
+    statusFilter,
+    dateInterval,
+    loadMore
+  ])
 
   const dateRecordInfo = useMemo(() => {
     const info: Record<string, { count: number }> = {}
@@ -291,6 +353,46 @@ export default function AllRecordsPage() {
       )
     }))
   }, [filteredRecords])
+
+  /**
+   * 内容高度 ≤ 可视高度时无法触底，onScrollToLower 不会触发，但服务端可能仍有下一页（筛选后尤其明显）。
+   * 自动连续 loadMore 直到可滚动或已无更多数据。
+   */
+  useEffect(() => {
+    if (USE_TEST_DATA) return
+    if (loadingInitial || loadingMore || !listHasMore || showFilterModal) return
+    if (autoFillLoadsRef.current >= 48) return
+
+    const timer = setTimeout(() => {
+      Taro.createSelectorQuery()
+        .select('#all-records-main-scroll')
+        .fields({ size: true, scrollOffset: true })
+        .exec((res: any) => {
+          const node = res?.[0]
+          if (!node) return
+          const scrollH = Number(node.scrollHeight)
+          const viewH = Number(node.height)
+          if (!Number.isFinite(scrollH) || !Number.isFinite(viewH) || viewH <= 0) return
+          if (scrollH <= viewH + 24) {
+            autoFillLoadsRef.current += 1
+            void loadMore()
+          }
+        })
+    }, 200)
+
+    return () => clearTimeout(timer)
+  }, [
+    records.length,
+    filteredRecords.length,
+    groupedByDate.length,
+    listHasMore,
+    loadingInitial,
+    loadingMore,
+    showFilterModal,
+    statusFilter,
+    dateInterval,
+    loadMore
+  ])
 
   const openFilterModal = () => {
     if (dateInterval) {
@@ -371,9 +473,11 @@ export default function AllRecordsPage() {
   return (
     <View className='all-records-page'>
       <ScrollView
+        id='all-records-main-scroll'
         className='all-records-scroll'
         style={mainScrollStyle}
         scrollY
+        enhanced
         showScrollbar={false}
         lowerThreshold={120}
         onScrollToLower={() => {

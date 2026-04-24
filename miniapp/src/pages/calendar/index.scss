@@ -17,6 +17,15 @@
   width: 100%;
 }
 
+/* WebView 下部分机型滚动条兜底（优先依赖 enhanced + showScrollbar={false}） */
+.all-records-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0 !important;
+  height: 0 !important;
+  color: transparent;
+  background: transparent;
+}
+
 /* 筛选：横向滚动标签 + 右侧「筛选」 */
 .filter-toolbar {
   display: flex;
