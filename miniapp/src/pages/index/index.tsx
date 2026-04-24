@@ -3,7 +3,6 @@ import { View, Text, Image, ScrollView, Canvas, Button, Textarea } from '@tarojs
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import {
   getRecordsPage,
-  getBpRecordsCount,
   getRecordsForHomeStats,
   HOME_LIST_PAGE_SIZE,
   BPRecord,
@@ -137,7 +136,6 @@ export default function Index() {
   const [listRecords, setListRecords] = useState<BPRecord[]>([])
   /** 近 180 天数据：本周概览、连续打卡（与列表分页无关） */
   const [statsRecords, setStatsRecords] = useState<BPRecord[]>([])
-  const [recordsTotal, setRecordsTotal] = useState(0)
   const [listHasMore, setListHasMore] = useState(false)
   const [listLoadingMore, setListLoadingMore] = useState(false)
   const listLoadGuardRef = useRef(false)
@@ -348,7 +346,6 @@ export default function Index() {
     // 测试模式直接加载测试数据
     if (USE_TEST_DATA) {
       const all = getTestData()
-      setRecordsTotal(all.length)
       setListRecords(all.slice(0, HOME_LIST_PAGE_SIZE))
       setStatsRecords(all)
       setListHasMore(all.length > HOME_LIST_PAGE_SIZE)
@@ -401,7 +398,6 @@ export default function Index() {
     listLoadGuardRef.current = false
     if (USE_TEST_DATA) {
       const all = getTestData()
-      setRecordsTotal(all.length)
       setListRecords(all.slice(0, HOME_LIST_PAGE_SIZE))
       setStatsRecords(all)
       setListHasMore(all.length > HOME_LIST_PAGE_SIZE)
@@ -409,14 +405,10 @@ export default function Index() {
     }
 
     try {
-      const [countRes, pageRes, statsRes] = await Promise.all([
-        getBpRecordsCount(userId),
+      const [pageRes, statsRes] = await Promise.all([
         getRecordsPage(userId, 0),
         getRecordsForHomeStats(userId)
       ])
-      if (!countRes.error) {
-        setRecordsTotal(countRes.count)
-      }
       if (pageRes.data && !pageRes.error) {
         setListRecords(pageRes.data)
         setListHasMore(pageRes.hasMore)
@@ -1047,11 +1039,8 @@ export default function Index() {
             <View className='section-title'>
               <Image className='title-icon' src={iconList} mode='aspectFit' />
               <Text>测量记录</Text>
-              {recordsTotal > 0 && (
-                <Text className='section-subtitle'>共 {recordsTotal} 条</Text>
-              )}
-              {/* 数据日历按钮 */}
-              {recordsTotal > 0 && (
+              {/* 数据日历按钮：有本页数据或仍有更多分页时显示（避免额外 count 请求） */}
+              {(listRecords.length > 0 || listHasMore) && (
                 <View className='calendar-trigger-btn' onClick={() => {
                   Taro.navigateTo({ url: '/pages/calendar/index' })
                 }}>

@@ -116,41 +116,8 @@ export async function getRecordsPage(
   return { data: slice, error: null, hasMore }
 }
 
-/**
- * 用户血压记录总条数（PostgREST Prefer: count=exact）
- */
-export async function getBpRecordsCount(userId: string): Promise<{ count: number; error: string | null }> {
-  const url = `${REST_URL}/bp_records?user_id=eq.${encodeURIComponent(userId)}&select=id`
-  try {
-    const res = await Taro.request({
-      url,
-      method: 'GET',
-      header: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        Prefer: 'count=exact'
-      }
-    })
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      const h = res.header as Record<string, string> | undefined
-      const range = h?.['content-range'] ?? h?.['Content-Range'] ?? ''
-      const m = typeof range === 'string' ? range.match(/\/(\d+)\s*$/) : null
-      if (m) {
-        return { count: parseInt(m[1], 10), error: null }
-      }
-      if (Array.isArray(res.data)) {
-        return { count: res.data.length, error: null }
-      }
-      return { count: 0, error: null }
-    }
-    return { count: 0, error: 'count 请求失败' }
-  } catch (e: any) {
-    return { count: 0, error: e.message || '网络错误' }
-  }
-}
-
 /** 首页统计用：近 N 天内的记录（本周均值、连续打卡），与列表分页无关 */
-const HOME_STATS_RANGE_DAYS = 180
+const HOME_STATS_RANGE_DAYS = 7
 
 export async function getRecordsForHomeStats(
   userId: string
