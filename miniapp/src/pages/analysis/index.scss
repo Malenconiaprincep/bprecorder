@@ -1,24 +1,10 @@
+/* 配色与改版前一致：浅蓝底、蓝强调、收缩压橙 / 舒张压蓝 */
 .analysis-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #e8f4ff 0%, #f0f6ff 100%);
+  background: #f0f6ff;
   padding: 20rpx 30rpx;
   padding-bottom: 180rpx;
   box-sizing: border-box;
-}
-
-/* 通用标题图标 */
-.title-icon {
-  width: 36rpx;
-  height: 36rpx;
-  margin-right: 12rpx;
-  vertical-align: middle;
-}
-
-.chart-title-icon {
-  width: 32rpx;
-  height: 32rpx;
-  margin-right: 8rpx;
-  vertical-align: middle;
 }
 
 .empty-icon {
@@ -28,26 +14,33 @@
   margin: 0 auto 20rpx;
 }
 
-/* 时间切换 */
+.analysis-top-card {
+  background: #ffffff;
+  border-radius: 28rpx;
+  padding: 20rpx 20rpx 22rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
 .time-tabs {
   display: flex;
-  background: #ffffff;
-  border-radius: 24rpx;
-  padding: 8rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  background: #f1f5f9;
+  border-radius: 20rpx;
+  padding: 6rpx;
+  margin-bottom: 16rpx;
 }
 
 .time-tab {
   flex: 1;
-  height: 72rpx;
+  height: 68rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 20rpx;
-  font-size: 30rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
   color: #64748b;
-  transition: all 0.3s;
+  transition: all 0.25s;
 }
 
 .time-tab.active {
@@ -57,83 +50,100 @@
   box-shadow: 0 4rpx 16rpx rgba(59, 130, 246, 0.3);
 }
 
-/* 图表卡片 */
-.chart-card {
-  background: #ffffff;
-  border-radius: 32rpx;
-  padding: 28rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.05);
-}
-
-.chart-header {
+.hand-toggle-row {
   display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-  margin-bottom: 24rpx;
-}
-
-.chart-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16rpx;
-}
-
-/* 趋势图内次级筛选：Chip 样式（次于顶部时间分段） */
-.chart-hand-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: row;
+  align-items: stretch;
   gap: 12rpx;
 }
 
-.chart-hand-chip {
-  padding: 10rpx 28rpx;
-  border-radius: 999rpx;
-  background: #f1f5f9;
-  border: 1rpx solid transparent;
-  font-size: 24rpx;
+.hand-toggle-btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 14rpx 8rpx;
+  background: #f8fafc;
+  border-radius: 18rpx;
+  border: 2rpx solid #eef2f6;
+  box-sizing: border-box;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.hand-toggle-btn.active {
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #93c5fd;
+  box-shadow: 0 4rpx 14rpx rgba(37, 99, 235, 0.12);
+}
+
+.hand-toggle-text {
+  font-size: 26rpx;
   color: #64748b;
   line-height: 1.2;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  text-align: center;
 }
 
-.chart-hand-chip Text {
-  font-size: 24rpx;
-  color: inherit;
-}
-
-.chart-hand-chip.active {
-  background: #eff6ff;
-  border-color: #93c5fd;
+.hand-toggle-btn.active .hand-toggle-text {
   color: #2563eb;
   font-weight: 600;
 }
 
-.chart-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #1e293b;
-  display: flex;
-  align-items: center;
+/* —— 血压趋势 —— */
+.chart-card {
+  background: #ffffff;
+  border-radius: 28rpx;
+  padding: 28rpx 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.05);
 }
 
-.chart-legend {
+.chart-title-plain {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.chart-legend-bar {
   display: flex;
-  gap: 24rpx;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.chart-legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.chart-legend-unit {
+  font-size: 24rpx;
+  color: #94a3b8;
+  flex-shrink: 0;
+  padding-top: 2rpx;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 8rpx;
+  gap: 10rpx;
 }
 
 .legend-dot {
-  width: 16rpx;
-  height: 16rpx;
+  width: 14rpx;
+  height: 14rpx;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .legend-dot.systolic {
@@ -147,6 +157,7 @@
 .legend-text {
   font-size: 24rpx;
   color: #64748b;
+  line-height: 1.3;
 }
 
 .chart-hint {
@@ -154,56 +165,47 @@
   color: #94a3b8;
   text-align: center;
   display: block;
-  margin-bottom: 16rpx;
+  margin-bottom: 14rpx;
 }
 
-/* 图表包装 */
 .chart-wrapper {
   display: flex;
-  min-height: 320rpx;
+  min-height: 300rpx;
 }
 
-/* Y轴 */
 .y-axis {
-  width: 60rpx;
+  width: 56rpx;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding-right: 12rpx;
+  padding-right: 10rpx;
 }
 
 .y-tick {
-  font-size: 22rpx;
-  color: #94a3b8;
+  font-size: 20rpx;
+  color: rgba(100, 116, 139, 0.75);
   text-align: right;
   line-height: 1;
 }
 
-/* 图表区域 */
 .chart-area {
   flex: 1;
   position: relative;
-  background: linear-gradient(
-    180deg,
-    rgba(248, 250, 252, 0.6) 0%,
-    rgba(241, 245, 249, 0.3) 100%
-  );
+  background: #ffffff;
   border-radius: 16rpx;
   overflow: visible;
-  /* 固定宽高比，确保线条角度计算准确 */
   aspect-ratio: 1.8;
 }
 
-/* 网格线 */
 .grid-line {
   position: absolute;
   left: 0;
   right: 0;
-  height: 1rpx;
-  background: #e2e8f0;
+  height: 0;
+  border-top: 1rpx solid rgba(148, 163, 184, 0.28);
+  z-index: 0;
 }
 
-/* 连接线层 */
 .lines-layer {
   position: absolute;
   top: 0;
@@ -213,7 +215,6 @@
   z-index: 1;
 }
 
-/* 数据层 */
 .data-layer {
   position: absolute;
   top: 0;
@@ -223,64 +224,115 @@
   z-index: 2;
 }
 
-/* 数据点 */
 .data-point {
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: 10;
+  width: 72rpx;
+  height: 72rpx;
 }
 
 .point-inner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
   width: 20rpx;
   height: 20rpx;
+  margin: 0;
+  transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 4rpx solid #ffffff;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+  border: 3rpx solid #ffffff;
+  box-sizing: border-box;
 }
 
-/* 30天模式下点更小 */
+/* 30 天：略大的点 + 白边光晕，默认即可辨认 */
 .month-mode .point-inner {
-  width: 12rpx;
-  height: 12rpx;
-  border: 2rpx solid #ffffff;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  width: 16rpx;
+  height: 16rpx;
+  border: 3rpx solid #ffffff;
+}
+
+.month-mode .data-point.systolic .point-inner {
+  background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
+  box-shadow:
+    0 0 0 2rpx rgba(255, 255, 255, 0.95),
+    0 2rpx 10rpx rgba(234, 88, 12, 0.4),
+    0 0 20rpx rgba(234, 88, 12, 0.2);
+}
+
+.month-mode .data-point.diastolic .point-inner {
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+  box-shadow:
+    0 0 0 2rpx rgba(255, 255, 255, 0.95),
+    0 2rpx 10rpx rgba(37, 99, 235, 0.4),
+    0 0 20rpx rgba(37, 99, 235, 0.2);
+}
+
+.month-mode .data-point.selected .point-inner {
+  width: 20rpx;
+  height: 20rpx;
 }
 
 .data-point.systolic .point-inner {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
+  box-shadow:
+    0 2rpx 6rpx rgba(234, 88, 12, 0.35),
+    0 6rpx 14rpx rgba(234, 88, 12, 0.18),
+    0 1rpx 0 rgba(255, 255, 255, 0.4) inset;
 }
 
 .data-point.diastolic .point-inner {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+  box-shadow:
+    0 2rpx 6rpx rgba(37, 99, 235, 0.35),
+    0 6rpx 14rpx rgba(37, 99, 235, 0.18),
+    0 1rpx 0 rgba(255, 255, 255, 0.35) inset;
 }
 
+/* 7 天：数值在圆点正上 / 正下 */
 .point-value {
   position: absolute;
-  font-size: 20rpx;
-  font-weight: 600;
-  white-space: nowrap;
-  transform: translateX(-50%);
   left: 50%;
+  transform: translateX(-50%);
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  z-index: 1;
+  letter-spacing: -0.5rpx;
 }
 
-.data-point.systolic .point-value {
+.point-value--sys {
   color: #ea580c;
-  top: -32rpx;
+  top: 4rpx;
+  transform: translate(-50%, -100%);
 }
 
-.data-point.diastolic .point-value {
+.point-value--dia {
   color: #2563eb;
-  bottom: -32rpx;
+  bottom: 4rpx;
+  transform: translate(-50%, 100%);
 }
 
-/* 选中状态 */
 .data-point.selected .point-inner {
-  width: 28rpx;
-  height: 28rpx;
-  box-shadow: 0 0 0 8rpx rgba(59, 130, 246, 0.2);
+  width: 24rpx;
+  height: 24rpx;
 }
 
-/* 提示气泡 */
+.data-point.systolic.selected .point-inner {
+  box-shadow:
+    0 0 0 5rpx rgba(255, 255, 255, 0.95),
+    0 0 0 8rpx rgba(234, 88, 12, 0.22),
+    0 4rpx 16rpx rgba(234, 88, 12, 0.35);
+}
+
+.data-point.diastolic.selected .point-inner {
+  box-shadow:
+    0 0 0 5rpx rgba(255, 255, 255, 0.95),
+    0 0 0 8rpx rgba(59, 130, 246, 0.22),
+    0 4rpx 16rpx rgba(37, 99, 235, 0.35);
+}
+
 .tooltip {
   position: absolute;
   transform: translate(-50%, -100%);
@@ -355,7 +407,6 @@
   margin: 0 auto;
 }
 
-/* 连接线 */
 .line {
   position: absolute;
   height: 4rpx;
@@ -363,9 +414,8 @@
   border-radius: 2rpx;
 }
 
-/* 30天模式下线条更细 */
 .month-mode .line {
-  height: 3rpx;
+  height: 4rpx;
 }
 
 .line.systolic {
@@ -376,35 +426,16 @@
   background: #3b82f6;
 }
 
-/* 30天模式下线条更粗更平滑 */
-.month-mode .line {
-  height: 5rpx;
-}
-
-.month-mode .line.systolic {
-  background: #f97316;
-}
-
-.month-mode .line.diastolic {
-  background: #3b82f6;
-}
-
-/* 空状态 */
 .chart-empty {
-  height: 300rpx;
+  height: 280rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-.empty-icon {
-  font-size: 64rpx;
-  margin-bottom: 16rpx;
-}
-
 .empty-text {
-  font-size: 32rpx;
+  font-size: 30rpx;
   color: #64748b;
   margin-bottom: 8rpx;
 }
@@ -414,18 +445,17 @@
   color: #94a3b8;
 }
 
-/* X轴 */
 .x-axis {
   position: relative;
-  height: 48rpx;
-  margin-left: 60rpx;
-  margin-top: 16rpx;
+  height: 44rpx;
+  margin-left: 56rpx;
+  margin-top: 12rpx;
 }
 
 .x-label {
   position: absolute;
   transform: translateX(-50%);
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: #94a3b8;
 }
 
@@ -434,331 +464,354 @@
   font-weight: 500;
 }
 
-/* 统计卡片 */
-.stats-card {
+/* —— 环形占比 —— */
+.donut-card,
+.avg-bp-card {
   background: #ffffff;
-  border-radius: 32rpx;
-  padding: 28rpx;
+  border-radius: 28rpx;
+  padding: 28rpx 24rpx;
+  margin-bottom: 24rpx;
   box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.05);
 }
 
-.stats-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24rpx;
-}
-
-.stats-title {
+.section-heading {
   font-size: 32rpx;
-  font-weight: 600;
+  font-weight: 700;
   color: #1e293b;
-  display: flex;
-  align-items: center;
+  display: block;
+  margin-bottom: 20rpx;
 }
 
-.stats-period {
-  font-size: 24rpx;
+.donut-empty {
+  padding: 40rpx 0;
+  text-align: center;
+}
+
+.donut-empty-text {
+  font-size: 26rpx;
   color: #94a3b8;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20rpx;
-}
-
-.stat-item {
-  background: #f8fafc;
-  border-radius: 20rpx;
-  padding: 24rpx;
-}
-
-.stat-label {
-  font-size: 24rpx;
-  color: #64748b;
-  margin-bottom: 12rpx;
-  display: block;
-}
-
-.stat-value-row {
+.donut-body {
   display: flex;
-  align-items: baseline;
-  gap: 8rpx;
+  flex-direction: row;
+  align-items: center;
+  gap: 24rpx;
 }
 
-.stat-value {
+.donut-visual {
+  position: relative;
+  width: 220rpx;
+  height: 220rpx;
+  flex-shrink: 0;
+}
+
+.donut-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.donut-hole {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 138rpx;
+  height: 138rpx;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1rpx #f1f5f9;
+}
+
+.donut-hole-num {
   font-size: 44rpx;
-  font-weight: 700;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.1;
 }
 
-.stat-value.systolic {
+.donut-hole-label {
+  font-size: 22rpx;
+  color: #94a3b8;
+  margin-top: 4rpx;
+}
+
+.donut-legend {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.donut-legend-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.donut-legend-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.donut-legend-label {
+  font-size: 26rpx;
+  color: #475569;
+  flex: 1;
+  min-width: 0;
+}
+
+.donut-legend-val {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1e293b;
+  flex-shrink: 0;
+}
+
+/* —— 平均血压双卡 —— */
+.avg-bp-row {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+}
+
+.avg-bp-cell {
+  flex: 1;
+  min-width: 0;
+  border-radius: 20rpx;
+  padding: 24rpx 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.avg-bp-cell--sys {
+  background: #fff7ed;
+}
+
+.avg-bp-cell--dia {
+  background: #eff6ff;
+}
+
+.avg-bp-num {
+  font-size: 52rpx;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.avg-bp-num--sys {
   color: #ea580c;
 }
 
-.stat-value.diastolic {
+.avg-bp-num--dia {
   color: #2563eb;
 }
 
-.stat-value.count {
-  color: #1e293b;
-}
-
-.stat-unit {
+.avg-bp-sublabel {
   font-size: 24rpx;
+  color: #64748b;
+  margin-top: 10rpx;
+}
+
+.avg-bp-unit {
+  font-size: 22rpx;
   color: #94a3b8;
+  margin-top: 4rpx;
 }
 
-/* 状态标签 */
-.status-tag {
-  display: inline-flex;
+/* —— 温馨提示 —— */
+.analysis-warm-tip {
+  background: #eef2f7;
+  border-radius: 20rpx;
+  padding: 22rpx 26rpx;
+  margin-bottom: 8rpx;
+  border: 1rpx solid #e2e8f0;
+}
+
+.analysis-warm-tip-head {
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  max-width: 92%;
-  padding: 12rpx 24rpx;
-  border-radius: 24rpx;
-  margin-top: 8rpx;
-  text-align: center;
-  line-height: 1.4;
+  gap: 10rpx;
+  margin-bottom: 10rpx;
 }
 
-.status-tag.ideal {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+.analysis-warm-tip-icon {
+  font-size: 32rpx;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
-.status-tag.low {
-  background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+.analysis-warm-tip-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #334155;
+  line-height: 1.3;
 }
 
-.status-tag.normal {
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+.analysis-warm-tip-body {
+  font-size: 24rpx;
+  color: #64748b;
+  line-height: 1.55;
+  display: block;
 }
 
-.status-tag.prehigh {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-}
-
-.status-tag.high-1 {
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-}
-
-.status-tag.high-2 {
-  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
-}
-
-.status-tag.high-3 {
-  background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%);
-}
-
-.status-text {
-  font-size: 28rpx;
-  font-weight: 600;
-}
-
-.status-tag.ideal .status-text {
-  color: #047857;
-}
-
-.status-tag.low .status-text {
-  color: #0e7490;
-}
-
-.status-tag.normal .status-text {
-  color: #15803d;
-}
-
-.status-tag.prehigh .status-text {
-  color: #a16207;
-}
-
-.status-tag.high-1 .status-text {
-  color: #c2410c;
-}
-
-.status-tag.high-2 .status-text {
-  color: #be123c;
-}
-
-.status-tag.high-3 .status-text {
-  color: #9f1239;
-}
-
-/* 底部占位 - 已通过 padding-bottom 实现 */
-
-/* ========== 关怀模式样式 ========== */
+/* ========== 关怀模式 ========== */
 .analysis-page.elder-mode {
   padding: 24rpx 30rpx;
   padding-bottom: 200rpx;
-  
-  /* 时间切换按钮放大 */
+
   .time-tabs {
-    border-radius: 28rpx;
-    padding: 10rpx;
-    margin-bottom: 28rpx;
-  }
-  
-  .time-tab {
-    height: 88rpx;
     border-radius: 24rpx;
-    font-size: 36rpx;
-  }
-  
-  /* 图表卡片 */
-  .chart-card {
-    border-radius: 32rpx;
-    padding: 32rpx;
-    margin-bottom: 28rpx;
-  }
-  
-  .chart-title {
-    font-size: 38rpx;
-  }
-  
-  .chart-title-icon {
-    width: 40rpx;
-    height: 40rpx;
-    margin-right: 12rpx;
-  }
-  
-  .legend-text {
-    font-size: 30rpx;
-  }
-  
-  .legend-dot {
-    width: 20rpx;
-    height: 20rpx;
-  }
-  
-  .chart-hint {
-    font-size: 26rpx;
+    padding: 8rpx;
     margin-bottom: 20rpx;
   }
-  
-  /* Y轴 */
-  .y-tick {
-    font-size: 26rpx;
+
+  .time-tab {
+    height: 84rpx;
+    font-size: 34rpx;
   }
-  
-  /* 数据点数值 */
-  .point-value {
+
+  .analysis-top-card {
+    border-radius: 32rpx;
+    padding: 24rpx;
+    margin-bottom: 28rpx;
+  }
+
+  .hand-toggle-btn {
+    padding: 20rpx 12rpx;
+  }
+
+  .hand-toggle-text {
+    font-size: 30rpx;
+  }
+
+  .chart-card,
+  .donut-card,
+  .avg-bp-card {
+    padding: 32rpx 28rpx;
+    border-radius: 32rpx;
+    margin-bottom: 28rpx;
+  }
+
+  .chart-title-plain,
+  .section-heading {
+    font-size: 36rpx;
+  }
+
+  .legend-text {
+    font-size: 28rpx;
+  }
+
+  .chart-legend-unit {
+    font-size: 28rpx;
+  }
+
+  .y-tick {
     font-size: 24rpx;
   }
-  
-  /* X轴 */
+
   .x-axis {
-    height: 56rpx;
-    margin-top: 20rpx;
+    height: 52rpx;
   }
-  
+
   .x-label {
+    font-size: 24rpx;
+  }
+
+  .point-value {
     font-size: 26rpx;
   }
-  
-  /* 提示气泡 */
+
+  .point-value--sys {
+    top: 6rpx;
+  }
+
+  .point-value--dia {
+    bottom: 6rpx;
+  }
+
+  .donut-visual {
+    width: 248rpx;
+    height: 248rpx;
+  }
+
+  .donut-hole {
+    width: 158rpx;
+    height: 158rpx;
+  }
+
+  .donut-hole-num {
+    font-size: 52rpx;
+  }
+
+  .donut-hole-label {
+    font-size: 26rpx;
+  }
+
+  .donut-legend-label,
+  .donut-legend-val {
+    font-size: 28rpx;
+  }
+
+  .avg-bp-num {
+    font-size: 60rpx;
+  }
+
+  .avg-bp-sublabel {
+    font-size: 28rpx;
+  }
+
+  .avg-bp-unit {
+    font-size: 26rpx;
+  }
+
+  .analysis-warm-tip-icon {
+    font-size: 36rpx;
+  }
+
+  .analysis-warm-tip-title {
+    font-size: 30rpx;
+  }
+
+  .analysis-warm-tip-body {
+    font-size: 28rpx;
+  }
+
   .tooltip-content {
     padding: 24rpx 32rpx;
-    border-radius: 24rpx;
     min-width: 180rpx;
   }
-  
-  .tooltip-date {
-    font-size: 28rpx;
-    margin-bottom: 10rpx;
-  }
-  
+
   .sys-value,
   .dia-value {
     font-size: 42rpx;
   }
-  
-  .slash {
-    font-size: 32rpx;
-  }
-  
-  .tooltip-unit {
-    font-size: 26rpx;
-  }
-  
-  .tooltip-count {
-    font-size: 24rpx;
-    margin-top: 8rpx;
-  }
-  
-  /* 空状态 */
+
   .chart-empty {
-    height: 340rpx;
+    height: 320rpx;
   }
-  
+
   .empty-icon {
     width: 100rpx;
     height: 100rpx;
-    margin-bottom: 24rpx;
   }
-  
+
   .empty-text {
-    font-size: 38rpx;
-    margin-bottom: 12rpx;
+    font-size: 34rpx;
   }
-  
+
   .empty-hint {
     font-size: 30rpx;
-  }
-  
-  /* 统计卡片 */
-  .stats-card {
-    border-radius: 32rpx;
-    padding: 32rpx;
-  }
-  
-  .stats-header {
-    margin-bottom: 28rpx;
-  }
-  
-  .stats-title {
-    font-size: 38rpx;
-  }
-  
-  .title-icon {
-    width: 42rpx;
-    height: 42rpx;
-    margin-right: 14rpx;
-  }
-  
-  .stats-period {
-    font-size: 28rpx;
-  }
-  
-  .stats-grid {
-    gap: 24rpx;
-  }
-  
-  .stat-item {
-    border-radius: 24rpx;
-    padding: 28rpx;
-  }
-  
-  .stat-label {
-    font-size: 30rpx;
-    margin-bottom: 14rpx;
-  }
-  
-  .stat-value {
-    font-size: 56rpx;
-  }
-  
-  .stat-unit {
-    font-size: 28rpx;
-  }
-  
-  /* 状态标签 */
-  .status-tag {
-    padding: 14rpx 28rpx;
-    border-radius: 28rpx;
-    margin-top: 10rpx;
-  }
-  
-  .status-text {
-    font-size: 34rpx;
   }
 }

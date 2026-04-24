@@ -860,7 +860,44 @@
 /* 记录列表区域 */
 .records-section {
   margin: 30rpx 30rpx 0 30rpx;
-  padding-bottom: 40rpx;
+  padding-bottom: 24rpx;
+}
+
+/* 首页底部小贴士 */
+.home-tip-card {
+  margin: 0 30rpx 24rpx;
+  padding: 24rpx 28rpx;
+  background: #eef2f7;
+  border-radius: 24rpx;
+  border: 1rpx solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.home-tip-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+}
+
+.home-tip-icon {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.home-tip-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
+}
+
+.home-tip-body {
+  font-size: 26rpx;
+  color: #64748b;
+  line-height: 1.55;
+  display: block;
 }
 
 .records-card {
@@ -1786,6 +1823,24 @@
   /* 记录列表 */
   .records-section {
     margin: 30rpx 30rpx 0 30rpx;
+  }
+
+  .home-tip-card {
+    margin: 0 30rpx 28rpx;
+    padding: 28rpx 32rpx;
+    border-radius: 28rpx;
+  }
+
+  .home-tip-icon {
+    font-size: 36rpx;
+  }
+
+  .home-tip-title {
+    font-size: 32rpx;
+  }
+
+  .home-tip-body {
+    font-size: 30rpx;
   }
   
   .records-card {

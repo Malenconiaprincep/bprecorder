@@ -55,3 +55,23 @@ export function getBPStatus(systolic: number, diastolic: number): BPStatusResult
 export function isBPNeedAttention(result: BPStatusResult): boolean {
   return result.color !== 'ideal'
 }
+
+/** 仅看收缩压（分析页「平均收缩压」旁状态标签） */
+export function getBPStatusSystolicOnly(systolic: number): BPStatusResult {
+  const s = systolic
+  if (s < 90) return { label: '偏低', color: 'low', emoji: '💧' }
+  if (s >= 160) return { label: '看医生', color: 'high-3', emoji: '🔴' }
+  if (s >= 140) return { label: '多测几天', color: 'high-1', emoji: '🟠' }
+  if (s >= 120) return { label: '稍高', color: 'prehigh', emoji: '🟡' }
+  return { label: '正常', color: 'ideal', emoji: '🟢' }
+}
+
+/** 仅看舒张压（分析页「平均舒张压」旁状态标签） */
+export function getBPStatusDiastolicOnly(diastolic: number): BPStatusResult {
+  const d = diastolic
+  if (d < 60) return { label: '偏低', color: 'low', emoji: '💧' }
+  if (d >= 100) return { label: '看医生', color: 'high-3', emoji: '🔴' }
+  if (d >= 90) return { label: '多测几天', color: 'high-1', emoji: '🟠' }
+  if (d >= 80) return { label: '稍高', color: 'prehigh', emoji: '🟡' }
+  return { label: '正常', color: 'ideal', emoji: '🟢' }
+}
