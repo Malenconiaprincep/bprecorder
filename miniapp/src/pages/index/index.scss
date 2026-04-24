@@ -442,7 +442,7 @@
 /* 本周概览卡片 */
 .summary-card {
   margin: 0 30rpx 24rpx;
-  padding: 32rpx;
+  padding: 28rpx 32rpx;
   background: #ffffff;
   border-radius: 32rpx;
   box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.05);
@@ -452,7 +452,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24rpx;
+  margin-bottom: 20rpx;
 }
 
 .summary-title {
@@ -481,6 +481,52 @@
   width: 100%;
 }
 
+/* 左右手均有数据：顶部分段，减少纵向占位 */
+.summary-hand-tabs {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 20rpx;
+  padding: 6rpx;
+  gap: 8rpx;
+  margin-bottom: 16rpx;
+}
+
+.summary-hand-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14rpx 12rpx;
+  border-radius: 16rpx;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.summary-hand-tab.active {
+  background: #ffffff;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.06);
+}
+
+.summary-hand-tab-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.summary-hand-tab.active .summary-hand-tab-text {
+  color: #2563eb;
+}
+
+.summary-hand-tab-sub {
+  font-size: 22rpx;
+  color: #94a3b8;
+  margin-top: 4rpx;
+}
+
+.summary-hand-tab.active .summary-hand-tab-sub {
+  color: #64748b;
+}
+
 .summary-hand-row {
   display: flex;
   justify-content: space-between;
@@ -491,6 +537,10 @@
   &:last-of-type {
     margin-bottom: 0;
   }
+
+  &.summary-hand-row--single {
+    margin-bottom: 0;
+  }
 }
 
 .summary-hand-main {
@@ -499,10 +549,10 @@
 }
 
 .summary-hand-title {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #64748b;
   display: block;
-  margin-bottom: 6rpx;
+  margin-bottom: 4rpx;
   font-weight: 500;
 }
 
@@ -516,23 +566,23 @@
 
 .avg-values--hand {
   .avg-number {
-    font-size: 48rpx;
+    font-size: 44rpx;
   }
 }
 
 .summary-status--compact {
-  margin-left: 20rpx;
+  margin-left: 16rpx;
   flex-shrink: 0;
-  padding: 14rpx 22rpx;
-  border-radius: 20rpx;
+  padding: 12rpx 18rpx;
+  border-radius: 18rpx;
 
   .status-emoji {
-    font-size: 36rpx;
+    font-size: 32rpx;
     margin-bottom: 0;
   }
 
   .status-text {
-    font-size: 24rpx;
+    font-size: 22rpx;
   }
 }
 

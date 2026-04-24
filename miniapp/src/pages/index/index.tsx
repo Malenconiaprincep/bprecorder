@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { View, Text, Image, ScrollView, Canvas, Button, Textarea } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import {
@@ -151,6 +151,8 @@ export default function Index() {
   const [shareImageUrl, setShareImageUrl] = useState<string>('')
   const [myGroups, setMyGroups] = useState<Group[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null) // 选中的日期（用于筛选）
+  /** 本周概览：左右手均有数据时在 Tab 间切换 */
+  const [summaryHandTab, setSummaryHandTab] = useState<'left' | 'right'>('left')
 
   // 字体模式状态
   const [fontSizeMode, setFontSizeModeState] = useState<FontSizeMode>('normal')
@@ -208,7 +210,6 @@ export default function Index() {
 
   const statsSource = statsRecords.length > 0 ? statsRecords : listRecords
 
-  // 近7天血压：左右分侧 + 未标条数（与数据页/周报同口径，见 computeHandSplitOverview）
   const weekHandOverview = useMemo(() => {
     if (statsSource.length === 0) return null
     const now = new Date()
@@ -217,6 +218,14 @@ export default function Index() {
     if (weekRecords.length === 0) return null
     return computeHandSplitOverview(weekRecords)
   }, [statsSource])
+
+  useEffect(() => {
+    if (!weekHandOverview || weekHandOverview.fallbackOverall) return
+    const { left, right } = weekHandOverview
+    if (left && right) return
+    if (left && !right) setSummaryHandTab('left')
+    else if (!left && right) setSummaryHandTab('right')
+  }, [weekHandOverview])
 
   // 连续打卡天数（与「我的」页统计一致，按本地自然日）
   const consecutiveDays = useMemo(() => {
@@ -898,47 +907,66 @@ export default function Index() {
               </View>
             ) : (
               <View className='summary-hands'>
-                {weekHandOverview.left && (
-                  <View className='summary-hand-row' key='left'>
-                    <View className='summary-hand-main'>
-                      <Text className='summary-hand-title'>左手平均 · {weekHandOverview.left.count} 次</Text>
-                      <View className='avg-values avg-values--hand'>
-                        <Text className='avg-number systolic'>{weekHandOverview.left.systolic}</Text>
-                        <Text className='avg-slash'>/</Text>
-                        <Text className='avg-number diastolic'>{weekHandOverview.left.diastolic}</Text>
-                        <Text className='avg-unit'>mmHg</Text>
+                {(() => {
+                  const { left, right, unlabeledCount } = weekHandOverview
+                  const bothSides = !!(left && right)
+                  const active =
+                    bothSides
+                      ? (summaryHandTab === 'left' ? left! : right!)
+                      : (left || right)
+                  if (!active) return null
+                  const st = getBPStatus(active.systolic, active.diastolic)
+                  return (
+                    <>
+                      {bothSides && (
+                        <View className='summary-hand-tabs'>
+                          <View
+                            className={`summary-hand-tab ${summaryHandTab === 'left' ? 'active' : ''}`}
+                            onClick={() => setSummaryHandTab('left')}
+                          >
+                            <Text className='summary-hand-tab-text'>左手</Text>
+                            {left ? (
+                              <Text className='summary-hand-tab-sub'>{left.count} 次</Text>
+                            ) : null}
+                          </View>
+                          <View
+                            className={`summary-hand-tab ${summaryHandTab === 'right' ? 'active' : ''}`}
+                            onClick={() => setSummaryHandTab('right')}
+                          >
+                            <Text className='summary-hand-tab-text'>右手</Text>
+                            {right ? (
+                              <Text className='summary-hand-tab-sub'>{right.count} 次</Text>
+                            ) : null}
+                          </View>
+                        </View>
+                      )}
+                      <View className='summary-hand-row summary-hand-row--single'>
+                        <View className='summary-hand-main'>
+                          <Text className='summary-hand-title'>
+                            {bothSides
+                              ? `平均 · ${active.count} 次`
+                              : `${left ? '左手' : '右手'}平均 · ${active.count} 次`}
+                          </Text>
+                          <View className='avg-values avg-values--hand'>
+                            <Text className='avg-number systolic'>{active.systolic}</Text>
+                            <Text className='avg-slash'>/</Text>
+                            <Text className='avg-number diastolic'>{active.diastolic}</Text>
+                            <Text className='avg-unit'>mmHg</Text>
+                          </View>
+                        </View>
+                        <View className={`summary-status summary-status--compact ${st.color}`}>
+                          <Text className='status-emoji'>{st.emoji}</Text>
+                          <Text className='status-text'>{st.label}</Text>
+                        </View>
                       </View>
-                    </View>
-                    <View
-                      className={`summary-status summary-status--compact ${getBPStatus(weekHandOverview.left.systolic, weekHandOverview.left.diastolic).color}`}
-                    >
-                      <Text className='status-emoji'>{getBPStatus(weekHandOverview.left.systolic, weekHandOverview.left.diastolic).emoji}</Text>
-                      <Text className='status-text'>{getBPStatus(weekHandOverview.left.systolic, weekHandOverview.left.diastolic).label}</Text>
-                    </View>
-                  </View>
-                )}
-                {weekHandOverview.right && (
-                  <View className='summary-hand-row' key='right'>
-                    <View className='summary-hand-main'>
-                      <Text className='summary-hand-title'>右手平均 · {weekHandOverview.right.count} 次</Text>
-                      <View className='avg-values avg-values--hand'>
-                        <Text className='avg-number systolic'>{weekHandOverview.right.systolic}</Text>
-                        <Text className='avg-slash'>/</Text>
-                        <Text className='avg-number diastolic'>{weekHandOverview.right.diastolic}</Text>
-                        <Text className='avg-unit'>mmHg</Text>
-                      </View>
-                    </View>
-                    <View
-                      className={`summary-status summary-status--compact ${getBPStatus(weekHandOverview.right.systolic, weekHandOverview.right.diastolic).color}`}
-                    >
-                      <Text className='status-emoji'>{getBPStatus(weekHandOverview.right.systolic, weekHandOverview.right.diastolic).emoji}</Text>
-                      <Text className='status-text'>{getBPStatus(weekHandOverview.right.systolic, weekHandOverview.right.diastolic).label}</Text>
-                    </View>
-                  </View>
-                )}
-                {weekHandOverview.unlabeledCount > 0 && (
-                  <Text className='summary-unlabeled-hint'>另有 {weekHandOverview.unlabeledCount} 次未标左右手，未计入上表</Text>
-                )}
+                      {unlabeledCount > 0 && (
+                        <Text className='summary-unlabeled-hint'>
+                          另有 {unlabeledCount} 次未标左右手，未计入上表
+                        </Text>
+                      )}
+                    </>
+                  )
+                })()}
               </View>
             )
           ) : (
