@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { View, Text, Image, ScrollView, Canvas, Button, Textarea } from '@tarojs/components'
+import { View, Text, Image, ScrollView, Canvas, Button, Textarea, Navigator } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import {
   getRecordsRecent,
@@ -971,14 +971,16 @@ export default function Index() {
               <Text>最近记录</Text>
               {/* 有最近记录时提供完整列表入口 */}
               {listRecords.length > 0 && (
-                <View className='calendar-trigger-btn' onClick={() => {
-                  Taro.navigateTo({ url: '/pages/calendar/index' })
-                }}>
+                <Navigator
+                  className='calendar-trigger-btn'
+                  url='/pages/calendar/index'
+                  hoverClass='calendar-trigger-btn--hover'
+                >
                   <Text className='calendar-trigger-text'>查看全部记录</Text>
                   {selectedDate && (
                     <Text className='calendar-trigger-badge'>已筛选</Text>
                   )}
-                </View>
+                </Navigator>
               )}
             </View>
 

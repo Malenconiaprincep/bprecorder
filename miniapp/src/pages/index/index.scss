@@ -933,11 +933,14 @@
   background: #f8fafc;
   border-radius: 20rpx;
   transition: all 0.2s ease;
+  position: relative;
+  z-index: 2;
 }
 
-.calendar-trigger-btn:active {
+.calendar-trigger-btn:active,
+.calendar-trigger-btn--hover {
   background: #e2e8f0;
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
 .calendar-trigger-text {
@@ -1857,9 +1860,14 @@
     font-size: 30rpx;
   }
   
-  /* 隐藏数据日历按钮 */
+  /* 关怀模式：保留「查看全部记录」，放大便于点击 */
   .calendar-trigger-btn {
-    display: none;
+    padding: 14rpx 26rpx;
+    border-radius: 24rpx;
+  }
+
+  .calendar-trigger-text {
+    font-size: 30rpx;
   }
   
   .filter-hint {

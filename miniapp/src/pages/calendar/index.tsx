@@ -1,7 +1,8 @@
 import { useState, useMemo, useCallback } from 'react'
+import type { CSSProperties } from 'react'
 import { View, Text, ScrollView, Image } from '@tarojs/components'
-import Taro, { useLoad, useDidShow } from '@tarojs/taro'
-import { getRecords, BPRecord, deleteRecord } from '../../lib/supabase'
+import Taro, { useDidShow, useReady } from '@tarojs/taro'
+import { getRecordsPage, HOME_LIST_PAGE_SIZE, BPRecord, deleteRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import { getBPStatus, BPStatusColor } from '../../utils/bpStatus'
@@ -68,8 +69,15 @@ function statusDotClass(color: BPStatusColor): string {
   return 'dot-high'
 }
 
+/** 全部记录列表每页条数 */
+const ALL_RECORDS_PAGE_SIZE = HOME_LIST_PAGE_SIZE
+
 /** 日期区间：含首尾最多 N 个自然日 */
 const MAX_INTERVAL_DAYS_INCLUSIVE = 30
+
+function sortRecordsDesc(list: BPRecord[]) {
+  return [...list].sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())
+}
 
 function dateKeyToTime(key: string): number {
   const [y, m, d] = key.split('-').map(Number)
@@ -107,6 +115,9 @@ function recordInClosedInterval(r: BPRecord, start: string, end: string): boolea
 
 export default function AllRecordsPage() {
   const [records, setRecords] = useState<BPRecord[]>([])
+  const [listHasMore, setListHasMore] = useState(true)
+  const [loadingInitial, setLoadingInitial] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   /** 闭区间 [start,end]，null 为不限日期；单日为 start===end */
   const [dateInterval, setDateInterval] = useState<{ start: string; end: string } | null>(null)
@@ -114,36 +125,116 @@ export default function AllRecordsPage() {
   const [intervalAnchor, setIntervalAnchor] = useState<string | null>(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [calendarMonth, setCalendarMonth] = useState(() => new Date())
+  /** 真机 scroll-view 必须给固定高度（px），仅靠 flex:1+height:0 常导致高度为 0 */
+  const [mainScrollStyle, setMainScrollStyle] = useState<CSSProperties>({ minHeight: '55vh' })
 
-  const fetchRecords = useCallback(async (userId: string) => {
-    if (USE_TEST_DATA) {
-      setRecords(getTestData())
+  useReady(() => {
+    try {
+      const si = Taro.getSystemInfoSync()
+      const windowHeight = si.windowHeight || 603
+      const screenWidth = si.screenWidth || 375
+      const rpxToPx = screenWidth / 750
+      const safeBottom =
+        (si as { safeAreaInsets?: { bottom?: number } }).safeAreaInsets?.bottom ??
+        (si.safeArea && si.screenHeight
+          ? Math.max(0, si.screenHeight - si.safeArea.bottom)
+          : 0)
+      // 底部「+记录血压」区：上 padding + 按钮 + 下 padding（与 index.scss 一致）
+      const fabBlockRpx = 16 + 96 + 16
+      const fabPx = fabBlockRpx * rpxToPx + safeBottom
+      const h = Math.max(200, Math.floor(windowHeight - fabPx))
+      setMainScrollStyle({ height: `${h}px`, minHeight: undefined })
+    } catch {
+      setMainScrollStyle({ minHeight: '55vh' })
+    }
+  })
+
+  const reloadFromServer = useCallback(async () => {
+    const storedUser = getUserInfo()
+    if (!storedUser?.openid) {
+      setRecords([])
+      setListHasMore(false)
+      setLoadingInitial(false)
       return
     }
+    const userId = storedUser.openid
+    setLoadingInitial(true)
+    setListHasMore(true)
+    setRecords([])
+
+    if (USE_TEST_DATA) {
+      const all = sortRecordsDesc(getTestData())
+      const first = all.slice(0, ALL_RECORDS_PAGE_SIZE)
+      setRecords(first)
+      setListHasMore(all.length > first.length)
+      setLoadingInitial(false)
+      return
+    }
+
     try {
-      const { data, error } = await getRecords(userId)
-      if (!error && data) setRecords(data)
+      const { data, error, hasMore } = await getRecordsPage(userId, 0, ALL_RECORDS_PAGE_SIZE)
+      if (error) {
+        Taro.showToast({ title: error, icon: 'none' })
+        setRecords([])
+        setListHasMore(false)
+      } else {
+        setRecords(data || [])
+        setListHasMore(hasMore)
+      }
     } catch (e) {
       console.error('Failed to fetch records', e)
+      setRecords([])
+      setListHasMore(false)
+    } finally {
+      setLoadingInitial(false)
     }
   }, [])
 
-  useLoad(async () => {
+  const loadMore = useCallback(async () => {
+    if (!listHasMore || loadingMore || loadingInitial) return
+    const storedUser = getUserInfo()
+    if (!storedUser?.openid) return
+
     if (USE_TEST_DATA) {
-      setRecords(getTestData())
+      const all = sortRecordsDesc(getTestData())
+      setRecords(prev => {
+        if (prev.length >= all.length) {
+          setListHasMore(false)
+          return prev
+        }
+        const next = all.slice(prev.length, prev.length + ALL_RECORDS_PAGE_SIZE)
+        const merged = [...prev, ...next]
+        setListHasMore(merged.length < all.length)
+        return merged
+      })
       return
     }
-    const storedUser = getUserInfo()
-    if (storedUser) await fetchRecords(storedUser.openid)
-  })
+
+    setLoadingMore(true)
+    try {
+      const offset = records.length
+      const { data, error, hasMore } = await getRecordsPage(
+        storedUser.openid,
+        offset,
+        ALL_RECORDS_PAGE_SIZE
+      )
+      if (error) {
+        Taro.showToast({ title: error, icon: 'none' })
+      } else if (data?.length) {
+        setRecords(prev => [...prev, ...data])
+        setListHasMore(hasMore)
+      } else {
+        setListHasMore(false)
+      }
+    } catch (e) {
+      console.error('loadMore records', e)
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [listHasMore, loadingMore, loadingInitial, records.length])
 
   useDidShow(() => {
-    if (USE_TEST_DATA) {
-      setRecords(getTestData())
-      return
-    }
-    const storedUser = getUserInfo()
-    if (storedUser) fetchRecords(storedUser.openid)
+    void reloadFromServer()
   })
 
   const filteredRecords = useMemo(
@@ -281,9 +372,13 @@ export default function AllRecordsPage() {
     <View className='all-records-page'>
       <ScrollView
         className='all-records-scroll'
+        style={mainScrollStyle}
         scrollY
-        enhanced
         showScrollbar={false}
+        lowerThreshold={120}
+        onScrollToLower={() => {
+          void loadMore()
+        }}
       >
         <View className='filter-toolbar'>
           <ScrollView
@@ -338,7 +433,11 @@ export default function AllRecordsPage() {
           </View>
         )}
 
-        {groupedByDate.length === 0 ? (
+        {loadingInitial && records.length === 0 ? (
+          <View className='all-records-loading'>
+            <Text className='all-records-loading-text'>加载中…</Text>
+          </View>
+        ) : groupedByDate.length === 0 ? (
           <View className='all-records-empty'>
             <Text className='all-records-empty-title'>
               {records.length === 0 ? '暂无记录' : '没有符合条件的记录'}
@@ -346,7 +445,9 @@ export default function AllRecordsPage() {
             <Text className='all-records-empty-hint'>
               {records.length === 0
                 ? '点击下方按钮开始记录血压'
-                : '试试调整状态、日期筛选或点「筛选」选日期'}
+                : listHasMore
+                  ? '当前已加载记录中无匹配项，向下滑动可继续加载更多'
+                  : '试试调整状态、日期筛选或点「筛选」选日期'}
             </Text>
           </View>
         ) : (
@@ -419,6 +520,22 @@ export default function AllRecordsPage() {
               })}
             </View>
           ))
+        )}
+
+        {!loadingInitial && records.length > 0 && (
+          <View className='all-records-list-footer'>
+            {loadingMore ? (
+              <Text className='all-records-list-footer-text'>加载中…</Text>
+            ) : listHasMore ? (
+              <Text className='all-records-list-footer-text all-records-list-footer-text--muted'>
+                上拉或继续下滑加载更多
+              </Text>
+            ) : (
+              <Text className='all-records-list-footer-text all-records-list-footer-text--muted'>
+                已加载全部记录
+              </Text>
+            )}
+          </View>
         )}
 
         <View className='all-records-scroll-pad' />

@@ -1,14 +1,17 @@
 .all-records-page {
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
   background: linear-gradient(180deg, #e8f4ff 0%, #f0f6ff 100%);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
+/* 纵向高度由 index.tsx 内联 style（px）指定，满足真机 scroll-view 对固定高度的要求 */
 .all-records-scroll {
   flex: 1;
-  height: 0;
+  min-height: 0;
   padding: 20rpx 28rpx 0;
   box-sizing: border-box;
   width: 100%;
@@ -652,6 +655,30 @@
 
 .all-records-empty-hint {
   font-size: 26rpx;
+  color: #94a3b8;
+}
+
+.all-records-loading {
+  padding: 100rpx 40rpx;
+  text-align: center;
+}
+
+.all-records-loading-text {
+  font-size: 28rpx;
+  color: #94a3b8;
+}
+
+.all-records-list-footer {
+  padding: 24rpx 0 8rpx;
+  text-align: center;
+}
+
+.all-records-list-footer-text {
+  font-size: 24rpx;
+  color: #64748b;
+}
+
+.all-records-list-footer-text--muted {
   color: #94a3b8;
 }
 
