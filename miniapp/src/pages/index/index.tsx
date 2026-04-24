@@ -17,6 +17,7 @@ import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { generateShareImage } from '../../utils/shareImage'
 import { getMyGroups, Group } from '../../lib/groups'
 import { getBPStatus } from '../../utils/bpStatus'
+import { computeHandSplitOverview } from '../../utils/bpHandAverages'
 import './index.scss'
 
 // 图标
@@ -212,20 +213,14 @@ export default function Index() {
 
   const statsSource = statsRecords.length > 0 ? statsRecords : listRecords
 
-  // 计算本周平均值（依赖统计数据集，不全依赖列表分页）
-  const weeklyAverage = useMemo(() => {
+  // 近7天血压：左右分侧 + 未标条数（与数据页/周报同口径，见 computeHandSplitOverview）
+  const weekHandOverview = useMemo(() => {
     if (statsSource.length === 0) return null
-
     const now = new Date()
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-
     const weekRecords = statsSource.filter(r => new Date(r.recorded_at) >= weekAgo)
     if (weekRecords.length === 0) return null
-
-    const avgSystolic = Math.round(weekRecords.reduce((sum, r) => sum + r.systolic, 0) / weekRecords.length)
-    const avgDiastolic = Math.round(weekRecords.reduce((sum, r) => sum + r.diastolic, 0) / weekRecords.length)
-
-    return { systolic: avgSystolic, diastolic: avgDiastolic, count: weekRecords.length }
+    return computeHandSplitOverview(weekRecords)
   }, [statsSource])
 
   // 连续打卡天数（与「我的」页统计一致，按本地自然日）
@@ -767,16 +762,19 @@ export default function Index() {
       itemColor: '#1e293b',
       success: async (res) => {
         if (res.tapIndex === 0) {
-          // 编辑
-          const params = new URLSearchParams({
-            id: String(record.id),
-            systolic: String(record.systolic),
-            diastolic: String(record.diastolic),
-            pulse: String(record.pulse),
-            hand: record.hand || '',
-            note: record.note || ''
-          })
-          Taro.navigateTo({ url: `/pages/input/index?${params.toString()}` })
+          // 编辑：t 为毫秒时间戳，放在最前；避免 ISO 串或长备注使 query 被截断
+          const p = new URLSearchParams()
+          p.set('id', String(record.id!))
+          if (record.recorded_at) {
+            const ms = new Date(record.recorded_at).getTime()
+            if (!Number.isNaN(ms)) p.set('t', String(ms))
+          }
+          p.set('systolic', String(record.systolic))
+          p.set('diastolic', String(record.diastolic))
+          p.set('pulse', String(record.pulse))
+          p.set('hand', record.hand || '')
+          p.set('note', record.note || '')
+          Taro.navigateTo({ url: `/pages/input/index?${p.toString()}` })
         } else if (res.tapIndex === 1) {
           // 删除确认
           const confirmRes = await Taro.showModal({
@@ -933,24 +931,72 @@ export default function Index() {
         <View className='summary-card'>
           <View className='summary-header'>
             <View className='summary-title'><Image className='title-icon' src={iconChart} mode='aspectFit' /><Text>本周概览</Text></View>
-            <Text className='summary-count'>共 {weeklyAverage?.count || 0} 次记录</Text>
+            <Text className='summary-count'>共 {weekHandOverview?.count || 0} 次记录</Text>
           </View>
-          {weeklyAverage ? (
-            <View className='summary-content'>
-              <View className='summary-avg'>
-                <Text className='avg-label'>平均血压</Text>
-                <View className='avg-values'>
-                  <Text className='avg-number systolic'>{weeklyAverage.systolic}</Text>
-                  <Text className='avg-slash'>/</Text>
-                  <Text className='avg-number diastolic'>{weeklyAverage.diastolic}</Text>
-                  <Text className='avg-unit'>mmHg</Text>
+          {weekHandOverview ? (
+            weekHandOverview.fallbackOverall ? (
+              <View className='summary-content'>
+                <View className='summary-avg'>
+                  <Text className='avg-label'>平均血压</Text>
+                  <View className='avg-values'>
+                    <Text className='avg-number systolic'>{weekHandOverview.fallbackOverall.systolic}</Text>
+                    <Text className='avg-slash'>/</Text>
+                    <Text className='avg-number diastolic'>{weekHandOverview.fallbackOverall.diastolic}</Text>
+                    <Text className='avg-unit'>mmHg</Text>
+                  </View>
+                </View>
+                <View
+                  className={`summary-status ${getBPStatus(weekHandOverview.fallbackOverall.systolic, weekHandOverview.fallbackOverall.diastolic).color}`}
+                >
+                  <Text className='status-emoji'>{getBPStatus(weekHandOverview.fallbackOverall.systolic, weekHandOverview.fallbackOverall.diastolic).emoji}</Text>
+                  <Text className='status-text'>{getBPStatus(weekHandOverview.fallbackOverall.systolic, weekHandOverview.fallbackOverall.diastolic).label}</Text>
                 </View>
               </View>
-              <View className={`summary-status ${getBPStatus(weeklyAverage.systolic, weeklyAverage.diastolic).color}`}>
-                <Text className='status-emoji'>{getBPStatus(weeklyAverage.systolic, weeklyAverage.diastolic).emoji}</Text>
-                <Text className='status-text'>{getBPStatus(weeklyAverage.systolic, weeklyAverage.diastolic).label}</Text>
+            ) : (
+              <View className='summary-hands'>
+                {weekHandOverview.left && (
+                  <View className='summary-hand-row' key='left'>
+                    <View className='summary-hand-main'>
+                      <Text className='summary-hand-title'>左手平均 · {weekHandOverview.left.count} 次</Text>
+                      <View className='avg-values avg-values--hand'>
+                        <Text className='avg-number systolic'>{weekHandOverview.left.systolic}</Text>
+                        <Text className='avg-slash'>/</Text>
+                        <Text className='avg-number diastolic'>{weekHandOverview.left.diastolic}</Text>
+                        <Text className='avg-unit'>mmHg</Text>
+                      </View>
+                    </View>
+                    <View
+                      className={`summary-status summary-status--compact ${getBPStatus(weekHandOverview.left.systolic, weekHandOverview.left.diastolic).color}`}
+                    >
+                      <Text className='status-emoji'>{getBPStatus(weekHandOverview.left.systolic, weekHandOverview.left.diastolic).emoji}</Text>
+                      <Text className='status-text'>{getBPStatus(weekHandOverview.left.systolic, weekHandOverview.left.diastolic).label}</Text>
+                    </View>
+                  </View>
+                )}
+                {weekHandOverview.right && (
+                  <View className='summary-hand-row' key='right'>
+                    <View className='summary-hand-main'>
+                      <Text className='summary-hand-title'>右手平均 · {weekHandOverview.right.count} 次</Text>
+                      <View className='avg-values avg-values--hand'>
+                        <Text className='avg-number systolic'>{weekHandOverview.right.systolic}</Text>
+                        <Text className='avg-slash'>/</Text>
+                        <Text className='avg-number diastolic'>{weekHandOverview.right.diastolic}</Text>
+                        <Text className='avg-unit'>mmHg</Text>
+                      </View>
+                    </View>
+                    <View
+                      className={`summary-status summary-status--compact ${getBPStatus(weekHandOverview.right.systolic, weekHandOverview.right.diastolic).color}`}
+                    >
+                      <Text className='status-emoji'>{getBPStatus(weekHandOverview.right.systolic, weekHandOverview.right.diastolic).emoji}</Text>
+                      <Text className='status-text'>{getBPStatus(weekHandOverview.right.systolic, weekHandOverview.right.diastolic).label}</Text>
+                    </View>
+                  </View>
+                )}
+                {weekHandOverview.unlabeledCount > 0 && (
+                  <Text className='summary-unlabeled-hint'>另有 {weekHandOverview.unlabeledCount} 次未标左右手，未计入上表</Text>
+                )}
               </View>
-            </View>
+            )
           ) : (
             <View className='summary-empty'>
               <Text className='summary-empty-text'>本周还没有记录</Text>

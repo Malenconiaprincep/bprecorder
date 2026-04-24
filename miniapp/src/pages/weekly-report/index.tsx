@@ -89,8 +89,6 @@ export default function WeeklyReportPage() {
     }
   })
 
-  const avgStatus = stats ? getBPStatus(stats.avgSystolic, stats.avgDiastolic) : null
-
   return (
     <View className='weekly-summary-root'>
       <ScrollView className='weekly-summary-page' scrollY enhanced showScrollbar={false}>
@@ -104,17 +102,79 @@ export default function WeeklyReportPage() {
             <>
               <View className='hero-card'>
                 <Text className='hero-meta'>{stats.rangeLabel} · 共 {stats.count} 次</Text>
-                <Text className='hero-label'>平均血压</Text>
-                <View className='avg-row'>
-                  <Text className='avg-sys'>{stats.avgSystolic}</Text>
-                  <Text className='avg-slash'>/</Text>
-                  <Text className='avg-dia'>{stats.avgDiastolic}</Text>
-                  <Text className='avg-unit'>mmHg</Text>
-                </View>
-                {avgStatus && (
-                  <Text className='avg-status'>
-                    {avgStatus.emoji} {avgStatus.label}
-                  </Text>
+                {stats.handSplit.fallbackOverall ? (
+                  <>
+                    <Text className='hero-label'>平均血压</Text>
+                    <View className='avg-row'>
+                      <Text className='avg-sys'>{stats.handSplit.fallbackOverall.systolic}</Text>
+                      <Text className='avg-slash'>/</Text>
+                      <Text className='avg-dia'>{stats.handSplit.fallbackOverall.diastolic}</Text>
+                      <Text className='avg-unit'>mmHg</Text>
+                    </View>
+                    <View className='avg-status'>
+                      <Text className='avg-status-emoji'>
+                        {getBPStatus(stats.handSplit.fallbackOverall.systolic, stats.handSplit.fallbackOverall.diastolic).emoji}
+                      </Text>
+                      <Text className='avg-status-label'>
+                        {getBPStatus(stats.handSplit.fallbackOverall.systolic, stats.handSplit.fallbackOverall.diastolic).label}
+                      </Text>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <View className='hero-hand-block'>
+                      {stats.handSplit.left && (
+                        <View className='hero-hand-line'>
+                          <View>
+                            <Text className='hero-sublabel'>左手平均 · {stats.handSplit.left.count} 次</Text>
+                            <View className='avg-row hero-avg-tight'>
+                              <Text className='avg-sys'>{stats.handSplit.left.systolic}</Text>
+                              <Text className='avg-slash'>/</Text>
+                              <Text className='avg-dia'>{stats.handSplit.left.diastolic}</Text>
+                              <Text className='avg-unit'>mmHg</Text>
+                            </View>
+                          </View>
+                          <View className='hero-tag'>
+                            <Text className='hero-tag-emoji'>
+                              {getBPStatus(stats.handSplit.left.systolic, stats.handSplit.left.diastolic).emoji}
+                            </Text>
+                            <Text className='hero-tag-label'>
+                              {getBPStatus(stats.handSplit.left.systolic, stats.handSplit.left.diastolic).label}
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+                      {stats.handSplit.right && (
+                        <View className='hero-hand-line'>
+                          <View>
+                            <Text className='hero-sublabel'>右手平均 · {stats.handSplit.right.count} 次</Text>
+                            <View className='avg-row hero-avg-tight'>
+                              <Text className='avg-sys'>{stats.handSplit.right.systolic}</Text>
+                              <Text className='avg-slash'>/</Text>
+                              <Text className='avg-dia'>{stats.handSplit.right.diastolic}</Text>
+                              <Text className='avg-unit'>mmHg</Text>
+                            </View>
+                          </View>
+                          <View className='hero-tag'>
+                            <Text className='hero-tag-emoji'>
+                              {getBPStatus(stats.handSplit.right.systolic, stats.handSplit.right.diastolic).emoji}
+                            </Text>
+                            <Text className='hero-tag-label'>
+                              {getBPStatus(stats.handSplit.right.systolic, stats.handSplit.right.diastolic).label}
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+                    </View>
+                    {stats.handSplit.unlabeledCount > 0 && (
+                      <Text className='hero-hand-hint'>另有 {stats.handSplit.unlabeledCount} 次未标左右手，未计入上表</Text>
+                    )}
+                    <View className='hero-overall-pill'>
+                      <Text className='hero-overall-text'>
+                        全周期均（含未标） {stats.avgSystolic} / {stats.avgDiastolic} mmHg
+                      </Text>
+                    </View>
+                  </>
                 )}
               </View>
 

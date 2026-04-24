@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { View, Text, Input, Button, Textarea, Picker } from '@tarojs/components'
-import Taro, { useLoad, useRouter } from '@tarojs/taro'
+import Taro, { useLoad } from '@tarojs/taro'
 import { addRecord, updateRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
@@ -36,8 +36,47 @@ function snapToTimeStep(
   }
 }
 
+/**
+ * 小程序 onLoad 的 query 是可靠传参；useRouter().params 在部分环境下同钩子里为空/错页
+ * 合并时以后者（onLoad 入参）覆盖实例上的 params
+ */
+function mergeInputPageQuery(
+  onLoadQuery: Record<string, string | undefined> | undefined
+): Record<string, string> {
+  const fromInstance = (Taro.getCurrentInstance()?.router?.params as Record<string, string>) || {}
+  const fromLoad = (onLoadQuery || {}) as Record<string, string | undefined>
+  const o: Record<string, string> = { ...fromInstance }
+  for (const k of Object.keys(fromLoad)) {
+    const v = fromLoad[k]
+    if (v !== undefined && v !== null) o[k] = String(v)
+  }
+  return o
+}
+
+function parseRecordedAtFromQuery(params: Record<string, string>): Date | null {
+  const t = params.t
+  if (t) {
+    const ms = parseInt(t, 10)
+    if (!Number.isNaN(ms)) {
+      const d = new Date(ms)
+      if (!Number.isNaN(d.getTime())) return d
+    }
+  }
+  if (params.recorded_at) {
+    const raw = (() => {
+      try {
+        return decodeURIComponent(params.recorded_at)
+      } catch {
+        return params.recorded_at
+      }
+    })()
+    const d = new Date(raw)
+    if (!Number.isNaN(d.getTime())) return d
+  }
+  return null
+}
+
 export default function InputPage() {
-  const router = useRouter()
   const [systolic, setSystolic] = useState('')
   const [diastolic, setDiastolic] = useState('')
   const [pulse, setPulse] = useState('')
@@ -98,37 +137,31 @@ export default function InputPage() {
     return [dateIndex >= 0 ? dateIndex : 0, timeIndex >= 0 ? timeIndex : 0]
   }, [selectedDate, selectedTime, dateOptions, timeOptions])
 
-  useLoad(() => {
-    // 检查是否是编辑模式
-    const params = router.params
+  useLoad((q) => {
+    const params = mergeInputPageQuery(q as Record<string, string | undefined>)
     if (params.id) {
       setIsEdit(true)
-      setRecordId(parseInt(params.id))
-      // 填充已有数据
+      setRecordId(parseInt(params.id, 10))
       if (params.systolic) setSystolic(params.systolic)
       if (params.diastolic) setDiastolic(params.diastolic)
       if (params.pulse) setPulse(params.pulse)
       if (params.hand) setHand(params.hand as 'left' | 'right')
       if (params.note) {
-        // 微信小程序的 URL 参数需要手动解码
         try {
           setNote(decodeURIComponent(params.note))
-        } catch (e) {
-          // 如果解码失败，直接使用原值
+        } catch {
           setNote(params.note)
         }
-        // 如果有备注内容，自动展开
         setNoteExpanded(true)
       }
-      // 如果有recorded_at参数，填充日期时间
-      if (params.recorded_at) {
-        const date = new Date(params.recorded_at)
+      const at = parseRecordedAtFromQuery(params)
+      if (at) {
         const snapped = snapToTimeStep(
-          date.getFullYear(),
-          date.getMonth() + 1,
-          date.getDate(),
-          date.getHours(),
-          date.getMinutes()
+          at.getFullYear(),
+          at.getMonth() + 1,
+          at.getDate(),
+          at.getHours(),
+          at.getMinutes()
         )
         setSelectedDate(snapped.date)
         setSelectedTime(snapped.time)

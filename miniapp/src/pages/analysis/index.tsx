@@ -43,6 +43,8 @@ interface SelectedPoint {
 export default function AnalysisPage() {
   const [records, setRecords] = useState<BPRecord[]>([])
   const [timeRange, setTimeRange] = useState<'week' | 'month'>('week')
+  /** 与首页左右分表口径一致：只统计标了左/右的记录，未标仅在「全部」中参与 */
+  const [handFilter, setHandFilter] = useState<'all' | 'left' | 'right'>('all')
   const [selectedPoint, setSelectedPoint] = useState<SelectedPoint | null>(null)
   const [fontSizeMode, setFontSizeMode] = useState<FontSizeMode>('normal')
 
@@ -132,7 +134,9 @@ export default function AnalysisPage() {
     const dailyAvg: { date: string; label: string; systolic: number | null; diastolic: number | null; count: number }[] = []
 
     dateList.forEach((dateStr, index) => {
-      const dayRecords = groupedByDate[dateStr] || []
+      const dayRaw = groupedByDate[dateStr] || []
+      const dayRecords =
+        handFilter === 'all' ? dayRaw : dayRaw.filter(r => r.hand === handFilter)
       // 周视图使用固定的周一到周日标签
       const label = timeRange === 'week' ? weekDayLabels[index] : formatDateDisplay(dateStr, timeRange)
 
@@ -158,7 +162,7 @@ export default function AnalysisPage() {
     })
 
     return dailyAvg
-  }, [records, timeRange])
+  }, [records, timeRange, handFilter])
 
   // 计算Y轴范围
   const yAxisRange = useMemo(() => {
@@ -253,6 +257,27 @@ export default function AnalysisPage() {
           onClick={() => { setTimeRange('month'); setSelectedPoint(null) }}
         >
           <Text>近30天</Text>
+        </View>
+      </View>
+
+      <View className='hand-tabs'>
+        <View
+          className={`hand-tab ${handFilter === 'all' ? 'active' : ''}`}
+          onClick={() => { setHandFilter('all'); setSelectedPoint(null) }}
+        >
+          <Text>全部</Text>
+        </View>
+        <View
+          className={`hand-tab ${handFilter === 'left' ? 'active' : ''}`}
+          onClick={() => { setHandFilter('left'); setSelectedPoint(null) }}
+        >
+          <Text>左手</Text>
+        </View>
+        <View
+          className={`hand-tab ${handFilter === 'right' ? 'active' : ''}`}
+          onClick={() => { setHandFilter('right'); setSelectedPoint(null) }}
+        >
+          <Text>右手</Text>
         </View>
       </View>
 
@@ -443,7 +468,10 @@ export default function AnalysisPage() {
                         <Text className='tooltip-unit'>mmHg</Text>
                       </View>
                       {selectedPoint.count > 1 && (
-                        <Text className='tooltip-count'>当日{selectedPoint.count}次平均</Text>
+                        <Text className='tooltip-count'>
+                          当日{handFilter === 'left' ? '左手' : handFilter === 'right' ? '右手' : ''}
+                          {selectedPoint.count}次平均
+                        </Text>
                       )}
                     </View>
                     <View className='tooltip-arrow' />
@@ -496,7 +524,10 @@ export default function AnalysisPage() {
           <View className='stats-header'>
             <View className='stats-title'><Image className='title-icon' src={iconChart} mode='aspectFit' /><Text>统计数据</Text></View>
             <Text className='stats-period'>
-              {timeRange === 'week' ? '近7天' : '近30天'} · {totalAverage.days}天有记录
+              {timeRange === 'week' ? '近7天' : '近30天'}
+              {handFilter === 'all' ? '' : handFilter === 'left' ? ' · 左手' : ' · 右手'}
+              {' · '}
+              {totalAverage.days}天有记录
             </Text>
           </View>
 

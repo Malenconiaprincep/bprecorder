@@ -474,6 +474,68 @@
   align-items: center;
 }
 
+.summary-hands {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+.summary-hand-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20rpx;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.summary-hand-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-hand-title {
+  font-size: 26rpx;
+  color: #64748b;
+  display: block;
+  margin-bottom: 6rpx;
+  font-weight: 500;
+}
+
+.summary-unlabeled-hint {
+  font-size: 22rpx;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin-top: 12rpx;
+  display: block;
+}
+
+.avg-values--hand {
+  .avg-number {
+    font-size: 48rpx;
+  }
+}
+
+.summary-status--compact {
+  margin-left: 20rpx;
+  flex-shrink: 0;
+  padding: 14rpx 22rpx;
+  border-radius: 20rpx;
+
+  .status-emoji {
+    font-size: 36rpx;
+    margin-bottom: 0;
+  }
+
+  .status-text {
+    font-size: 24rpx;
+  }
+}
+
 .summary-empty {
   text-align: center;
   padding: 32rpx 0;

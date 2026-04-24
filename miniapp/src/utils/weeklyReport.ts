@@ -1,13 +1,19 @@
 import type { BPRecord } from '../lib/supabase'
 import { getBPStatus } from './bpStatus'
+import { computeHandSplitOverview, type HandSplitPeriodOverview } from './bpHandAverages'
+
+export type { HandSplitPeriodOverview } from './bpHandAverages'
 
 export interface WeeklyReportStats {
   count: number
   /** 自然语言区间，如 4月1日 - 4月5日 */
   rangeLabel: string
+  /** 全周期内全部记录的均值（与分享、封面图等一致） */
   avgSystolic: number
   avgDiastolic: number
   avgPulse: number
+  /** 与首页「本周概览」同口径的左右分侧与未标条数 */
+  handSplit: HandSplitPeriodOverview
   /** 正常（理想）次数 */
   normalCount: number
   /** 非理想次数（偏低+稍高+高血压等） */
@@ -116,12 +122,15 @@ export function computeWeeklyReport(records: BPRecord[]): WeeklyReportStats | nu
 
   const timeBuckets = BUCKET_ORDER.map(label => ({ label, count: bucketMap[label] || 0 }))
 
+  const handSplit = computeHandSplitOverview(weekRecords)!
+
   return {
     count: weekRecords.length,
     rangeLabel: formatRangeLabel(start, end),
     avgSystolic,
     avgDiastolic,
     avgPulse,
+    handSplit,
     normalCount,
     abnormalCount,
     lowCount,
