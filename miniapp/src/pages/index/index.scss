@@ -481,79 +481,193 @@
   width: 100%;
 }
 
-/* 左右手均有数据：顶部分段，减少纵向占位 */
+/* 本周概览·分侧：参考轻量 Tab + 大号血压 + 状态药丸 */
+.summary-hand-refined {
+  width: 100%;
+  padding: 8rpx 0 4rpx;
+  box-sizing: border-box;
+}
+
+.summary-hand-tabs-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  width: 100%;
+  margin-bottom: 8rpx;
+}
+
 .summary-hand-tabs {
   display: flex;
-  background: #f1f5f9;
-  border-radius: 20rpx;
-  padding: 6rpx;
-  gap: 8rpx;
-  margin-bottom: 16rpx;
+  flex-direction: row;
+  align-items: center;
 }
 
 .summary-hand-tab {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 14rpx 12rpx;
-  border-radius: 16rpx;
-  transition: background 0.2s, box-shadow 0.2s;
+  padding: 6rpx 10rpx 12rpx;
+  border-bottom: 3rpx solid transparent;
+  box-sizing: border-box;
 }
 
-.summary-hand-tab.active {
-  background: #ffffff;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.06);
+.summary-hand-tab--active {
+  border-bottom-color: #2563eb;
 }
 
 .summary-hand-tab-text {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.summary-hand-tab.active .summary-hand-tab-text {
-  color: #2563eb;
-}
-
-.summary-hand-tab-sub {
-  font-size: 22rpx;
+  font-size: 26rpx;
   color: #94a3b8;
-  margin-top: 4rpx;
+  line-height: 1.2;
 }
 
-.summary-hand-tab.active .summary-hand-tab-sub {
-  color: #64748b;
+.summary-hand-tab--active .summary-hand-tab-text {
+  color: #2563eb;
+  font-weight: 600;
 }
 
-.summary-hand-row {
+.summary-hand-tab-divider {
+  font-size: 22rpx;
+  color: #e2e8f0;
+  margin: 0 2rpx;
+  line-height: 1;
+}
+
+.summary-hand-avg-meta {
+  font-size: 24rpx;
+  color: #94a3b8;
+  line-height: 1.4;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.summary-hand-refined-main {
   display: flex;
+  flex-direction: row;
+  align-items: flex-end;
   justify-content: space-between;
-  align-items: center;
+  gap: 20rpx;
   width: 100%;
-  margin-bottom: 20rpx;
-
-  &:last-of-type {
-    margin-bottom: 0;
-  }
-
-  &.summary-hand-row--single {
-    margin-bottom: 0;
-  }
 }
 
-.summary-hand-main {
+.summary-hand-refined-bp {
   flex: 1;
   min-width: 0;
 }
 
-.summary-hand-title {
-  font-size: 24rpx;
-  color: #64748b;
-  display: block;
-  margin-bottom: 4rpx;
+.summary-hand-refined-bp-row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  line-height: 1.1;
+}
+
+.summary-hand-refined-sys {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #ea580c;
+}
+
+.summary-hand-refined-slash {
+  font-size: 40rpx;
   font-weight: 500;
+  color: #cbd5e1;
+  margin: 0 6rpx;
+  line-height: 1;
+}
+
+.summary-hand-refined-dia {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.summary-hand-refined-unit {
+  font-size: 24rpx;
+  color: #94a3b8;
+  margin-left: 12rpx;
+  font-weight: 400;
+}
+
+.summary-hand-pill {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 22rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}
+
+.summary-hand-pill-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.summary-hand-pill-text {
+  font-size: 24rpx;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.summary-hand-pill--ideal {
+  background: #dcfce7;
+}
+.summary-hand-pill--ideal .summary-hand-pill-dot {
+  background: #22c55e;
+}
+.summary-hand-pill--ideal .summary-hand-pill-text {
+  color: #15803d;
+}
+
+.summary-hand-pill--low {
+  background: #cffafe;
+}
+.summary-hand-pill--low .summary-hand-pill-dot {
+  background: #06b6d4;
+}
+.summary-hand-pill--low .summary-hand-pill-text {
+  color: #0e7490;
+}
+
+.summary-hand-pill--prehigh {
+  background: #fef3c7;
+}
+.summary-hand-pill--prehigh .summary-hand-pill-dot {
+  background: #f59e0b;
+}
+.summary-hand-pill--prehigh .summary-hand-pill-text {
+  color: #a16207;
+}
+
+.summary-hand-pill--high-1 {
+  background: #ffedd5;
+}
+.summary-hand-pill--high-1 .summary-hand-pill-dot {
+  background: #ea580c;
+}
+.summary-hand-pill--high-1 .summary-hand-pill-text {
+  color: #c2410c;
+}
+
+.summary-hand-pill--high-2 {
+  background: #ffe4e6;
+}
+.summary-hand-pill--high-2 .summary-hand-pill-dot {
+  background: #e11d48;
+}
+.summary-hand-pill--high-2 .summary-hand-pill-text {
+  color: #be123c;
+}
+
+.summary-hand-pill--high-3 {
+  background: #fce7f3;
+}
+.summary-hand-pill--high-3 .summary-hand-pill-dot {
+  background: #be123c;
+}
+.summary-hand-pill--high-3 .summary-hand-pill-text {
+  color: #9f1239;
 }
 
 .summary-unlabeled-hint {
@@ -562,28 +676,6 @@
   line-height: 1.4;
   margin-top: 12rpx;
   display: block;
-}
-
-.avg-values--hand {
-  .avg-number {
-    font-size: 44rpx;
-  }
-}
-
-.summary-status--compact {
-  margin-left: 16rpx;
-  flex-shrink: 0;
-  padding: 12rpx 18rpx;
-  border-radius: 18rpx;
-
-  .status-emoji {
-    font-size: 32rpx;
-    margin-bottom: 0;
-  }
-
-  .status-text {
-    font-size: 22rpx;
-  }
 }
 
 .summary-empty {
@@ -969,8 +1061,9 @@
   align-items: baseline;
 }
 
+/* 标准模式：略小于旧版 60rpx，与日期/时间层级更协调；关怀模式见 .page.elder-mode */
 .bp-num {
-  font-size: 60rpx;
+  font-size: 48rpx;
   font-weight: bold;
   line-height: 1;
 }
@@ -984,7 +1077,7 @@
 }
 
 .bp-divider {
-  font-size: 44rpx;
+  font-size: 34rpx;
   color: #cbd5e1;
   margin: 0 4rpx;
   line-height: 1;
@@ -1002,7 +1095,7 @@
 }
 
 .pulse-num {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: #1e293b;
   font-weight: 500;
 }
@@ -1590,6 +1683,50 @@
     margin: 0 30rpx 24rpx;
     padding: 36rpx;
     border-radius: 32rpx;
+  }
+
+  .summary-hand-tab {
+    padding: 10rpx 14rpx 16rpx;
+  }
+
+  .summary-hand-tab-text {
+    font-size: 30rpx;
+  }
+
+  .summary-hand-tab-divider {
+    font-size: 26rpx;
+  }
+
+  .summary-hand-avg-meta {
+    font-size: 28rpx;
+    margin-bottom: 16rpx;
+  }
+
+  .summary-hand-refined-sys,
+  .summary-hand-refined-dia {
+    font-size: 68rpx;
+  }
+
+  .summary-hand-refined-slash {
+    font-size: 48rpx;
+    margin: 0 8rpx;
+  }
+
+  .summary-hand-refined-unit {
+    font-size: 28rpx;
+  }
+
+  .summary-hand-pill {
+    padding: 14rpx 26rpx;
+  }
+
+  .summary-hand-pill-dot {
+    width: 14rpx;
+    height: 14rpx;
+  }
+
+  .summary-hand-pill-text {
+    font-size: 28rpx;
   }
   
   .summary-title {

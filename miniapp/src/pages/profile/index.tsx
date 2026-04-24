@@ -511,7 +511,7 @@ export default function Profile() {
   }
 
   const goToGroups = () => {
-    Taro.navigateTo({ url: '/pages/groups/index' })
+    Taro.switchTab({ url: '/pages/groups/index' })
   }
 
   // 打开数据导入弹窗

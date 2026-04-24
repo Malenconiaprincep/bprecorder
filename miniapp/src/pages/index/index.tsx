@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { View, Text, Image, ScrollView, Canvas, Button, Textarea } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import {
@@ -14,7 +14,6 @@ import { FontSizeMode, getCurrentFontSizeMode, initFontSizeMode, getFontSizeMode
 import { API_BASE_URL } from '../../utils/api'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { generateShareImage } from '../../utils/shareImage'
-import { getMyGroups, Group } from '../../lib/groups'
 import { getBPStatus } from '../../utils/bpStatus'
 import { computeHandSplitOverview } from '../../utils/bpHandAverages'
 import './index.scss'
@@ -32,8 +31,6 @@ import iconChart from '../../assets/icons/chart.png'
 import iconList from '../../assets/icons/list.png'
 // @ts-ignore
 import iconShare from '../../assets/icons/share.png'
-// @ts-ignore
-import iconGroups from '../../assets/icons/groups.png'
 // 活动横幅图 assets/promo/promo-banner.png
 // @ts-ignore
 import promoBanner from '../../assets/promo/promo-banner.png'
@@ -149,9 +146,8 @@ export default function Index() {
   const [note, setNote] = useState('')
   const [noteExpanded, setNoteExpanded] = useState(false)
   const [shareImageUrl, setShareImageUrl] = useState<string>('')
-  const [myGroups, setMyGroups] = useState<Group[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null) // 选中的日期（用于筛选）
-  /** 本周概览：左右手均有数据时在 Tab 间切换 */
+  /** 本周概览左右手均有数据时，轻量 Tab 切换 */
   const [summaryHandTab, setSummaryHandTab] = useState<'left' | 'right'>('left')
 
   // 字体模式状态
@@ -219,10 +215,9 @@ export default function Index() {
     return computeHandSplitOverview(weekRecords)
   }, [statsSource])
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!weekHandOverview || weekHandOverview.fallbackOverall) return
     const { left, right } = weekHandOverview
-    if (left && right) return
     if (left && !right) setSummaryHandTab('left')
     else if (!left && right) setSummaryHandTab('right')
   }, [weekHandOverview])
@@ -315,7 +310,6 @@ export default function Index() {
     const storedUser = getUserInfo()
     if (storedUser) {
       fetchRecords(storedUser.openid)
-      fetchGroups(storedUser.openid)
     }
   })
 
@@ -368,7 +362,6 @@ export default function Index() {
         setFontSizeModeState(storedUser.fontSizeMode)
       }
       await fetchRecords(storedUser.openid)
-      await fetchGroups(storedUser.openid)
     } else {
       await autoLogin()
     }
@@ -390,7 +383,6 @@ export default function Index() {
         }
 
         await fetchRecords(result.userInfo.openid)
-        await fetchGroups(result.userInfo.openid)
       } else {
         console.log('Silent login failed:', result.error)
       }
@@ -424,19 +416,6 @@ export default function Index() {
       }
     } catch (e) {
       console.error('Failed to fetch records', e)
-    }
-  }
-
-  const fetchGroups = async (userId: string) => {
-    if (USE_TEST_DATA) return
-
-    try {
-      const result = await getMyGroups(userId)
-      if (result.success && result.groups) {
-        setMyGroups(result.groups)
-      }
-    } catch (e) {
-      console.error('Failed to fetch groups', e)
     }
   }
 
@@ -918,45 +897,42 @@ export default function Index() {
                   const st = getBPStatus(active.systolic, active.diastolic)
                   return (
                     <>
-                      {bothSides && (
-                        <View className='summary-hand-tabs'>
-                          <View
-                            className={`summary-hand-tab ${summaryHandTab === 'left' ? 'active' : ''}`}
-                            onClick={() => setSummaryHandTab('left')}
-                          >
-                            <Text className='summary-hand-tab-text'>左手</Text>
-                            {left ? (
-                              <Text className='summary-hand-tab-sub'>{left.count} 次</Text>
-                            ) : null}
+                      <View className='summary-hand-refined'>
+                        {bothSides && (
+                          <View className='summary-hand-tabs-row'>
+                            <View className='summary-hand-tabs'>
+                              <View
+                                className={`summary-hand-tab ${summaryHandTab === 'left' ? 'summary-hand-tab--active' : ''}`}
+                                onClick={() => setSummaryHandTab('left')}
+                              >
+                                <Text className='summary-hand-tab-text'>左手</Text>
+                              </View>
+                              <Text className='summary-hand-tab-divider'>|</Text>
+                              <View
+                                className={`summary-hand-tab ${summaryHandTab === 'right' ? 'summary-hand-tab--active' : ''}`}
+                                onClick={() => setSummaryHandTab('right')}
+                              >
+                                <Text className='summary-hand-tab-text'>右手</Text>
+                              </View>
+                            </View>
                           </View>
-                          <View
-                            className={`summary-hand-tab ${summaryHandTab === 'right' ? 'active' : ''}`}
-                            onClick={() => setSummaryHandTab('right')}
-                          >
-                            <Text className='summary-hand-tab-text'>右手</Text>
-                            {right ? (
-                              <Text className='summary-hand-tab-sub'>{right.count} 次</Text>
-                            ) : null}
+                        )}
+                        <Text className='summary-hand-avg-meta'>
+                          平均 · {active.count}次
+                        </Text>
+                        <View className='summary-hand-refined-main'>
+                          <View className='summary-hand-refined-bp'>
+                            <View className='summary-hand-refined-bp-row'>
+                              <Text className='summary-hand-refined-sys'>{active.systolic}</Text>
+                              <Text className='summary-hand-refined-slash'>/</Text>
+                              <Text className='summary-hand-refined-dia'>{active.diastolic}</Text>
+                              <Text className='summary-hand-refined-unit'>mmHg</Text>
+                            </View>
                           </View>
-                        </View>
-                      )}
-                      <View className='summary-hand-row summary-hand-row--single'>
-                        <View className='summary-hand-main'>
-                          <Text className='summary-hand-title'>
-                            {bothSides
-                              ? `平均 · ${active.count} 次`
-                              : `${left ? '左手' : '右手'}平均 · ${active.count} 次`}
-                          </Text>
-                          <View className='avg-values avg-values--hand'>
-                            <Text className='avg-number systolic'>{active.systolic}</Text>
-                            <Text className='avg-slash'>/</Text>
-                            <Text className='avg-number diastolic'>{active.diastolic}</Text>
-                            <Text className='avg-unit'>mmHg</Text>
+                          <View className={`summary-hand-pill summary-hand-pill--${st.color}`}>
+                            <View className='summary-hand-pill-dot' />
+                            <Text className='summary-hand-pill-text'>{st.label}</Text>
                           </View>
-                        </View>
-                        <View className={`summary-status summary-status--compact ${st.color}`}>
-                          <Text className='status-emoji'>{st.emoji}</Text>
-                          <Text className='status-text'>{st.label}</Text>
                         </View>
                       </View>
                       {unlabeledCount > 0 && (
@@ -984,32 +960,6 @@ export default function Index() {
               <Text className='summary-report-entry-sub'>详细统计 · 可分享</Text>
             </View>
             <Text className='summary-report-entry-arrow'>›</Text>
-          </View>
-        </View>
-
-        {/* 我的组快捷入口 - 本周概览与测量记录之间 */}
-        <View className='groups-shortcut' onClick={() => {
-          if (myGroups.length === 1) {
-            Taro.navigateTo({ url: `/pages/groups/detail?id=${myGroups[0].id}` })
-          } else {
-            Taro.navigateTo({ url: '/pages/groups/index' })
-          }
-        }}>
-          <View className='groups-shortcut-content'>
-            <View className='groups-shortcut-header'>
-              <Image className='groups-shortcut-icon' src={iconGroups} mode='aspectFit' />
-              <Text className='groups-shortcut-title'>我的组</Text>
-              <Text className='groups-shortcut-arrow'>›</Text>
-            </View>
-            <View className='groups-shortcut-info'>
-              {myGroups.length === 0 ? (
-                <Text className='groups-shortcut-desc groups-shortcut-hint'>创建或加入组，与家人朋友一起记录</Text>
-              ) : myGroups.length === 1 ? (
-                <Text className='groups-shortcut-desc'>{myGroups[0].name}</Text>
-              ) : (
-                <Text className='groups-shortcut-desc'>已加入 {myGroups.length} 个组</Text>
-              )}
-            </View>
           </View>
         </View>
 

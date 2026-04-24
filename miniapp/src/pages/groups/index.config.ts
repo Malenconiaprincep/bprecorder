@@ -1,5 +1,5 @@
 export default definePageConfig({
-  navigationBarTitleText: '我的组',
+  navigationBarTitleText: '组',
   enablePullDownRefresh: true
 })
 

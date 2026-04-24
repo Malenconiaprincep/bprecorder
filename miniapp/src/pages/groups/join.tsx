@@ -72,7 +72,7 @@ export default function JoinGroup() {
       Taro.showToast({ title: '加入成功！', icon: 'success' })
       setTimeout(() => {
         // 跳转到组列表页
-        Taro.redirectTo({ url: '/pages/groups/index' })
+        Taro.switchTab({ url: '/pages/groups/index' })
       }, 1500)
     } else {
       Taro.showToast({ title: result.error || '加入失败', icon: 'none' })

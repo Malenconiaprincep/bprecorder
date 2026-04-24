@@ -1,15 +1,15 @@
 export default defineAppConfig({
   pages: [
     'pages/index/index',
+    'pages/analysis/index',
+    'pages/groups/index',
+    'pages/profile/index',
     'pages/promo-activity/index',
     'pages/weekly-report/index',
-    'pages/analysis/index',
-    'pages/profile/index',
     'pages/input/index',
     'pages/camera/index',
     'pages/login/index',
     'pages/calendar/index',
-    'pages/groups/index',
     'pages/groups/detail',
     'pages/groups/join',
     'pages/groups/member'
@@ -40,6 +40,12 @@ export default defineAppConfig({
         text: '分析',
         iconPath: 'assets/icons/analyse.png',
         selectedIconPath: 'assets/icons/analyse.png'
+      },
+      {
+        pagePath: 'pages/groups/index',
+        text: '组',
+        iconPath: 'assets/icons/tab-group.png',
+        selectedIconPath: 'assets/icons/tab-group.png'
       },
       {
         pagePath: 'pages/profile/index',
