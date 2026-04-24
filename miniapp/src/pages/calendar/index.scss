@@ -8,11 +8,19 @@
   overflow: hidden;
 }
 
-/* 纵向高度由 index.tsx 内联 style（px）指定，满足真机 scroll-view 对固定高度的要求 */
+/* 固定头部以下：纵向高度由 index.tsx 内联 style（px）指定，满足真机 scroll-view 对固定高度的要求 */
+.all-records-head {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 20rpx 28rpx 0;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #e8f4ff 0%, #f0f6ff 100%);
+}
+
 .all-records-scroll {
   flex: 1;
   min-height: 0;
-  padding: 20rpx 28rpx 0;
+  padding: 0 28rpx 0;
   box-sizing: border-box;
   width: 100%;
 }

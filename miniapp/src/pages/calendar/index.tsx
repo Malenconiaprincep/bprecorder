@@ -127,6 +127,8 @@ export default function AllRecordsPage() {
   const [calendarMonth, setCalendarMonth] = useState(() => new Date())
   /** 真机 scroll-view 必须给固定高度（px），仅靠 flex:1+height:0 常导致高度为 0 */
   const [mainScrollStyle, setMainScrollStyle] = useState<CSSProperties>({ minHeight: '55vh' })
+  /** 窗口内可用于「头部以下 + 列表」的高度（已扣底部按钮区），见 useReady */
+  const availableScrollPxRef = useRef(0)
   /** 筛选后列表变短时不触发 scrolltolower，用自动补页防止 listHasMore 一直为 true */
   const autoFillLoadsRef = useRef(0)
   /** 有筛选时整页可能无匹配，列表高度不变导致无法再次触底；上一页 loadMore 开始时记录的筛选后条数 */
@@ -135,6 +137,20 @@ export default function AllRecordsPage() {
   const recordsLengthWhenPageLoadStartedRef = useRef<number | null>(null)
   /** 连续「整页无匹配」自动翻页次数上限，防止异常死循环 */
   const filterEmptyPageChainRef = useRef(0)
+
+  const updateMainScrollHeight = useCallback(() => {
+    const avail = availableScrollPxRef.current
+    if (avail <= 0) return
+    Taro.createSelectorQuery()
+      .select('#all-records-head')
+      .boundingClientRect()
+      .exec((res: any) => {
+        const rect = res?.[0]
+        const headH = rect && typeof rect.height === 'number' ? rect.height : 0
+        const h = Math.max(160, Math.floor(avail - headH))
+        setMainScrollStyle({ height: `${h}px`, minHeight: undefined })
+      })
+  }, [])
 
   useReady(() => {
     try {
@@ -150,9 +166,10 @@ export default function AllRecordsPage() {
       // 底部「+记录血压」区：上 padding + 按钮 + 下 padding（与 index.scss 一致）
       const fabBlockRpx = 16 + 96 + 16
       const fabPx = fabBlockRpx * rpxToPx + safeBottom
-      const h = Math.max(200, Math.floor(windowHeight - fabPx))
-      setMainScrollStyle({ height: `${h}px`, minHeight: undefined })
+      availableScrollPxRef.current = Math.max(200, Math.floor(windowHeight - fabPx))
+      Taro.nextTick(() => updateMainScrollHeight())
     } catch {
+      availableScrollPxRef.current = 0
       setMainScrollStyle({ minHeight: '55vh' })
     }
   })
@@ -248,6 +265,11 @@ export default function AllRecordsPage() {
     recordsLengthWhenPageLoadStartedRef.current = null
     filterEmptyPageChainRef.current = 0
   }, [statusFilter, dateInterval])
+
+  useEffect(() => {
+    if (availableScrollPxRef.current <= 0) return
+    Taro.nextTick(() => updateMainScrollHeight())
+  }, [statusFilter, dateInterval, updateMainScrollHeight])
 
   useDidShow(() => {
     void reloadFromServer()
@@ -472,18 +494,7 @@ export default function AllRecordsPage() {
 
   return (
     <View className='all-records-page'>
-      <ScrollView
-        id='all-records-main-scroll'
-        className='all-records-scroll'
-        style={mainScrollStyle}
-        scrollY
-        enhanced
-        showScrollbar={false}
-        lowerThreshold={120}
-        onScrollToLower={() => {
-          void loadMore()
-        }}
-      >
+      <View id='all-records-head' className='all-records-head'>
         <View className='filter-toolbar'>
           <ScrollView
             className='filter-chips-scroll'
@@ -536,7 +547,20 @@ export default function AllRecordsPage() {
             </Text>
           </View>
         )}
+      </View>
 
+      <ScrollView
+        id='all-records-main-scroll'
+        className='all-records-scroll'
+        style={mainScrollStyle}
+        scrollY
+        enhanced
+        showScrollbar={false}
+        lowerThreshold={120}
+        onScrollToLower={() => {
+          void loadMore()
+        }}
+      >
         {loadingInitial && records.length === 0 ? (
           <View className='all-records-loading'>
             <Text className='all-records-loading-text'>加载中…</Text>
