@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { View, Text, Image, Button, Input, Textarea } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, getUserInfo, silentLogin, uploadAvatar } from '../../lib/auth'
@@ -32,6 +32,17 @@ function exportRangeToBoundsCST(startStr: string, endStr: string): { start: Date
     end: new Date(`${endStr}T23:59:59.999+08:00`)
   }
 }
+
+/** 微信小程序激励视频广告（最小接口） */
+interface RewardedVideoAdLike {
+  show(): Promise<void>
+  load(): Promise<void>
+  onLoad(cb: () => void): void
+  onError(cb: (err: unknown) => void): void
+  onClose(cb: (res: { isEnded?: boolean }) => void): void
+}
+
+const EXPORT_REWARD_AD_UNIT_ID = 'adunit-04588b8cb1a0181a'
 
 /** 将 ISO 记录时间格式化为东八区日期与时间（导出 Excel） */
 function formatRecordedAtAsiaShanghai(iso: string): { date: string; time: string } {
@@ -95,6 +106,9 @@ export default function Profile() {
   const [exportStart, setExportStart] = useState('')
   const [exportEnd, setExportEnd] = useState('')
   const [exporting, setExporting] = useState(false)
+  const handleExportRef = useRef<(start?: string, end?: string) => Promise<void>>(async () => {})
+  const videoAdRef = useRef<RewardedVideoAdLike | null>(null)
+  const pendingExportRef = useRef<{ start: string; end: string } | null>(null)
   // 联系方式配置
   const CONTACT_CONFIG = {
     // 方式1: 微信号（推荐，永久有效）
@@ -508,6 +522,54 @@ export default function Profile() {
       setExporting(false)
       Taro.showToast({ title: e.message || '导出失败', icon: 'none' })
     }
+  }
+
+  handleExportRef.current = handleExport
+
+  useEffect(() => {
+    const wxGlobal = (globalThis as unknown as {
+      wx?: { createRewardedVideoAd?: (opts: { adUnitId: string }) => RewardedVideoAdLike }
+    }).wx
+    if (!wxGlobal?.createRewardedVideoAd) return
+
+    const videoAd = wxGlobal.createRewardedVideoAd({ adUnitId: EXPORT_REWARD_AD_UNIT_ID })
+    videoAd.onLoad(() => {})
+    videoAd.onError((err) => {
+      console.error('激励视频广告加载失败', err)
+    })
+    videoAd.onClose((res) => {
+      if (res?.isEnded && pendingExportRef.current) {
+        const { start, end } = pendingExportRef.current
+        pendingExportRef.current = null
+        void handleExportRef.current(start, end)
+      } else {
+        pendingExportRef.current = null
+        if (res && res.isEnded === false) {
+          Taro.showToast({ title: '请完整观看广告后导出', icon: 'none' })
+        }
+      }
+    })
+    videoAdRef.current = videoAd
+  }, [])
+
+  /** 先展示激励视频，完整观看后再执行导出 */
+  const showRewardedVideoThenExport = (start: string, end: string) => {
+    const videoAd = videoAdRef.current
+    if (!videoAd) {
+      void handleExport(start, end)
+      return
+    }
+    pendingExportRef.current = { start, end }
+    videoAd.show().catch(() => {
+      videoAd
+        .load()
+        .then(() => videoAd.show())
+        .catch((err) => {
+          console.error('激励视频广告显示失败', err)
+          pendingExportRef.current = null
+          Taro.showToast({ title: '广告加载失败，请稍后重试', icon: 'none' })
+        })
+    })
   }
 
   const goToGroups = () => {
@@ -1176,25 +1238,25 @@ export default function Profile() {
             <View className='export-shortcuts'>
               <View
                 className={`export-shortcut-btn ${exporting ? 'disabled' : ''}`}
-                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('1m'); handleExport(start, end); }}
+                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('1m'); showRewardedVideoThenExport(start, end); }}
               >
                 <Text>近一个月</Text>
               </View>
               <View
                 className={`export-shortcut-btn ${exporting ? 'disabled' : ''}`}
-                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('3m'); handleExport(start, end); }}
+                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('3m'); showRewardedVideoThenExport(start, end); }}
               >
                 <Text>近三个月</Text>
               </View>
               <View
                 className={`export-shortcut-btn ${exporting ? 'disabled' : ''}`}
-                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('6m'); handleExport(start, end); }}
+                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('6m'); showRewardedVideoThenExport(start, end); }}
               >
                 <Text>近半年</Text>
               </View>
               <View
                 className={`export-shortcut-btn ${exporting ? 'disabled' : ''}`}
-                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('1y'); handleExport(start, end); }}
+                onClick={exporting ? undefined : () => { const { start, end } = getRangeForShortcut('1y'); showRewardedVideoThenExport(start, end); }}
               >
                 <Text>近一年</Text>
               </View>
