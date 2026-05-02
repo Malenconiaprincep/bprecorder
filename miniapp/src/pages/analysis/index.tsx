@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react'
-import { View, Text, Image } from '@tarojs/components'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { View, Text, Image, Picker } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { getRecords, BPRecord } from '../../lib/supabase'
 import { consumeAnalysisNeedRefresh } from '../../store/analysisRefresh'
@@ -29,6 +29,41 @@ const recordLocalDateKey = (iso: string) => {
   return formatDateKey(d)
 }
 
+/** 自定义区间：生成包含端点的 YYYY-MM-DD 列表（本地日历日） */
+function enumerateDateKeys(startStr: string, endStr: string): string[] {
+  const list: string[] = []
+  const partsS = startStr.split('-').map(Number)
+  const partsE = endStr.split('-').map(Number)
+  if (partsS.length !== 3 || partsE.length !== 3 || partsS.some(Number.isNaN) || partsE.some(Number.isNaN)) {
+    return []
+  }
+  let cur = new Date(partsS[0], partsS[1] - 1, partsS[2])
+  const end = new Date(partsE[0], partsE[1] - 1, partsE[2])
+  if (cur > end) return []
+  while (cur <= end) {
+    list.push(formatDateKey(cur))
+    cur.setDate(cur.getDate() + 1)
+  }
+  return list
+}
+
+/** 自定义分析区间最长一年（与常见导出上限一致） */
+const MAX_CUSTOM_RANGE_DAYS = 365
+
+/** 微信小程序激励视频广告（最小接口） */
+interface RewardedVideoAdLike {
+  show(): Promise<void>
+  load(): Promise<void>
+  onLoad(cb: () => void): void
+  onError(cb: (err: unknown) => void): void
+  onClose(cb: (res: { isEnded?: boolean }) => void): void
+}
+
+/** 分析页激励视频：自定义 Tab、30天总结、自定义总结（兜底） */
+const ANALYSIS_REWARD_AD_UNIT_ID = 'adunit-f6882fea9352fb42'
+
+type PendingVideoAction = 'unlock-custom-tab' | 'open-summary-30d' | 'open-summary-custom-fallback'
+
 const formatDateDisplay = (dateStr: string, type: 'week' | 'month') => {
   if (type === 'month') {
     const parts = dateStr.split('-')
@@ -56,10 +91,16 @@ interface SelectedPoint {
 
 export default function AnalysisPage() {
   const [records, setRecords] = useState<BPRecord[]>([])
-  const [timeRange, setTimeRange] = useState<'week' | 'month'>('week')
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'custom'>('week')
+  const [customStart, setCustomStart] = useState('')
+  const [customEnd, setCustomEnd] = useState('')
   const [handFilter, setHandFilter] = useState<'all' | 'left' | 'right'>('all')
   const [selectedPoint, setSelectedPoint] = useState<SelectedPoint | null>(null)
   const [fontSizeMode, setFontSizeMode] = useState<FontSizeMode>('normal')
+  const videoAdRef = useRef<RewardedVideoAdLike | null>(null)
+  const pendingVideoActionRef = useRef<PendingVideoAction | null>(null)
+  /** 自定义：看完进入 Tab 的那一次广告，同时解锁该时段下的总结（不再二次看广告） */
+  const customOneAdUnlockedRef = useRef(false)
 
   useLoad(() => {
     setFontSizeMode(getCurrentFontSizeMode())
@@ -87,7 +128,60 @@ export default function AnalysisPage() {
 
   useEffect(() => {
     setSelectedPoint(null)
-  }, [timeRange, handFilter])
+  }, [timeRange, handFilter, customStart, customEnd])
+
+  useEffect(() => {
+    if (timeRange !== 'custom') {
+      customOneAdUnlockedRef.current = false
+    }
+  }, [timeRange])
+
+  useEffect(() => {
+    const wxGlobal = (globalThis as unknown as {
+      wx?: { createRewardedVideoAd?: (opts: { adUnitId: string }) => RewardedVideoAdLike }
+    }).wx
+    if (!wxGlobal?.createRewardedVideoAd) return
+    try {
+      const videoAd = wxGlobal.createRewardedVideoAd({ adUnitId: ANALYSIS_REWARD_AD_UNIT_ID })
+      videoAd.onLoad(() => {})
+      videoAd.onError((err) => {
+        console.error('激励视频广告加载失败', err)
+      })
+      videoAd.onClose((res) => {
+        const action = pendingVideoActionRef.current
+        if (res?.isEnded && action) {
+          pendingVideoActionRef.current = null
+          if (action === 'unlock-custom-tab') {
+            setSelectedPoint(null)
+            const now = new Date()
+            const endStr = formatDateKey(now)
+            const startBase = new Date(now)
+            startBase.setDate(startBase.getDate() - 13)
+            const startStr = formatDateKey(startBase)
+            setCustomStart(prev => prev || startStr)
+            setCustomEnd(prev => prev || endStr)
+            setTimeRange('custom')
+            customOneAdUnlockedRef.current = true
+          } else if (action === 'open-summary-30d' || action === 'open-summary-custom-fallback') {
+            Taro.navigateTo({ url: '/pages/weekly-report/index' })
+          }
+        } else {
+          const forToast = pendingVideoActionRef.current
+          pendingVideoActionRef.current = null
+          if (res && res.isEnded === false && forToast) {
+            const title =
+              forToast === 'open-summary-30d' || forToast === 'open-summary-custom-fallback'
+                ? '请完整观看广告后查看总结报告'
+                : '请完整观看广告后使用自定义区间'
+            Taro.showToast({ title, icon: 'none' })
+          }
+        }
+      })
+      videoAdRef.current = videoAd
+    } catch (e) {
+      console.error('激励视频广告创建失败', e)
+    }
+  }, [])
 
   const fetchRecords = async () => {
     if (USE_TEST_DATA) {
@@ -105,7 +199,7 @@ export default function AnalysisPage() {
   const periodDateBounds = useMemo(() => {
     const now = new Date()
     now.setHours(23, 59, 59, 999)
-    const dateList: string[] = []
+    let dateList: string[] = []
     const weekDayLabels = ['一', '二', '三', '四', '五', '六', '日']
     if (timeRange === 'week') {
       const dayOfWeek = now.getDay() || 7
@@ -116,15 +210,26 @@ export default function AnalysisPage() {
         d.setDate(monday.getDate() + i)
         dateList.push(formatDateKey(d))
       }
-    } else {
+    } else if (timeRange === 'month') {
       for (let i = 29; i >= 0; i--) {
         const d = new Date(now)
         d.setDate(now.getDate() - i)
         dateList.push(formatDateKey(d))
       }
+    } else {
+      if (!customStart || !customEnd) {
+        return { start: '', end: '', dateList: [], weekDayLabels }
+      }
+      dateList = enumerateDateKeys(customStart, customEnd)
+      if (dateList.length > MAX_CUSTOM_RANGE_DAYS) {
+        dateList = dateList.slice(0, MAX_CUSTOM_RANGE_DAYS)
+      }
+    }
+    if (dateList.length === 0) {
+      return { start: '', end: '', dateList: [], weekDayLabels }
     }
     return { start: dateList[0], end: dateList[dateList.length - 1], dateList, weekDayLabels }
-  }, [timeRange])
+  }, [timeRange, customStart, customEnd])
 
   const filteredRecords = useMemo(() => {
     const { start, end } = periodDateBounds
@@ -174,7 +279,7 @@ export default function AnalysisPage() {
       const dayRecords =
         handFilter === 'all' ? dayRaw : dayRaw.filter(r => r.hand === handFilter)
       const label =
-        timeRange === 'week' ? weekDayLabels[index] : formatDateDisplay(dateStr, timeRange)
+        timeRange === 'week' ? weekDayLabels[index] : formatDateDisplay(dateStr, 'month')
 
       if (dayRecords.length > 0) {
         const avgSys = Math.round(
@@ -204,6 +309,20 @@ export default function AnalysisPage() {
     return dailyAvg
   }, [records, timeRange, handFilter, periodDateBounds])
 
+  const nDays = periodDateBounds.dateList.length
+  const isLongSmoothChart = timeRange === 'month' || (timeRange === 'custom' && nDays > 7)
+  const showPointValues =
+    (timeRange === 'week' || (timeRange === 'custom' && nDays > 0 && nDays <= 7))
+  const chartTotalPoints = Math.max(nDays - 1, 1)
+
+  /** 与顶部时间选择一致：7天 / 30天 / 自定义区间天数 */
+  const unlockReportTitle = useMemo(() => {
+    if (timeRange === 'week') return '解锁近7天深度总结报告'
+    if (timeRange === 'month') return '解锁近30天深度总结报告'
+    if (timeRange === 'custom' && nDays > 0) return `解锁近${nDays}天深度总结报告`
+    return '解锁深度总结报告'
+  }, [timeRange, nDays])
+
   const yAxisRange = useMemo(() => {
     const validData = chartData.filter(d => d.systolic !== null)
     if (validData.length === 0) {
@@ -230,7 +349,7 @@ export default function AnalysisPage() {
   }, [yAxisRange])
 
   const smoothTrendLine = useMemo(() => {
-    if (timeRange !== 'month') return []
+    if (!isLongSmoothChart) return []
     const validPoints = chartData
       .map((d, i) => ({ ...d, index: i }))
       .filter(d => d.systolic !== null)
@@ -251,9 +370,112 @@ export default function AnalysisPage() {
         )
       }
     })
-  }, [chartData, timeRange])
+  }, [chartData, isLongSmoothChart])
 
   const donutTotal = filteredRecords.length
+
+  const clampCustomRange = (nextStart: string, nextEnd: string) => {
+    const partsS = nextStart.split('-').map(Number)
+    const partsE = nextEnd.split('-').map(Number)
+    if (partsS.length !== 3 || partsE.length !== 3) return { start: nextStart, end: nextEnd }
+    let dS = new Date(partsS[0], partsS[1] - 1, partsS[2])
+    let dE = new Date(partsE[0], partsE[1] - 1, partsE[2])
+    let startStr = nextStart
+    let endStr = nextEnd
+    if (dS > dE) {
+      endStr = startStr
+      dE = new Date(dS)
+    }
+    const span =
+      Math.floor((dE.getTime() - dS.getTime()) / (24 * 60 * 60 * 1000)) + 1
+    if (span > MAX_CUSTOM_RANGE_DAYS) {
+      const cap = new Date(dS)
+      cap.setDate(cap.getDate() + MAX_CUSTOM_RANGE_DAYS - 1)
+      endStr = formatDateKey(cap)
+      Taro.showToast({
+        title: `最长支持 ${MAX_CUSTOM_RANGE_DAYS} 天，已自动截断结束日期`,
+        icon: 'none',
+        duration: 2800
+      })
+    }
+    return { start: startStr, end: endStr }
+  }
+
+  const onPickCustomStart = (e: { detail: { value: string } }) => {
+    const v = e.detail.value
+    const { start, end } = clampCustomRange(v, customEnd || v)
+    setCustomStart(start)
+    setCustomEnd(end)
+  }
+
+  const onPickCustomEnd = (e: { detail: { value: string } }) => {
+    const v = e.detail.value
+    const { start, end } = clampCustomRange(customStart || v, v)
+    setCustomStart(start)
+    setCustomEnd(end)
+  }
+
+  const navigateWeeklyReport = () => {
+    Taro.navigateTo({ url: '/pages/weekly-report/index' })
+  }
+
+  const playRewardedVideo = (onMissingAd: () => void) => {
+    const videoAd = videoAdRef.current
+    if (!videoAd) {
+      onMissingAd()
+      return
+    }
+    videoAd.show().catch(() => {
+      videoAd
+        .load()
+        .then(() => videoAd.show())
+        .catch((err) => {
+          console.error('激励视频广告显示失败', err)
+          pendingVideoActionRef.current = null
+          Taro.showToast({ title: '广告加载失败，请稍后重试', icon: 'none' })
+        })
+    })
+  }
+
+  /** 仅自定义 Tab 需广告；该次广告同时标记「总结已解锁」 */
+  const showRewardedVideoThenUnlockCustomTab = () => {
+    const applyCustomFree = () => {
+      setSelectedPoint(null)
+      const now = new Date()
+      const endStr = formatDateKey(now)
+      const startBase = new Date(now)
+      startBase.setDate(startBase.getDate() - 13)
+      const startStr = formatDateKey(startBase)
+      setCustomStart(prev => prev || startStr)
+      setCustomEnd(prev => prev || endStr)
+      setTimeRange('custom')
+      customOneAdUnlockedRef.current = true
+    }
+
+    pendingVideoActionRef.current = 'unlock-custom-tab'
+    playRewardedVideo(applyCustomFree)
+  }
+
+  /**
+   * 总结：7天免费；30天看广告；自定义与趋势共用一次广告（进 Tab 时已看则免费）
+   */
+  const openWeeklyReportWithPolicy = () => {
+    if (timeRange === 'week') {
+      navigateWeeklyReport()
+      return
+    }
+    if (timeRange === 'month') {
+      pendingVideoActionRef.current = 'open-summary-30d'
+      playRewardedVideo(navigateWeeklyReport)
+      return
+    }
+    if (customOneAdUnlockedRef.current) {
+      navigateWeeklyReport()
+      return
+    }
+    pendingVideoActionRef.current = 'open-summary-custom-fallback'
+    playRewardedVideo(navigateWeeklyReport)
+  }
 
   const legendRows = useMemo(() => {
     const t = donutTotal
@@ -267,55 +489,101 @@ export default function AnalysisPage() {
   return (
     <View className={`analysis-page ${getFontSizeModeClass(fontSizeMode)}`}>
       <View className='analysis-top-card'>
-        <View className='time-tabs'>
-          <View
-            className={`time-tab ${timeRange === 'week' ? 'active' : ''}`}
-            onClick={() => {
-              setTimeRange('week')
-              setSelectedPoint(null)
-            }}
-          >
-            <Text>7天</Text>
+        <View className='analysis-filter-section'>
+          <Text className='analysis-filter-label'>时间范围</Text>
+          <View className='time-tabs time-tabs--triple'>
+            <View
+              className={`time-tab ${timeRange === 'week' ? 'active' : ''}`}
+              onClick={() => {
+                setTimeRange('week')
+                setSelectedPoint(null)
+              }}
+            >
+              <Text>7天</Text>
+            </View>
+            <View
+              className={`time-tab ${timeRange === 'month' ? 'active' : ''}`}
+              onClick={() => {
+                setTimeRange('month')
+                setSelectedPoint(null)
+              }}
+            >
+              <Text>30天</Text>
+            </View>
+            <View
+              className={`time-tab ${timeRange === 'custom' ? 'active' : ''}`}
+              onClick={() => {
+                if (timeRange === 'custom') return
+                showRewardedVideoThenUnlockCustomTab()
+              }}
+            >
+              <Text>自定义</Text>
+            </View>
           </View>
-          <View
-            className={`time-tab ${timeRange === 'month' ? 'active' : ''}`}
-            onClick={() => {
-              setTimeRange('month')
-              setSelectedPoint(null)
-            }}
-          >
-            <Text>30天</Text>
+          {timeRange === 'custom' && customStart && customEnd && (
+            <View className='custom-range-row'>
+              <View className='custom-range-field'>
+                <Text className='custom-range-label'>开始</Text>
+                <Picker mode='date' value={customStart} onChange={onPickCustomStart}>
+                  <View className='custom-range-value'>{customStart}</View>
+                </Picker>
+              </View>
+              <Text className='custom-range-sep'>—</Text>
+              <View className='custom-range-field'>
+                <Text className='custom-range-label'>结束</Text>
+                <Picker mode='date' value={customEnd} onChange={onPickCustomEnd}>
+                  <View className='custom-range-value'>{customEnd}</View>
+                </Picker>
+              </View>
+            </View>
+          )}
+          {timeRange === 'custom' && (
+            <Text className='custom-range-hint'>最长可选一年（{MAX_CUSTOM_RANGE_DAYS} 天）</Text>
+          )}
+        </View>
+
+        <View className='analysis-filter-divider' />
+
+        <View className='analysis-filter-section analysis-filter-section--last'>
+          <Text className='analysis-filter-label'>测量手</Text>
+          <View className='hand-toggle-row hand-toggle-row--segmented'>
+            <View
+              className={`hand-toggle-btn ${handFilter === 'all' ? 'active' : ''}`}
+              onClick={() => {
+                setHandFilter('all')
+                setSelectedPoint(null)
+              }}
+            >
+              <Text className='hand-toggle-text'>全部</Text>
+            </View>
+            <View
+              className={`hand-toggle-btn ${handFilter === 'left' ? 'active' : ''}`}
+              onClick={() => {
+                setHandFilter('left')
+                setSelectedPoint(null)
+              }}
+            >
+              <Text className='hand-toggle-text'>左手</Text>
+            </View>
+            <View
+              className={`hand-toggle-btn ${handFilter === 'right' ? 'active' : ''}`}
+              onClick={() => {
+                setHandFilter('right')
+                setSelectedPoint(null)
+              }}
+            >
+              <Text className='hand-toggle-text'>右手</Text>
+            </View>
           </View>
         </View>
-        <View className='hand-toggle-row'>
-          <View
-            className={`hand-toggle-btn ${handFilter === 'all' ? 'active' : ''}`}
-            onClick={() => {
-              setHandFilter('all')
-              setSelectedPoint(null)
-            }}
-          >
-            <Text className='hand-toggle-text'>全部</Text>
-          </View>
-          <View
-            className={`hand-toggle-btn ${handFilter === 'left' ? 'active' : ''}`}
-            onClick={() => {
-              setHandFilter('left')
-              setSelectedPoint(null)
-            }}
-          >
-            <Text className='hand-toggle-text'>左手</Text>
-          </View>
-          <View
-            className={`hand-toggle-btn ${handFilter === 'right' ? 'active' : ''}`}
-            onClick={() => {
-              setHandFilter('right')
-              setSelectedPoint(null)
-            }}
-          >
-            <Text className='hand-toggle-text'>右手</Text>
-          </View>
+      </View>
+
+      <View className='analysis-report-cta' onClick={openWeeklyReportWithPolicy}>
+        <View className='analysis-report-cta-left'>
+          <Text className='analysis-report-cta-title'>{unlockReportTitle}</Text>
+          <Text className='analysis-report-cta-sub'>所选时间段内 · 详细统计 · 趋势解读 · 可分享海报</Text>
         </View>
+        <Text className='analysis-report-cta-arrow'>›</Text>
       </View>
 
       {/* 血压趋势 */}
@@ -335,12 +603,14 @@ export default function AnalysisPage() {
           <Text className='chart-legend-unit'>mmHg</Text>
         </View>
 
-        {timeRange === 'month' && (
-          <Text className='chart-hint'>近30天为平滑趋势线，便于观察走势</Text>
+        {isLongSmoothChart && (
+          <Text className='chart-hint'>
+            {timeRange === 'month' ? '近30天为平滑趋势线，便于观察走势' : '多日区间为平滑趋势线，便于观察走势'}
+          </Text>
         )}
 
         {chartData.some(d => d.systolic !== null) ? (
-          <View className={`chart-wrapper ${timeRange === 'month' ? 'month-mode' : ''}`}>
+          <View className={`chart-wrapper ${isLongSmoothChart ? 'month-mode' : ''}`}>
             <View className='y-axis'>
               {yAxisTicks.map(tick => (
                 <Text key={tick} className='y-tick'>
@@ -349,7 +619,7 @@ export default function AnalysisPage() {
               ))}
             </View>
             <View
-              className={`chart-area ${timeRange === 'month' ? 'month-mode' : ''}`}
+              className={`chart-area ${isLongSmoothChart ? 'month-mode' : ''}`}
               onClick={() => setSelectedPoint(null)}
             >
               <View className='chart-area-fade' />
@@ -363,9 +633,9 @@ export default function AnalysisPage() {
               <View className='lines-layer'>
                 {(() => {
                   const aspectRatio = 1.8
-                  const totalPoints = timeRange === 'week' ? 6 : 29
+                  const totalPoints = chartTotalPoints
                   const dataToRender =
-                    timeRange === 'month'
+                    isLongSmoothChart
                       ? smoothTrendLine.map(d => ({ point: d, index: d.index }))
                       : chartData
                         .map((point, index) => ({ point, index }))
@@ -410,9 +680,9 @@ export default function AnalysisPage() {
               </View>
               <View className='data-layer'>
                 {(() => {
-                  const totalPoints = timeRange === 'week' ? 6 : 29
+                  const totalPoints = chartTotalPoints
                   const pointsToRender =
-                    timeRange === 'month'
+                    isLongSmoothChart
                       ? smoothTrendLine
                       : chartData
                         .map((d, i) => ({ ...d, index: i }))
@@ -447,7 +717,7 @@ export default function AnalysisPage() {
                           style={{ left: `${xPercent}%`, top: `${sysY}%` }}
                           onClick={handlePointClick}
                         >
-                          {timeRange === 'week' && (
+                          {showPointValues && (
                             <Text className='point-value point-value--sys'>{point.systolic}</Text>
                           )}
                           <View className='point-inner' />
@@ -457,7 +727,7 @@ export default function AnalysisPage() {
                           style={{ left: `${xPercent}%`, top: `${diaY}%` }}
                           onClick={handlePointClick}
                         >
-                          {timeRange === 'week' && (
+                          {showPointValues && (
                             <Text className='point-value point-value--dia'>{point.diastolic}</Text>
                           )}
                           <View className='point-inner' />
@@ -518,20 +788,41 @@ export default function AnalysisPage() {
                 <Text
                   key={point.date}
                   className={`x-label ${point.count > 0 ? 'has-data' : ''}`}
-                  style={{ left: `${(index / 6) * 100}%` }}
+                  style={{ left: `${(index / chartTotalPoints) * 100}%` }}
                 >
                   {point.label}
                 </Text>
               ))
-              : [0, 10, 20, 29].map(index => (
-                <Text
-                  key={chartData[index]?.date || index}
-                  className='x-label'
-                  style={{ left: `${(index / 29) * 100}%` }}
-                >
-                  {chartData[index]?.label || ''}
-                </Text>
-              ))}
+              : timeRange === 'month'
+                ? [0, 10, 20, 29].map(index => (
+                  <Text
+                    key={chartData[index]?.date || index}
+                    className='x-label'
+                    style={{ left: `${(index / chartTotalPoints) * 100}%` }}
+                  >
+                    {chartData[index]?.label || ''}
+                  </Text>
+                ))
+                : (() => {
+                    const n = chartData.length
+                    const tp = Math.max(n - 1, 1)
+                    const rawIdx =
+                      n <= 7
+                        ? chartData.map((_, i) => i)
+                        : [0, Math.floor(n * 0.25), Math.floor(n * 0.5), Math.floor(n * 0.75), n - 1]
+                    const indices = rawIdx
+                      .filter((v, i, a) => a.indexOf(v) === i)
+                      .sort((a, b) => a - b)
+                    return indices.map(index => (
+                      <Text
+                        key={chartData[index]?.date ?? String(index)}
+                        className='x-label'
+                        style={{ left: `${(index / tp) * 100}%` }}
+                      >
+                        {chartData[index]?.label || ''}
+                      </Text>
+                    ))
+                  })()}
           </View>
         )}
       </View>
