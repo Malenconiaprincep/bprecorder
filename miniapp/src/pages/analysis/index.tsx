@@ -50,6 +50,9 @@ function enumerateDateKeys(startStr: string, endStr: string): string[] {
 /** 自定义分析区间最长一年（与常见导出上限一致） */
 const MAX_CUSTOM_RANGE_DAYS = 365
 
+/** 将自定义起止日编码为键，用于判断「该区间是否已看过解锁广告」 */
+const customRangeAdKey = (start: string, end: string) => `${start}\u0000${end}`
+
 /** 微信小程序激励视频广告（最小接口） */
 interface RewardedVideoAdLike {
   show(): Promise<void>
@@ -99,8 +102,14 @@ export default function AnalysisPage() {
   const [fontSizeMode, setFontSizeMode] = useState<FontSizeMode>('normal')
   const videoAdRef = useRef<RewardedVideoAdLike | null>(null)
   const pendingVideoActionRef = useRef<PendingVideoAction | null>(null)
-  /** 自定义：看完进入 Tab 的那一次广告，同时解锁该时段下的总结（不再二次看广告） */
-  const customOneAdUnlockedRef = useRef(false)
+  /** 已解锁激励视频的自定义区间（换一组起止日需重新解锁） */
+  const customRangeAdUnlockedKeyRef = useRef<string | null>(null)
+  /** 与 ref 同步，用于解锁后刷新「趋势/占比/平均」展示 */
+  const [customRangeUnlockedKeyState, setCustomRangeUnlockedKeyState] = useState<string | null>(null)
+  /** 当前这次播放对应的区间键（onClose 写入 unlocked） */
+  const pendingCustomUnlockKeyRef = useRef<string | null>(null)
+  /** 避免重复拉起「自定义解锁」广告 */
+  const unlockCustomAdInFlightRef = useRef(false)
 
   useLoad(() => {
     setFontSizeMode(getCurrentFontSizeMode())
@@ -131,12 +140,6 @@ export default function AnalysisPage() {
   }, [timeRange, handFilter, customStart, customEnd])
 
   useEffect(() => {
-    if (timeRange !== 'custom') {
-      customOneAdUnlockedRef.current = false
-    }
-  }, [timeRange])
-
-  useEffect(() => {
     const wxGlobal = (globalThis as unknown as {
       wx?: { createRewardedVideoAd?: (opts: { adUnitId: string }) => RewardedVideoAdLike }
     }).wx
@@ -153,21 +156,23 @@ export default function AnalysisPage() {
           pendingVideoActionRef.current = null
           if (action === 'unlock-custom-tab') {
             setSelectedPoint(null)
-            const now = new Date()
-            const endStr = formatDateKey(now)
-            const startBase = new Date(now)
-            startBase.setDate(startBase.getDate() - 13)
-            const startStr = formatDateKey(startBase)
-            setCustomStart(prev => prev || startStr)
-            setCustomEnd(prev => prev || endStr)
-            setTimeRange('custom')
-            customOneAdUnlockedRef.current = true
+            const k = pendingCustomUnlockKeyRef.current
+            if (k) {
+              customRangeAdUnlockedKeyRef.current = k
+              setCustomRangeUnlockedKeyState(k)
+              pendingCustomUnlockKeyRef.current = null
+            }
+            unlockCustomAdInFlightRef.current = false
           } else if (action === 'open-summary-30d' || action === 'open-summary-custom-fallback') {
             Taro.navigateTo({ url: '/pages/weekly-report/index' })
           }
         } else {
           const forToast = pendingVideoActionRef.current
           pendingVideoActionRef.current = null
+          if (forToast === 'unlock-custom-tab') {
+            unlockCustomAdInFlightRef.current = false
+            pendingCustomUnlockKeyRef.current = null
+          }
           if (res && res.isEnded === false && forToast) {
             const title =
               forToast === 'open-summary-30d' || forToast === 'open-summary-custom-fallback'
@@ -403,16 +408,31 @@ export default function AnalysisPage() {
 
   const onPickCustomStart = (e: { detail: { value: string } }) => {
     const v = e.detail.value
-    const { start, end } = clampCustomRange(v, customEnd || v)
+    /** 尚未选结束日时，只写入开始日；不要用「结束=开始」凑齐区间，否则会只选一次就弹广告 */
+    if (!customEnd) {
+      setCustomStart(v)
+      return
+    }
+    const { start, end } = clampCustomRange(v, customEnd)
     setCustomStart(start)
     setCustomEnd(end)
+    if (timeRange === 'custom' && start && end) {
+      requestCustomUnlockAd(start, end)
+    }
   }
 
   const onPickCustomEnd = (e: { detail: { value: string } }) => {
     const v = e.detail.value
-    const { start, end } = clampCustomRange(customStart || v, v)
+    if (!customStart) {
+      setCustomEnd(v)
+      return
+    }
+    const { start, end } = clampCustomRange(customStart, v)
     setCustomStart(start)
     setCustomEnd(end)
+    if (timeRange === 'custom' && start && end) {
+      requestCustomUnlockAd(start, end)
+    }
   }
 
   const navigateWeeklyReport = () => {
@@ -431,33 +451,35 @@ export default function AnalysisPage() {
         .then(() => videoAd.show())
         .catch((err) => {
           console.error('激励视频广告显示失败', err)
+          const wasUnlock = pendingVideoActionRef.current === 'unlock-custom-tab'
           pendingVideoActionRef.current = null
+          unlockCustomAdInFlightRef.current = false
+          if (wasUnlock) pendingCustomUnlockKeyRef.current = null
           Taro.showToast({ title: '广告加载失败，请稍后重试', icon: 'none' })
         })
     })
   }
 
-  /** 仅自定义 Tab 需广告；该次广告同时标记「总结已解锁」 */
-  const showRewardedVideoThenUnlockCustomTab = () => {
-    const applyCustomFree = () => {
+  /** 起止日期都选好后再播：解锁自定义区间对应的深度总结等权益 */
+  const requestCustomUnlockAd = (startStr: string, endStr: string) => {
+    if (!startStr || !endStr) return
+    const rangeKey = customRangeAdKey(startStr, endStr)
+    if (customRangeAdUnlockedKeyRef.current === rangeKey || unlockCustomAdInFlightRef.current) return
+    unlockCustomAdInFlightRef.current = true
+    pendingCustomUnlockKeyRef.current = rangeKey
+    const onMissingAd = () => {
+      unlockCustomAdInFlightRef.current = false
+      pendingCustomUnlockKeyRef.current = null
       setSelectedPoint(null)
-      const now = new Date()
-      const endStr = formatDateKey(now)
-      const startBase = new Date(now)
-      startBase.setDate(startBase.getDate() - 13)
-      const startStr = formatDateKey(startBase)
-      setCustomStart(prev => prev || startStr)
-      setCustomEnd(prev => prev || endStr)
-      setTimeRange('custom')
-      customOneAdUnlockedRef.current = true
+      customRangeAdUnlockedKeyRef.current = rangeKey
+      setCustomRangeUnlockedKeyState(rangeKey)
     }
-
     pendingVideoActionRef.current = 'unlock-custom-tab'
-    playRewardedVideo(applyCustomFree)
+    playRewardedVideo(onMissingAd)
   }
 
   /**
-   * 总结：7天免费；30天看广告；自定义与趋势共用一次广告（进 Tab 时已看则免费）
+   * 总结：7天免费；30天看广告；自定义与趋势共用一次广告（选完日期并看完激励视频则免费）
    */
   const openWeeklyReportWithPolicy = () => {
     if (timeRange === 'week') {
@@ -469,7 +491,11 @@ export default function AnalysisPage() {
       playRewardedVideo(navigateWeeklyReport)
       return
     }
-    if (customOneAdUnlockedRef.current) {
+    if (
+      customStart &&
+      customEnd &&
+      customRangeAdUnlockedKeyRef.current === customRangeAdKey(customStart, customEnd)
+    ) {
       navigateWeeklyReport()
       return
     }
@@ -485,6 +511,20 @@ export default function AnalysisPage() {
       return { ...m, count: n, pct }
     })
   }, [donutCounts, donutTotal])
+
+  const customPickerToday = formatDateKey(new Date())
+  const customStartPickerValue = customStart || customPickerToday
+  const customEndPickerValue = customEnd || customPickerToday
+
+  /** 自定义：仅在看激励视频解锁后才展示趋势、占比、平均血压（与总结解锁同一区间键） */
+  const customRangeComplete = !!(customStart && customEnd)
+  const customRangeKeyLive =
+    timeRange === 'custom' && customRangeComplete
+      ? customRangeAdKey(customStart, customEnd)
+      : null
+  const showCustomTrendAndStats =
+    timeRange !== 'custom' ||
+    (customRangeKeyLive !== null && customRangeUnlockedKeyState === customRangeKeyLive)
 
   return (
     <View className={`analysis-page ${getFontSizeModeClass(fontSizeMode)}`}>
@@ -514,25 +554,35 @@ export default function AnalysisPage() {
               className={`time-tab ${timeRange === 'custom' ? 'active' : ''}`}
               onClick={() => {
                 if (timeRange === 'custom') return
-                showRewardedVideoThenUnlockCustomTab()
+                setTimeRange('custom')
+                setSelectedPoint(null)
+                if (
+                  customStart &&
+                  customEnd &&
+                  customRangeAdUnlockedKeyRef.current !== customRangeAdKey(customStart, customEnd)
+                ) {
+                  Taro.nextTick(() => {
+                    requestCustomUnlockAd(customStart, customEnd)
+                  })
+                }
               }}
             >
               <Text>自定义</Text>
             </View>
           </View>
-          {timeRange === 'custom' && customStart && customEnd && (
+          {timeRange === 'custom' && (
             <View className='custom-range-row'>
               <View className='custom-range-field'>
                 <Text className='custom-range-label'>开始</Text>
-                <Picker mode='date' value={customStart} onChange={onPickCustomStart}>
-                  <View className='custom-range-value'>{customStart}</View>
+                <Picker mode='date' value={customStartPickerValue} onChange={onPickCustomStart}>
+                  <View className='custom-range-value'>{customStart || '选择开始日期'}</View>
                 </Picker>
               </View>
               <Text className='custom-range-sep'>—</Text>
               <View className='custom-range-field'>
                 <Text className='custom-range-label'>结束</Text>
-                <Picker mode='date' value={customEnd} onChange={onPickCustomEnd}>
-                  <View className='custom-range-value'>{customEnd}</View>
+                <Picker mode='date' value={customEndPickerValue} onChange={onPickCustomEnd}>
+                  <View className='custom-range-value'>{customEnd || '选择结束日期'}</View>
                 </Picker>
               </View>
             </View>
@@ -589,6 +639,20 @@ export default function AnalysisPage() {
       {/* 血压趋势 */}
       <View className='chart-card'>
         <Text className='chart-title-plain'>血压趋势</Text>
+        {timeRange === 'custom' && !showCustomTrendAndStats ? (
+          <View className='chart-empty'>
+            <Image className='empty-icon' src={iconChart} mode='aspectFit' />
+            <Text className='empty-text'>
+              {!customRangeComplete ? '请先选择开始与结束日期' : '请完整观看激励视频后查看趋势'}
+            </Text>
+            <Text className='empty-hint'>
+              {!customRangeComplete
+                ? '选好后将播放短视频，完整观看后可查看本区间趋势与统计'
+                : '完整观看短视频后即可查看曲线与各区块数据'}
+            </Text>
+          </View>
+        ) : (
+          <>
         <View className='chart-legend-bar'>
           <View className='chart-legend-items'>
             <View className='legend-item'>
@@ -825,12 +889,20 @@ export default function AnalysisPage() {
                   })()}
           </View>
         )}
+          </>
+        )}
       </View>
 
       {/* 血压分类占比 */}
       <View className='donut-card'>
         <Text className='section-heading'>血压分类占比</Text>
-        {donutTotal === 0 ? (
+        {timeRange === 'custom' && !showCustomTrendAndStats ? (
+          <View className='donut-empty'>
+            <Text className='donut-empty-text'>
+              {!customRangeComplete ? '请先选择日期区间' : '观看激励视频后查看分类占比'}
+            </Text>
+          </View>
+        ) : donutTotal === 0 ? (
           <View className='donut-empty'>
             <Text className='donut-empty-text'>本时段暂无记录</Text>
           </View>
@@ -861,7 +933,13 @@ export default function AnalysisPage() {
       {/* 平均血压 */}
       <View className='avg-bp-card'>
         <Text className='section-heading'>平均血压</Text>
-        {periodRecordAverage ? (
+        {timeRange === 'custom' && !showCustomTrendAndStats ? (
+          <View className='donut-empty'>
+            <Text className='donut-empty-text'>
+              {!customRangeComplete ? '请先选择日期区间' : '观看激励视频后查看平均血压'}
+            </Text>
+          </View>
+        ) : periodRecordAverage ? (
           <View className='avg-bp-row'>
             <View className='avg-bp-cell avg-bp-cell--sys'>
               <Text className='avg-bp-num avg-bp-num--sys'>{periodRecordAverage.systolic}</Text>
