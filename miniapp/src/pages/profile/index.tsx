@@ -44,6 +44,9 @@ interface RewardedVideoAdLike {
 
 const EXPORT_REWARD_AD_UNIT_ID = 'adunit-04588b8cb1a0181a'
 
+/** 微信流量主审核未通过时拉取会失败，审核通过后在各页改为 `true` 再发版 */
+const REWARD_VIDEO_ADS_ENABLED = false
+
 /** 将 ISO 记录时间格式化为东八区日期与时间（导出 Excel） */
 function formatRecordedAtAsiaShanghai(iso: string): { date: string; time: string } {
   if (!iso) return { date: '', time: '' }
@@ -527,6 +530,7 @@ export default function Profile() {
   handleExportRef.current = handleExport
 
   useEffect(() => {
+    if (!REWARD_VIDEO_ADS_ENABLED) return
     const wxGlobal = (globalThis as unknown as {
       wx?: { createRewardedVideoAd?: (opts: { adUnitId: string }) => RewardedVideoAdLike }
     }).wx
@@ -554,6 +558,10 @@ export default function Profile() {
 
   /** 先展示激励视频，完整观看后再执行导出 */
   const showRewardedVideoThenExport = (start: string, end: string) => {
+    if (!REWARD_VIDEO_ADS_ENABLED) {
+      void handleExport(start, end)
+      return
+    }
     const videoAd = videoAdRef.current
     if (!videoAd) {
       void handleExport(start, end)

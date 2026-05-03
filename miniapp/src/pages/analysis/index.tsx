@@ -65,6 +65,9 @@ interface RewardedVideoAdLike {
 /** 分析页激励视频：自定义 Tab、30天总结、自定义总结（兜底） */
 const ANALYSIS_REWARD_AD_UNIT_ID = 'adunit-f6882fea9352fb42'
 
+/** 微信流量主审核未通过时拉取会失败，审核通过后在各页改为 `true` 再发版 */
+const REWARD_VIDEO_ADS_ENABLED = false
+
 type PendingVideoAction = 'unlock-custom-tab' | 'open-summary-30d' | 'open-summary-custom-fallback'
 
 const formatDateDisplay = (dateStr: string, type: 'week' | 'month') => {
@@ -92,6 +95,15 @@ interface SelectedPoint {
   yPercent: number
 }
 
+interface SelectedPulsePoint {
+  date: string
+  label: string
+  pulse: number
+  count: number
+  xPercent: number
+  yPercent: number
+}
+
 export default function AnalysisPage() {
   const [records, setRecords] = useState<BPRecord[]>([])
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'custom'>('week')
@@ -99,6 +111,7 @@ export default function AnalysisPage() {
   const [customEnd, setCustomEnd] = useState('')
   const [handFilter, setHandFilter] = useState<'all' | 'left' | 'right'>('all')
   const [selectedPoint, setSelectedPoint] = useState<SelectedPoint | null>(null)
+  const [selectedPulsePoint, setSelectedPulsePoint] = useState<SelectedPulsePoint | null>(null)
   const [fontSizeMode, setFontSizeMode] = useState<FontSizeMode>('normal')
   const videoAdRef = useRef<RewardedVideoAdLike | null>(null)
   const pendingVideoActionRef = useRef<PendingVideoAction | null>(null)
@@ -137,9 +150,11 @@ export default function AnalysisPage() {
 
   useEffect(() => {
     setSelectedPoint(null)
+    setSelectedPulsePoint(null)
   }, [timeRange, handFilter, customStart, customEnd])
 
   useEffect(() => {
+    if (!REWARD_VIDEO_ADS_ENABLED) return
     const wxGlobal = (globalThis as unknown as {
       wx?: { createRewardedVideoAd?: (opts: { adUnitId: string }) => RewardedVideoAdLike }
     }).wx
@@ -156,6 +171,7 @@ export default function AnalysisPage() {
           pendingVideoActionRef.current = null
           if (action === 'unlock-custom-tab') {
             setSelectedPoint(null)
+            setSelectedPulsePoint(null)
             const k = pendingCustomUnlockKeyRef.current
             if (k) {
               customRangeAdUnlockedKeyRef.current = k
@@ -276,6 +292,7 @@ export default function AnalysisPage() {
       label: string
       systolic: number | null
       diastolic: number | null
+      pulse: number | null
       count: number
     }[] = []
 
@@ -293,11 +310,19 @@ export default function AnalysisPage() {
         const avgDia = Math.round(
           dayRecords.reduce((sum, r) => sum + r.diastolic, 0) / dayRecords.length
         )
+        const withPulse = dayRecords.filter(r => (r.pulse ?? 0) > 0)
+        const avgPulse =
+          withPulse.length > 0
+            ? Math.round(
+                withPulse.reduce((sum, r) => sum + (r.pulse as number), 0) / withPulse.length
+              )
+            : null
         dailyAvg.push({
           date: dateStr,
           label,
           systolic: avgSys,
           diastolic: avgDia,
+          pulse: avgPulse,
           count: dayRecords.length
         })
       } else {
@@ -306,6 +331,7 @@ export default function AnalysisPage() {
           label,
           systolic: null,
           diastolic: null,
+          pulse: null,
           count: 0
         })
       }
@@ -377,6 +403,59 @@ export default function AnalysisPage() {
     })
   }, [chartData, isLongSmoothChart])
 
+  const pulseYAxisRange = useMemo(() => {
+    const validData = chartData.filter(d => d.pulse !== null)
+    if (validData.length === 0) {
+      return { min: 40, max: 120, step: 20 }
+    }
+    let maxVal = Math.max(...validData.map(d => d.pulse!))
+    let minVal = Math.min(...validData.map(d => d.pulse!))
+    maxVal = Math.ceil((maxVal + 6) / 20) * 20
+    minVal = Math.floor((minVal - 6) / 20) * 20
+    minVal = Math.max(40, minVal)
+    maxVal = Math.min(200, Math.max(100, maxVal))
+    if (maxVal - minVal < 40) {
+      const mid = Math.round((minVal + maxVal) / 2)
+      minVal = Math.max(40, mid - 30)
+      maxVal = Math.min(200, mid + 30)
+    }
+    const step = 20
+    return { min: minVal, max: maxVal, step }
+  }, [chartData])
+
+  const getPulseYPercent = (value: number) => {
+    const { min, max } = pulseYAxisRange
+    return 100 - ((value - min) / (max - min)) * 100
+  }
+
+  const pulseYAxisTicks = useMemo(() => {
+    const { min, max, step } = pulseYAxisRange
+    const ticks: number[] = []
+    for (let v = min; v <= max; v += step) {
+      ticks.push(v)
+    }
+    return ticks.reverse()
+  }, [pulseYAxisRange])
+
+  const smoothPulseTrendLine = useMemo(() => {
+    if (!isLongSmoothChart) return []
+    const validPoints = chartData
+      .map((d, i) => ({ ...d, index: i }))
+      .filter(d => d.pulse !== null)
+    if (validPoints.length < 2) return validPoints
+    return validPoints.map((point, i) => {
+      if (i === 0 || i === validPoints.length - 1) {
+        return point
+      }
+      const prev = validPoints[i - 1]
+      const next = validPoints[i + 1]
+      return {
+        ...point,
+        pulse: Math.round(prev.pulse! * 0.25 + point.pulse! * 0.5 + next.pulse! * 0.25)
+      }
+    })
+  }, [chartData, isLongSmoothChart])
+
   const donutTotal = filteredRecords.length
 
   const clampCustomRange = (nextStart: string, nextEnd: string) => {
@@ -440,6 +519,11 @@ export default function AnalysisPage() {
   }
 
   const playRewardedVideo = (onMissingAd: () => void) => {
+    if (!REWARD_VIDEO_ADS_ENABLED) {
+      pendingVideoActionRef.current = null
+      onMissingAd()
+      return
+    }
     const videoAd = videoAdRef.current
     if (!videoAd) {
       onMissingAd()
@@ -471,6 +555,7 @@ export default function AnalysisPage() {
       unlockCustomAdInFlightRef.current = false
       pendingCustomUnlockKeyRef.current = null
       setSelectedPoint(null)
+      setSelectedPulsePoint(null)
       customRangeAdUnlockedKeyRef.current = rangeKey
       setCustomRangeUnlockedKeyState(rangeKey)
     }
@@ -537,6 +622,7 @@ export default function AnalysisPage() {
               onClick={() => {
                 setTimeRange('week')
                 setSelectedPoint(null)
+                setSelectedPulsePoint(null)
               }}
             >
               <Text>7天</Text>
@@ -546,6 +632,7 @@ export default function AnalysisPage() {
               onClick={() => {
                 setTimeRange('month')
                 setSelectedPoint(null)
+                setSelectedPulsePoint(null)
               }}
             >
               <Text>30天</Text>
@@ -556,6 +643,7 @@ export default function AnalysisPage() {
                 if (timeRange === 'custom') return
                 setTimeRange('custom')
                 setSelectedPoint(null)
+                setSelectedPulsePoint(null)
                 if (
                   customStart &&
                   customEnd &&
@@ -602,6 +690,7 @@ export default function AnalysisPage() {
               onClick={() => {
                 setHandFilter('all')
                 setSelectedPoint(null)
+                setSelectedPulsePoint(null)
               }}
             >
               <Text className='hand-toggle-text'>全部</Text>
@@ -611,6 +700,7 @@ export default function AnalysisPage() {
               onClick={() => {
                 setHandFilter('left')
                 setSelectedPoint(null)
+                setSelectedPulsePoint(null)
               }}
             >
               <Text className='hand-toggle-text'>左手</Text>
@@ -620,6 +710,7 @@ export default function AnalysisPage() {
               onClick={() => {
                 setHandFilter('right')
                 setSelectedPoint(null)
+                setSelectedPulsePoint(null)
               }}
             >
               <Text className='hand-toggle-text'>右手</Text>
@@ -684,7 +775,10 @@ export default function AnalysisPage() {
             </View>
             <View
               className={`chart-area ${isLongSmoothChart ? 'month-mode' : ''}`}
-              onClick={() => setSelectedPoint(null)}
+              onClick={() => {
+                setSelectedPoint(null)
+                setSelectedPulsePoint(null)
+              }}
             >
               <View className='chart-area-fade' />
               {yAxisTicks.map(tick => (
@@ -762,6 +856,7 @@ export default function AnalysisPage() {
                       if (isSelected) {
                         setSelectedPoint(null)
                       } else {
+                        setSelectedPulsePoint(null)
                         const originalData = chartData.find(d => d.date === point.date)
                         setSelectedPoint({
                           date: point.date,
@@ -889,6 +984,232 @@ export default function AnalysisPage() {
                   })()}
           </View>
         )}
+          </>
+        )}
+      </View>
+
+      {/* 心率趋势（当日有脉搏记录时按日平均） */}
+      <View className='chart-card'>
+        <Text className='chart-title-plain'>心率趋势</Text>
+        {timeRange === 'custom' && !showCustomTrendAndStats ? (
+          <View className='chart-empty'>
+            <Image className='empty-icon' src={iconChart} mode='aspectFit' />
+            <Text className='empty-text'>
+              {!customRangeComplete ? '请先选择开始与结束日期' : '请完整观看激励视频后查看趋势'}
+            </Text>
+            <Text className='empty-hint'>
+              {!customRangeComplete
+                ? '选好后将播放短视频，完整观看后可查看本区间趋势与统计'
+                : '完整观看短视频后即可查看曲线与各区块数据'}
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View className='chart-legend-bar'>
+              <View className='chart-legend-items'>
+                <View className='legend-item'>
+                  <View className='legend-dot pulse' />
+                  <Text className='legend-text'>心率（脉搏）</Text>
+                </View>
+              </View>
+              <Text className='chart-legend-unit'>次/分</Text>
+            </View>
+
+            {isLongSmoothChart && (
+              <Text className='chart-hint'>
+                {timeRange === 'month' ? '近30天为平滑趋势线，便于观察走势' : '多日区间为平滑趋势线，便于观察走势'}
+              </Text>
+            )}
+
+            {chartData.some(d => d.pulse !== null) ? (
+              <View className={`chart-wrapper ${isLongSmoothChart ? 'month-mode' : ''}`}>
+                <View className='y-axis'>
+                  {pulseYAxisTicks.map(tick => (
+                    <Text key={tick} className='y-tick'>
+                      {tick}
+                    </Text>
+                  ))}
+                </View>
+                <View
+                  className={`chart-area ${isLongSmoothChart ? 'month-mode' : ''}`}
+                  onClick={() => {
+                    setSelectedPulsePoint(null)
+                    setSelectedPoint(null)
+                  }}
+                >
+                  <View className='chart-area-fade' />
+                  {pulseYAxisTicks.map(tick => (
+                    <View
+                      key={`pulse-grid-${tick}`}
+                      className='grid-line'
+                      style={{ top: `${getPulseYPercent(tick)}%` }}
+                    />
+                  ))}
+                  <View className='lines-layer'>
+                    {(() => {
+                      const aspectRatio = 1.8
+                      const totalPoints = chartTotalPoints
+                      const dataToRender = isLongSmoothChart
+                        ? smoothPulseTrendLine.map(d => ({ point: d, index: d.index }))
+                        : chartData
+                          .map((point, index) => ({ point, index }))
+                          .filter(({ point }) => point.pulse !== null)
+
+                      return dataToRender.map(({ point, index }, i) => {
+                        if (i >= dataToRender.length - 1) return null
+                        const nextItem = dataToRender[i + 1]
+                        const x1 = (index / totalPoints) * 100
+                        const x2 = (nextItem.index / totalPoints) * 100
+                        const y1 = getPulseYPercent(point.pulse!)
+                        const y2 = getPulseYPercent(nextItem.point.pulse!)
+                        const dx = (x2 - x1) * aspectRatio
+                        const angle = Math.atan2(y2 - y1, dx) * (180 / Math.PI)
+                        return (
+                          <View
+                            key={`pulse-line-${index}`}
+                            className='line pulse'
+                            style={{
+                              left: `${x1}%`,
+                              top: `${y1}%`,
+                              width: `${Math.sqrt((x2 - x1) ** 2 + ((y2 - y1) / aspectRatio) ** 2)}%`,
+                              transform: `rotate(${angle}deg)`
+                            }}
+                          />
+                        )
+                      })
+                    })()}
+                  </View>
+                  <View className='data-layer'>
+                    {(() => {
+                      const totalPoints = chartTotalPoints
+                      const pointsToRender = isLongSmoothChart
+                        ? smoothPulseTrendLine
+                        : chartData.map((d, i) => ({ ...d, index: i })).filter(d => d.pulse !== null)
+
+                      return pointsToRender.map(point => {
+                        const xPercent = (point.index / totalPoints) * 100
+                        const pulseY = getPulseYPercent(point.pulse!)
+                        const isSelected = selectedPulsePoint?.date === point.date
+                        const handlePulseClick = (e: any) => {
+                          e.stopPropagation?.()
+                          if (isSelected) {
+                            setSelectedPulsePoint(null)
+                          } else {
+                            setSelectedPoint(null)
+                            const originalData = chartData.find(d => d.date === point.date)
+                            setSelectedPulsePoint({
+                              date: point.date,
+                              label: point.label,
+                              pulse: originalData?.pulse ?? point.pulse!,
+                              count: originalData?.count || 1,
+                              xPercent,
+                              yPercent: pulseY
+                            })
+                          }
+                        }
+                        return (
+                          <View key={`pulse-${point.date}`}>
+                            <View
+                              className={`data-point pulse ${isSelected ? 'selected' : ''}`}
+                              style={{ left: `${xPercent}%`, top: `${pulseY}%` }}
+                              onClick={handlePulseClick}
+                            >
+                              {showPointValues && (
+                                <Text className='point-value point-value--pulse'>{point.pulse}</Text>
+                              )}
+                              <View className='point-inner' />
+                            </View>
+                          </View>
+                        )
+                      })
+                    })()}
+
+                    {selectedPulsePoint && (
+                      <View
+                        className='tooltip'
+                        style={{
+                          left: `${Math.min(Math.max(selectedPulsePoint.xPercent, 15), 85)}%`,
+                          top: `${Math.max(selectedPulsePoint.yPercent - 5, 5)}%`
+                        }}
+                      >
+                        <View className='tooltip-content'>
+                          <Text className='tooltip-date'>{selectedPulsePoint.label}</Text>
+                          <View className='tooltip-values'>
+                            <Text className='tooltip-pulse-row'>
+                              <Text className='pulse-tooltip-val'>{selectedPulsePoint.pulse}</Text>
+                              <Text className='tooltip-unit'>次/分</Text>
+                            </Text>
+                          </View>
+                          {selectedPulsePoint.count > 1 && (
+                            <Text className='tooltip-count'>
+                              当日
+                              {handFilter === 'left'
+                                ? '左手'
+                                : handFilter === 'right'
+                                  ? '右手'
+                                  : ''}
+                              {selectedPulsePoint.count}条中含脉搏的平均
+                            </Text>
+                          )}
+                        </View>
+                        <View className='tooltip-arrow' />
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View className='chart-empty'>
+                <Image className='empty-icon' src={iconChart} mode='aspectFit' />
+                <Text className='empty-text'>暂无脉搏数据</Text>
+                <Text className='empty-hint'>记录时填写脉搏后，这里会显示心率趋势</Text>
+              </View>
+            )}
+
+            {chartData.some(d => d.pulse !== null) && (
+              <View className='x-axis'>
+                {timeRange === 'week'
+                  ? chartData.map((point, index) => (
+                    <Text
+                      key={`pulse-x-${point.date}`}
+                      className={`x-label ${point.count > 0 ? 'has-data' : ''}`}
+                      style={{ left: `${(index / chartTotalPoints) * 100}%` }}
+                    >
+                      {point.label}
+                    </Text>
+                  ))
+                  : timeRange === 'month'
+                    ? [0, 10, 20, 29].map(index => (
+                      <Text
+                        key={`pulse-x-${chartData[index]?.date || index}`}
+                        className='x-label'
+                        style={{ left: `${(index / chartTotalPoints) * 100}%` }}
+                      >
+                        {chartData[index]?.label || ''}
+                      </Text>
+                    ))
+                    : (() => {
+                        const n = chartData.length
+                        const tp = Math.max(n - 1, 1)
+                        const rawIdx =
+                          n <= 7
+                            ? chartData.map((_, i) => i)
+                            : [0, Math.floor(n * 0.25), Math.floor(n * 0.5), Math.floor(n * 0.75), n - 1]
+                        const indices = rawIdx
+                          .filter((v, i, a) => a.indexOf(v) === i)
+                          .sort((a, b) => a - b)
+                        return indices.map(index => (
+                          <Text
+                            key={`pulse-x-${chartData[index]?.date ?? String(index)}`}
+                            className='x-label'
+                            style={{ left: `${(index / tp) * 100}%` }}
+                          >
+                            {chartData[index]?.label || ''}
+                          </Text>
+                        ))
+                      })()}
+              </View>
+            )}
           </>
         )}
       </View>
