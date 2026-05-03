@@ -8,6 +8,8 @@ export interface WeeklyReportStats {
   count: number
   /** 自然语言区间，如 4月1日 - 4月5日 */
   rangeLabel: string
+  /** 所选统计区间包含的日历天数（用于分享图、免责文案等） */
+  periodDayCount: number
   /** 全周期内全部记录的均值（与分享、封面图等一致） */
   avgSystolic: number
   avgDiastolic: number
@@ -63,13 +65,70 @@ export function getWeekRecords(records: BPRecord[]): BPRecord[] {
   return records.filter(r => new Date(r.recorded_at) >= weekAgo)
 }
 
-export function computeWeeklyReport(records: BPRecord[]): WeeklyReportStats | null {
-  const weekRecords = getWeekRecords(records)
-  if (weekRecords.length === 0) return null
+function recordLocalDateKey(iso: string): string {
+  const d = new Date(iso)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
 
-  const times = weekRecords.map(r => new Date(r.recorded_at).getTime())
-  const start = new Date(Math.min(...times))
-  const end = new Date(Math.max(...times))
+/** 含首尾两日 */
+export function inclusiveCalendarDaysBetween(startKey: string, endKey: string): number {
+  const [ys, ms, ds] = startKey.split('-').map(Number)
+  const [ye, me, de] = endKey.split('-').map(Number)
+  if ([ys, ms, ds, ye, me, de].some(n => Number.isNaN(n))) return 1
+  const s = new Date(ys, ms - 1, ds)
+  const e = new Date(ye, me - 1, de)
+  return Math.floor((e.getTime() - s.getTime()) / (24 * 60 * 60 * 1000)) + 1
+}
+
+export type WeeklyReportRangeOpts = {
+  startKey: string
+  endKey: string
+  hand?: 'all' | 'left' | 'right'
+}
+
+function filterRecordsForReport(
+  records: BPRecord[],
+  range: WeeklyReportRangeOpts | null | undefined
+): BPRecord[] {
+  if (!range?.startKey || !range?.endKey) {
+    return getWeekRecords(records)
+  }
+  const hand = range.hand ?? 'all'
+  return records.filter(r => {
+    const k = recordLocalDateKey(r.recorded_at)
+    if (k < range.startKey || k > range.endKey) return false
+    if (hand === 'all') return true
+    return r.hand === hand
+  })
+}
+
+export function computeWeeklyReport(
+  records: BPRecord[],
+  range?: WeeklyReportRangeOpts | null
+): WeeklyReportStats | null {
+  const periodRecords = filterRecordsForReport(records, range ?? null)
+  if (periodRecords.length === 0) return null
+
+  let rangeLabel: string
+  let periodDayCount: number
+
+  if (range?.startKey && range?.endKey) {
+    const [ys, ms, ds] = range.startKey.split('-').map(Number)
+    const [ye, me, de] = range.endKey.split('-').map(Number)
+    const start = new Date(ys, ms - 1, ds)
+    const end = new Date(ye, me - 1, de)
+    rangeLabel = formatRangeLabel(start, end)
+    periodDayCount = inclusiveCalendarDaysBetween(range.startKey, range.endKey)
+  } else {
+    const times = periodRecords.map(r => new Date(r.recorded_at).getTime())
+    const start = new Date(Math.min(...times))
+    const end = new Date(Math.max(...times))
+    rangeLabel = formatRangeLabel(start, end)
+    periodDayCount = 7
+  }
 
   let normalCount = 0
   let lowCount = 0
@@ -82,14 +141,14 @@ export function computeWeeklyReport(records: BPRecord[]): WeeklyReportStats | nu
     bucketMap[b] = 0
   })
 
-  let maxRecord = weekRecords[0]
-  let minRecord = weekRecords[0]
+  let maxRecord = periodRecords[0]
+  let minRecord = periodRecords[0]
   let maxSum = maxRecord.systolic + maxRecord.diastolic
   let minSum = minRecord.systolic + minRecord.diastolic
 
   let pulseSum = 0
 
-  for (const r of weekRecords) {
+  for (const r of periodRecords) {
     const st = getBPStatus(r.systolic, r.diastolic)
     if (st.color === 'ideal') normalCount++
     else if (st.color === 'low') lowCount++
@@ -114,19 +173,20 @@ export function computeWeeklyReport(records: BPRecord[]): WeeklyReportStats | nu
     }
   }
 
-  const abnormalCount = weekRecords.length - normalCount
+  const abnormalCount = periodRecords.length - normalCount
 
-  const avgSystolic = Math.round(weekRecords.reduce((s, r) => s + r.systolic, 0) / weekRecords.length)
-  const avgDiastolic = Math.round(weekRecords.reduce((s, r) => s + r.diastolic, 0) / weekRecords.length)
-  const avgPulse = Math.round(pulseSum / weekRecords.length)
+  const avgSystolic = Math.round(periodRecords.reduce((s, r) => s + r.systolic, 0) / periodRecords.length)
+  const avgDiastolic = Math.round(periodRecords.reduce((s, r) => s + r.diastolic, 0) / periodRecords.length)
+  const avgPulse = Math.round(pulseSum / periodRecords.length)
 
   const timeBuckets = BUCKET_ORDER.map(label => ({ label, count: bucketMap[label] || 0 }))
 
-  const handSplit = computeHandSplitOverview(weekRecords)!
+  const handSplit = computeHandSplitOverview(periodRecords)!
 
   return {
-    count: weekRecords.length,
-    rangeLabel: formatRangeLabel(start, end),
+    count: periodRecords.length,
+    rangeLabel,
+    periodDayCount,
     avgSystolic,
     avgDiastolic,
     avgPulse,

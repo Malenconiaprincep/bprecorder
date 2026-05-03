@@ -112,7 +112,9 @@ export function generateWeeklyReportImage(stats: WeeklyReportStats): Promise<str
     ctx.setFillStyle('#334155')
     ctx.setFontSize(30)
     ctx.setTextAlign('left')
-    ctx.fillText('近 7 天血压小结', cardX + 48, cardY + 44)
+    const headline =
+      stats.periodDayCount <= 7 ? '近 7 天血压小结' : `近 ${stats.periodDayCount} 天血压小结`
+    ctx.fillText(headline, cardX + 48, cardY + 44)
     ctx.setFillStyle('#94a3b8')
     ctx.setFontSize(22)
     ctx.fillText('给关心你的人看一眼', cardX + 48, cardY + 74)

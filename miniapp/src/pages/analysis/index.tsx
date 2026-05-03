@@ -123,6 +123,12 @@ export default function AnalysisPage() {
   const pendingCustomUnlockKeyRef = useRef<string | null>(null)
   /** 避免重复拉起「自定义解锁」广告 */
   const unlockCustomAdInFlightRef = useRef(false)
+  /** 去总结页时带当前区间/左右手，避免闭包滞后 */
+  const weeklyReportNavRef = useRef({
+    periodStart: '' as string,
+    periodEnd: '' as string,
+    hand: 'all' as 'all' | 'left' | 'right'
+  })
 
   useLoad(() => {
     setFontSizeMode(getCurrentFontSizeMode())
@@ -152,57 +158,6 @@ export default function AnalysisPage() {
     setSelectedPoint(null)
     setSelectedPulsePoint(null)
   }, [timeRange, handFilter, customStart, customEnd])
-
-  useEffect(() => {
-    if (!REWARD_VIDEO_ADS_ENABLED) return
-    const wxGlobal = (globalThis as unknown as {
-      wx?: { createRewardedVideoAd?: (opts: { adUnitId: string }) => RewardedVideoAdLike }
-    }).wx
-    if (!wxGlobal?.createRewardedVideoAd) return
-    try {
-      const videoAd = wxGlobal.createRewardedVideoAd({ adUnitId: ANALYSIS_REWARD_AD_UNIT_ID })
-      videoAd.onLoad(() => {})
-      videoAd.onError((err) => {
-        console.error('激励视频广告加载失败', err)
-      })
-      videoAd.onClose((res) => {
-        const action = pendingVideoActionRef.current
-        if (res?.isEnded && action) {
-          pendingVideoActionRef.current = null
-          if (action === 'unlock-custom-tab') {
-            setSelectedPoint(null)
-            setSelectedPulsePoint(null)
-            const k = pendingCustomUnlockKeyRef.current
-            if (k) {
-              customRangeAdUnlockedKeyRef.current = k
-              setCustomRangeUnlockedKeyState(k)
-              pendingCustomUnlockKeyRef.current = null
-            }
-            unlockCustomAdInFlightRef.current = false
-          } else if (action === 'open-summary-30d' || action === 'open-summary-custom-fallback') {
-            Taro.navigateTo({ url: '/pages/weekly-report/index' })
-          }
-        } else {
-          const forToast = pendingVideoActionRef.current
-          pendingVideoActionRef.current = null
-          if (forToast === 'unlock-custom-tab') {
-            unlockCustomAdInFlightRef.current = false
-            pendingCustomUnlockKeyRef.current = null
-          }
-          if (res && res.isEnded === false && forToast) {
-            const title =
-              forToast === 'open-summary-30d' || forToast === 'open-summary-custom-fallback'
-                ? '请完整观看广告后查看总结报告'
-                : '请完整观看广告后使用自定义区间'
-            Taro.showToast({ title, icon: 'none' })
-          }
-        }
-      })
-      videoAdRef.current = videoAd
-    } catch (e) {
-      console.error('激励视频广告创建失败', e)
-    }
-  }, [])
 
   const fetchRecords = async () => {
     if (USE_TEST_DATA) {
@@ -251,6 +206,68 @@ export default function AnalysisPage() {
     }
     return { start: dateList[0], end: dateList[dateList.length - 1], dateList, weekDayLabels }
   }, [timeRange, customStart, customEnd])
+
+  weeklyReportNavRef.current = {
+    periodStart: periodDateBounds.start,
+    periodEnd: periodDateBounds.end,
+    hand: handFilter
+  }
+
+  useEffect(() => {
+    if (!REWARD_VIDEO_ADS_ENABLED) return
+    const wxGlobal = (globalThis as unknown as {
+      wx?: { createRewardedVideoAd?: (opts: { adUnitId: string }) => RewardedVideoAdLike }
+    }).wx
+    if (!wxGlobal?.createRewardedVideoAd) return
+    try {
+      const videoAd = wxGlobal.createRewardedVideoAd({ adUnitId: ANALYSIS_REWARD_AD_UNIT_ID })
+      videoAd.onLoad(() => {})
+      videoAd.onError((err) => {
+        console.error('激励视频广告加载失败', err)
+      })
+      videoAd.onClose((res) => {
+        const action = pendingVideoActionRef.current
+        if (res?.isEnded && action) {
+          pendingVideoActionRef.current = null
+          if (action === 'unlock-custom-tab') {
+            setSelectedPoint(null)
+            setSelectedPulsePoint(null)
+            const k = pendingCustomUnlockKeyRef.current
+            if (k) {
+              customRangeAdUnlockedKeyRef.current = k
+              setCustomRangeUnlockedKeyState(k)
+              pendingCustomUnlockKeyRef.current = null
+            }
+            unlockCustomAdInFlightRef.current = false
+          } else if (action === 'open-summary-30d' || action === 'open-summary-custom-fallback') {
+            const { periodStart, periodEnd, hand } = weeklyReportNavRef.current
+            const url =
+              periodStart && periodEnd
+                ? `/pages/weekly-report/index?start=${encodeURIComponent(periodStart)}&end=${encodeURIComponent(periodEnd)}&hand=${encodeURIComponent(hand)}`
+                : '/pages/weekly-report/index'
+            Taro.navigateTo({ url })
+          }
+        } else {
+          const forToast = pendingVideoActionRef.current
+          pendingVideoActionRef.current = null
+          if (forToast === 'unlock-custom-tab') {
+            unlockCustomAdInFlightRef.current = false
+            pendingCustomUnlockKeyRef.current = null
+          }
+          if (res && res.isEnded === false && forToast) {
+            const title =
+              forToast === 'open-summary-30d' || forToast === 'open-summary-custom-fallback'
+                ? '请完整观看广告后查看总结报告'
+                : '请完整观看广告后使用自定义区间'
+            Taro.showToast({ title, icon: 'none' })
+          }
+        }
+      })
+      videoAdRef.current = videoAd
+    } catch (e) {
+      console.error('激励视频广告创建失败', e)
+    }
+  }, [])
 
   const filteredRecords = useMemo(() => {
     const { start, end } = periodDateBounds
@@ -515,7 +532,12 @@ export default function AnalysisPage() {
   }
 
   const navigateWeeklyReport = () => {
-    Taro.navigateTo({ url: '/pages/weekly-report/index' })
+    const { periodStart, periodEnd, hand } = weeklyReportNavRef.current
+    const url =
+      periodStart && periodEnd
+        ? `/pages/weekly-report/index?start=${encodeURIComponent(periodStart)}&end=${encodeURIComponent(periodEnd)}&hand=${encodeURIComponent(hand)}`
+        : '/pages/weekly-report/index'
+    Taro.navigateTo({ url })
   }
 
   const playRewardedVideo = (onMissingAd: () => void) => {
