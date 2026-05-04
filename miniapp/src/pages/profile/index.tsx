@@ -47,25 +47,18 @@ const EXPORT_REWARD_AD_UNIT_ID = 'adunit-04588b8cb1a0181a'
 /** 微信流量主审核未通过时拉取会失败，审核通过后在各页改为 `true` 再发版 */
 const REWARD_VIDEO_ADS_ENABLED = false
 
-/** 将 ISO 记录时间格式化为东八区日期与时间（导出 Excel） */
+const pad2 = (n: number) => String(n).padStart(2, '0')
+
+/** 将 ISO 记录时间格式化为东八区日期与时间（导出 Excel）。不用 Intl：部分 Android 真机 JS 环境无全局 Intl。 */
 function formatRecordedAtAsiaShanghai(iso: string): { date: string; time: string } {
   if (!iso) return { date: '', time: '' }
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return { date: '', time: '' }
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Shanghai',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }).formatToParts(d)
-  const v = (t: Intl.DateTimeFormatPartTypes) => parts.find(p => p.type === t)?.value ?? ''
+  // 中国标准时间固定 UTC+8；将时刻平移 8 小时后取 UTC 分量即上海墙钟（与 Intl + Asia/Shanghai 一致）
+  const sh = new Date(d.getTime() + 8 * 60 * 60 * 1000)
   return {
-    date: `${v('year')}-${v('month')}-${v('day')}`,
-    time: `${v('hour')}:${v('minute')}:${v('second')}`
+    date: `${sh.getUTCFullYear()}-${pad2(sh.getUTCMonth() + 1)}-${pad2(sh.getUTCDate())}`,
+    time: `${pad2(sh.getUTCHours())}:${pad2(sh.getUTCMinutes())}:${pad2(sh.getUTCSeconds())}`
   }
 }
 
