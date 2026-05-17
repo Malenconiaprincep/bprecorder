@@ -848,7 +848,7 @@ export default function Index() {
         </View>
 
         {/* 活动入口：横幅图占位，点击进入活动页 */}
-        <View
+        {/* <View
           className='home-promo-entry'
           onClick={() => Taro.navigateTo({ url: '/pages/promo-activity/index' })}
         >
@@ -857,7 +857,7 @@ export default function Index() {
             src={promoBanner}
             mode='aspectFill'
           />
-        </View>
+        </View> */}
 
         {/* 本周概览卡片 */}
         <View className='summary-card'>
