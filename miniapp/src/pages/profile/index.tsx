@@ -45,7 +45,7 @@ interface RewardedVideoAdLike {
 const EXPORT_REWARD_AD_UNIT_ID = 'adunit-04588b8cb1a0181a'
 
 /** 微信流量主审核未通过时拉取会失败，审核通过后在各页改为 `true` 再发版 */
-const REWARD_VIDEO_ADS_ENABLED = false
+const REWARD_VIDEO_ADS_ENABLED = true
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 

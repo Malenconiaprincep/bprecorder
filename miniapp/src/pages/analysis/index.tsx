@@ -66,7 +66,7 @@ interface RewardedVideoAdLike {
 const ANALYSIS_REWARD_AD_UNIT_ID = 'adunit-f6882fea9352fb42'
 
 /** 微信流量主审核未通过时拉取会失败，审核通过后在各页改为 `true` 再发版 */
-const REWARD_VIDEO_ADS_ENABLED = false
+const REWARD_VIDEO_ADS_ENABLED = true
 
 type PendingVideoAction = 'unlock-custom-tab' | 'open-summary-30d' | 'open-summary-custom-fallback'
 
