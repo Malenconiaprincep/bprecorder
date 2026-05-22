@@ -102,7 +102,7 @@ export default function Profile() {
   const [exportStart, setExportStart] = useState('')
   const [exportEnd, setExportEnd] = useState('')
   const [exporting, setExporting] = useState(false)
-  const handleExportRef = useRef<(start?: string, end?: string) => Promise<void>>(async () => {})
+  const handleExportRef = useRef<(start?: string, end?: string) => Promise<void>>(async () => { })
   const videoAdRef = useRef<RewardedVideoAdLike | null>(null)
   const pendingExportRef = useRef<{ start: string; end: string } | null>(null)
   // 联系方式配置
@@ -530,7 +530,7 @@ export default function Profile() {
     if (!wxGlobal?.createRewardedVideoAd) return
 
     const videoAd = wxGlobal.createRewardedVideoAd({ adUnitId: EXPORT_REWARD_AD_UNIT_ID })
-    videoAd.onLoad(() => {})
+    videoAd.onLoad(() => { })
     videoAd.onError((err) => {
       console.error('激励视频广告加载失败', err)
     })
@@ -1389,7 +1389,7 @@ export default function Profile() {
       )}
 
       <View className='version-info'>
-        <Text className='version-text'>v2.4.0</Text>
+        <Text className='version-text'>v2.4.1</Text>
       </View>
 
       {/* 字体模式选择弹窗 */}
