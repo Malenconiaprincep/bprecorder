@@ -1,4 +1,9 @@
 export default defineAppConfig({
+  permission: {
+    'scope.camera': {
+      desc: '用于拍摄血压计屏幕进行识别'
+    }
+  },
   pages: [
     'pages/index/index',
     'pages/analysis/index',

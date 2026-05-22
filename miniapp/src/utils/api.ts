@@ -9,3 +9,6 @@ export const API_BASE_URL = isDev
   ? 'http://localhost:3000' 
   : 'https://bprecorder.aikee.xyz'
 
+/** analyze/key 始终走线上（本地无对应密钥配置） */
+export const ANALYZE_KEY_API_BASE_URL = 'https://bprecorder.aikee.xyz'
+

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { View, Text, Image, ScrollView, Canvas, Button, Textarea, Navigator } from '@tarojs/components'
+import { View, Text, Image, ScrollView, Canvas, Button, Textarea, Navigator, Camera } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import {
   getRecordsRecent,
@@ -11,7 +11,7 @@ import {
 } from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
 import { FontSizeMode, getCurrentFontSizeMode, initFontSizeMode, getFontSizeModeClass, saveLocalFontSizeMode, applyFontSizeMode, getPreferredMeasureHand, savePreferredMeasureHand, clearPreferredMeasureHand } from '../../lib/settings'
-import { API_BASE_URL } from '../../utils/api'
+import { API_BASE_URL, ANALYZE_KEY_API_BASE_URL } from '../../utils/api'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { generateShareImage } from '../../utils/shareImage'
 import { getBPStatus } from '../../utils/bpStatus'
@@ -141,6 +141,7 @@ export default function Index() {
     pulse: number
   } | null>(null)
   const [showResultModal, setShowResultModal] = useState(false)
+  const [showCamera, setShowCamera] = useState(false)
   const [savingRecord, setSavingRecord] = useState(false)
   const [selectedHand, setSelectedHand] = useState<'left' | 'right' | ''>(() => getPreferredMeasureHand() ?? '')
   const [note, setNote] = useState('')
@@ -450,29 +451,93 @@ export default function Index() {
     })
   }
 
-  const goToCamera = async () => {
+  const processSelectedImage = async (tempFilePath: string) => {
+    setShowCamera(false)
+    setAnalyzing(true)
+    try {
+      const isDevtools = Taro.getSystemInfoSync().platform === 'devtools'
+      if (isDevtools) {
+        await analyzeImageUpload(tempFilePath)
+      } else {
+        await analyzeImageQwenDirect(tempFilePath)
+      }
+    } catch (e) {
+      console.log('Analyze error:', e)
+    }
+  }
+
+  const ensureCameraAuth = async (): Promise<boolean> => {
+    try {
+      const setting = await Taro.getSetting()
+      if (setting.authSetting['scope.camera']) return true
+      await Taro.authorize({ scope: 'scope.camera' })
+      return true
+    } catch {
+      const res = await Taro.showModal({
+        title: '需要相机权限',
+        content: '请开启相机权限，以便拍摄血压计屏幕进行识别',
+        confirmText: '去设置',
+        cancelText: '取消'
+      })
+      if (res.confirm) {
+        await Taro.openSetting()
+        const after = await Taro.getSetting()
+        return !!after.authSetting['scope.camera']
+      }
+      return false
+    }
+  }
+
+  const goToCamera = () => {
     checkLoginAndProceed(async () => {
-      try {
-        // 直接拉起相机或相册
-        const res = await Taro.chooseImage({
-          count: 1,
-          sizeType: ['compressed'],
-          sourceType: ['album', 'camera']
-        })
-
-        const tempFilePath = res.tempFilePaths[0]
-
-        setAnalyzing(true)
-        const isDevtools = Taro.getSystemInfoSync().platform === 'devtools'
-        if (isDevtools) {
-          await analyzeImageUpload(tempFilePath)
-        } else {
-          await analyzeImageQwenDirect(tempFilePath)
+      const isDevtools = Taro.getSystemInfoSync().platform === 'devtools'
+      // 开发者工具无 camera 组件，仍用 chooseImage
+      if (isDevtools) {
+        try {
+          const res = await Taro.chooseImage({
+            count: 1,
+            sizeType: ['compressed'],
+            sourceType: ['album', 'camera']
+          })
+          await processSelectedImage(res.tempFilePaths[0])
+        } catch (e) {
+          console.log('User cancelled or error:', e)
         }
-      } catch (e) {
-        console.log('User cancelled or error:', e)
+        return
+      }
+      const ok = await ensureCameraAuth()
+      if (ok) setShowCamera(true)
+    })
+  }
+
+  const closeCamera = () => {
+    setShowCamera(false)
+  }
+
+  const handleTakePhoto = () => {
+    const ctx = Taro.createCameraContext()
+    ctx.takePhoto({
+      quality: 'high',
+      success: (res) => {
+        processSelectedImage(res.tempImagePath)
+      },
+      fail: () => {
+        Taro.showToast({ title: '拍照失败，请重试', icon: 'none' })
       }
     })
+  }
+
+  const chooseFromAlbum = async () => {
+    try {
+      const res = await Taro.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        sourceType: ['album']
+      })
+      await processSelectedImage(res.tempFilePaths[0])
+    } catch (e) {
+      console.log('User cancelled or error:', e)
+    }
   }
 
   /** 微信开发者工具：multipart 上传至本站 /api/analyze（服务端 Qwen） */
@@ -523,7 +588,7 @@ export default function Index() {
   const analyzeImageQwenDirect = async (filePath: string) => {
     try {
       const keyRes = await Taro.request<{ apiKey?: string; error?: string }>({
-        url: `${API_BASE_URL}/api/analyze/key`,
+        url: `${ANALYZE_KEY_API_BASE_URL}/api/analyze/key`,
         method: 'GET'
       })
 
@@ -1073,6 +1138,34 @@ export default function Index() {
         {/* 底部占位，防止被 tabbar 遮挡 */}
         <View className='bottom-spacer' />
       </ScrollView>
+
+      {/* 内嵌相机：takePhoto 仅写临时文件，不会保存到系统相册 */}
+      {showCamera && (
+        <View className='camera-mask'>
+          <Camera
+            className='camera-view'
+            devicePosition='back'
+            flash='auto'
+            onError={() => {
+              Taro.showToast({ title: '相机不可用', icon: 'none' })
+              setShowCamera(false)
+            }}
+          />
+          <View className='camera-top-bar'>
+            <Text className='camera-close' onClick={closeCamera}>×</Text>
+            <Text className='camera-hint'>请将血压计屏幕对准取景框</Text>
+          </View>
+          <View className='camera-bottom-bar'>
+            <View className='camera-album-btn' onClick={chooseFromAlbum}>
+              <Text className='camera-album-text'>相册</Text>
+            </View>
+            <View className='camera-shutter' onClick={handleTakePhoto}>
+              <View className='camera-shutter-inner' />
+            </View>
+            <View className='camera-album-placeholder' />
+          </View>
+        </View>
+      )}
 
       {/* 识别中遮罩 - 放在 ScrollView 外面 */}
       {analyzing && (
