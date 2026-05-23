@@ -466,25 +466,17 @@ export default function Index() {
     }
   }
 
-  const ensureCameraAuth = async (): Promise<boolean> => {
+  /** 仅从相册选图（不会触发系统相机，避免部分机型拍照落盘相册） */
+  const pickImageFromAlbum = async () => {
     try {
-      const setting = await Taro.getSetting()
-      if (setting.authSetting['scope.camera']) return true
-      await Taro.authorize({ scope: 'scope.camera' })
-      return true
-    } catch {
-      const res = await Taro.showModal({
-        title: '需要相机权限',
-        content: '请开启相机权限，以便拍摄血压计屏幕进行识别',
-        confirmText: '去设置',
-        cancelText: '取消'
+      const res = await Taro.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        sourceType: ['album']
       })
-      if (res.confirm) {
-        await Taro.openSetting()
-        const after = await Taro.getSetting()
-        return !!after.authSetting['scope.camera']
-      }
-      return false
+      await processSelectedImage(res.tempFilePaths[0])
+    } catch (e) {
+      console.log('User cancelled or error:', e)
     }
   }
 
@@ -505,8 +497,14 @@ export default function Index() {
         }
         return
       }
-      const ok = await ensureCameraAuth()
-      if (ok) setShowCamera(true)
+
+      // 内嵌相机 takePhoto 仅写临时文件，不会保存到系统相册；静默尝试授权，不阻塞打开取景框
+      Taro.getSetting().then(({ authSetting }) => {
+        if (!authSetting['scope.camera']) {
+          Taro.authorize({ scope: 'scope.camera' }).catch(() => {})
+        }
+      })
+      setShowCamera(true)
     })
   }
 
@@ -528,16 +526,7 @@ export default function Index() {
   }
 
   const chooseFromAlbum = async () => {
-    try {
-      const res = await Taro.chooseImage({
-        count: 1,
-        sizeType: ['compressed'],
-        sourceType: ['album']
-      })
-      await processSelectedImage(res.tempFilePaths[0])
-    } catch (e) {
-      console.log('User cancelled or error:', e)
-    }
+    await pickImageFromAlbum()
   }
 
   /** 微信开发者工具：multipart 上传至本站 /api/analyze（服务端 Qwen） */
@@ -1147,8 +1136,20 @@ export default function Index() {
             devicePosition='back'
             flash='auto'
             onError={() => {
-              Taro.showToast({ title: '相机不可用', icon: 'none' })
               setShowCamera(false)
+              Taro.showModal({
+                title: '相机不可用',
+                content: '无法打开相机。可在微信设置中开启摄像头权限，或从相册选择已有照片。',
+                confirmText: '去设置',
+                cancelText: '从相册选',
+                success: (res) => {
+                  if (res.confirm) {
+                    Taro.openSetting()
+                  } else {
+                    pickImageFromAlbum()
+                  }
+                }
+              })
             }}
           />
           <View className='camera-top-bar'>
