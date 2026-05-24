@@ -13,7 +13,6 @@ export default defineAppConfig({
     'pages/weekly-report/index',
     'pages/input/index',
     'pages/camera/index',
-    'pages/login/index',
     'pages/calendar/index',
     'pages/groups/detail',
     'pages/groups/join',
