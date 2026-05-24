@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { View, Text, Image, ScrollView, Canvas, Button, Textarea, Navigator, Camera } from '@tarojs/components'
+import { View, Text, Image, ScrollView, Canvas, Button, Textarea, Navigator } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import {
   getRecordsRecent,
@@ -141,7 +141,6 @@ export default function Index() {
     pulse: number
   } | null>(null)
   const [showResultModal, setShowResultModal] = useState(false)
-  const [showCamera, setShowCamera] = useState(false)
   const [savingRecord, setSavingRecord] = useState(false)
   const [selectedHand, setSelectedHand] = useState<'left' | 'right' | ''>(() => getPreferredMeasureHand() ?? '')
   const [note, setNote] = useState('')
@@ -451,82 +450,27 @@ export default function Index() {
     })
   }
 
-  const processSelectedImage = async (tempFilePath: string) => {
-    setShowCamera(false)
-    setAnalyzing(true)
-    try {
-      const isDevtools = Taro.getSystemInfoSync().platform === 'devtools'
-      if (isDevtools) {
-        await analyzeImageUpload(tempFilePath)
-      } else {
-        await analyzeImageQwenDirect(tempFilePath)
-      }
-    } catch (e) {
-      console.log('Analyze error:', e)
-    }
-  }
-
-  /** 仅从相册选图（不会触发系统相机，避免部分机型拍照落盘相册） */
-  const pickImageFromAlbum = async () => {
-    try {
-      const res = await Taro.chooseImage({
-        count: 1,
-        sizeType: ['compressed'],
-        sourceType: ['album']
-      })
-      await processSelectedImage(res.tempFilePaths[0])
-    } catch (e) {
-      console.log('User cancelled or error:', e)
-    }
-  }
-
   const goToCamera = () => {
     checkLoginAndProceed(async () => {
-      const isDevtools = Taro.getSystemInfoSync().platform === 'devtools'
-      // 开发者工具无 camera 组件，仍用 chooseImage
-      if (isDevtools) {
-        try {
-          const res = await Taro.chooseImage({
-            count: 1,
-            sizeType: ['compressed'],
-            sourceType: ['album', 'camera']
-          })
-          await processSelectedImage(res.tempFilePaths[0])
-        } catch (e) {
-          console.log('User cancelled or error:', e)
+      try {
+        const res = await Taro.chooseImage({
+          count: 1,
+          sizeType: ['compressed'],
+          sourceType: ['album', 'camera']
+        })
+
+        const tempFilePath = res.tempFilePaths[0]
+        setAnalyzing(true)
+        const isDevtools = Taro.getSystemInfoSync().platform === 'devtools'
+        if (isDevtools) {
+          await analyzeImageUpload(tempFilePath)
+        } else {
+          await analyzeImageQwenDirect(tempFilePath)
         }
-        return
-      }
-
-      // 内嵌相机 takePhoto 仅写临时文件，不会保存到系统相册；静默尝试授权，不阻塞打开取景框
-      Taro.getSetting().then(({ authSetting }) => {
-        if (!authSetting['scope.camera']) {
-          Taro.authorize({ scope: 'scope.camera' }).catch(() => {})
-        }
-      })
-      setShowCamera(true)
-    })
-  }
-
-  const closeCamera = () => {
-    setShowCamera(false)
-  }
-
-  const handleTakePhoto = () => {
-    const ctx = Taro.createCameraContext()
-    ctx.takePhoto({
-      quality: 'high',
-      success: (res) => {
-        processSelectedImage(res.tempImagePath)
-      },
-      fail: () => {
-        Taro.showToast({ title: '拍照失败，请重试', icon: 'none' })
+      } catch (e) {
+        console.log('User cancelled or error:', e)
       }
     })
-  }
-
-  const chooseFromAlbum = async () => {
-    await pickImageFromAlbum()
   }
 
   /** 微信开发者工具：multipart 上传至本站 /api/analyze（服务端 Qwen） */
@@ -1127,46 +1071,6 @@ export default function Index() {
         {/* 底部占位，防止被 tabbar 遮挡 */}
         <View className='bottom-spacer' />
       </ScrollView>
-
-      {/* 内嵌相机：takePhoto 仅写临时文件，不会保存到系统相册 */}
-      {showCamera && (
-        <View className='camera-mask'>
-          <Camera
-            className='camera-view'
-            devicePosition='back'
-            flash='auto'
-            onError={() => {
-              setShowCamera(false)
-              Taro.showModal({
-                title: '相机不可用',
-                content: '无法打开相机。可在微信设置中开启摄像头权限，或从相册选择已有照片。',
-                confirmText: '去设置',
-                cancelText: '从相册选',
-                success: (res) => {
-                  if (res.confirm) {
-                    Taro.openSetting()
-                  } else {
-                    pickImageFromAlbum()
-                  }
-                }
-              })
-            }}
-          />
-          <View className='camera-top-bar'>
-            <Text className='camera-close' onClick={closeCamera}>×</Text>
-            <Text className='camera-hint'>请将血压计屏幕对准取景框</Text>
-          </View>
-          <View className='camera-bottom-bar'>
-            <View className='camera-album-btn' onClick={chooseFromAlbum}>
-              <Text className='camera-album-text'>相册</Text>
-            </View>
-            <View className='camera-shutter' onClick={handleTakePhoto}>
-              <View className='camera-shutter-inner' />
-            </View>
-            <View className='camera-album-placeholder' />
-          </View>
-        </View>
-      )}
 
       {/* 识别中遮罩 - 放在 ScrollView 外面 */}
       {analyzing && (
