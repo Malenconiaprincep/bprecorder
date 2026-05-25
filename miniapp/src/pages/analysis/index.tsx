@@ -15,6 +15,7 @@ import {
   countDonutCategories,
   type AnalysisDonutCategory
 } from '../../utils/analysisClassification'
+import { REWARD_VIDEO_ADS_ENABLED, SHARED_REWARD_AD_UNIT_ID } from '../../utils/rewardAdUnit'
 
 /** 本地日历日 YYYY-MM-DD */
 const formatDateKey = (date: Date) => {
@@ -61,12 +62,6 @@ interface RewardedVideoAdLike {
   onError(cb: (err: unknown) => void): void
   onClose(cb: (res: { isEnded?: boolean }) => void): void
 }
-
-/** 分析页激励视频：自定义 Tab、30天总结、自定义总结（兜底） */
-const ANALYSIS_REWARD_AD_UNIT_ID = 'adunit-f6882fea9352fb42'
-
-/** 微信流量主审核未通过时拉取会失败，审核通过后在各页改为 `true` 再发版 */
-const REWARD_VIDEO_ADS_ENABLED = true
 
 type PendingVideoAction = 'unlock-custom-tab' | 'open-summary-30d' | 'open-summary-custom-fallback'
 
@@ -220,7 +215,7 @@ export default function AnalysisPage() {
     }).wx
     if (!wxGlobal?.createRewardedVideoAd) return
     try {
-      const videoAd = wxGlobal.createRewardedVideoAd({ adUnitId: ANALYSIS_REWARD_AD_UNIT_ID })
+      const videoAd = wxGlobal.createRewardedVideoAd({ adUnitId: SHARED_REWARD_AD_UNIT_ID })
       videoAd.onLoad(() => {})
       videoAd.onError((err) => {
         console.error('激励视频广告加载失败', err)

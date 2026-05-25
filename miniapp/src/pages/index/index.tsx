@@ -16,6 +16,14 @@ import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { generateShareImage } from '../../utils/shareImage'
 import { getBPStatus } from '../../utils/bpStatus'
 import { computeHandSplitOverview } from '../../utils/bpHandAverages'
+import DietAdviceCard from '../../components/DietAdviceCard'
+import {
+  DIET_ADVICE_UI_INITIAL,
+  markDietAdvicePromptDismissed,
+  openDietAdviceAfterSave,
+  requestDietAdviceDetailWithAd,
+  type DietAdviceUiState,
+} from '../../utils/triggerDietAdvice'
 import './index.scss'
 
 // 图标
@@ -146,6 +154,7 @@ export default function Index() {
   const [note, setNote] = useState('')
   const [noteExpanded, setNoteExpanded] = useState(false)
   const [shareImageUrl, setShareImageUrl] = useState<string>('')
+  const [dietAdviceUi, setDietAdviceUi] = useState<DietAdviceUiState>(DIET_ADVICE_UI_INITIAL)
   const [selectedDate, setSelectedDate] = useState<string | null>(null) // 选中的日期（用于筛选）
   /** 本周概览左右手均有数据时，轻量 Tab 切换 */
   const [summaryHandTab, setSummaryHandTab] = useState<'left' | 'right'>('left')
@@ -617,6 +626,17 @@ export default function Index() {
     }
   }
 
+  const closeDietAdviceCard = () => {
+    markDietAdvicePromptDismissed()
+    setDietAdviceUi(DIET_ADVICE_UI_INITIAL)
+  }
+
+  const handleViewDietAdvice = () => {
+    const latest = dietAdviceUi.savedLatest
+    if (!latest || !userInfo) return
+    requestDietAdviceDetailWithAd(userInfo.openid, latest, closeDietAdviceCard)
+  }
+
   const handleSaveRecord = async () => {
     if (!analyzeResult || !userInfo) {
       Taro.showToast({ title: '请先登录', icon: 'none' })
@@ -626,16 +646,23 @@ export default function Index() {
 
     setSavingRecord(true)
     const recordedAt = new Date().toISOString()
+    const savedReading = {
+      systolic: analyzeResult.systolic,
+      diastolic: analyzeResult.diastolic,
+      pulse: analyzeResult.pulse,
+      note: note || undefined,
+      recordedAt,
+    }
 
     try {
       const { error } = await addRecord({
         user_id: userInfo.openid,
-        systolic: analyzeResult.systolic,
-        diastolic: analyzeResult.diastolic,
-        pulse: analyzeResult.pulse,
+        systolic: savedReading.systolic,
+        diastolic: savedReading.diastolic,
+        pulse: savedReading.pulse,
         recorded_at: recordedAt,
         hand: selectedHand === 'left' || selectedHand === 'right' ? selectedHand : undefined,
-        note: note || undefined
+        note: savedReading.note
       })
 
       if (error) {
@@ -647,9 +674,9 @@ export default function Index() {
         // 生成分享图片
         try {
           const imageUrl = await generateShareImage(
-            analyzeResult.systolic,
-            analyzeResult.diastolic,
-            analyzeResult.pulse,
+            savedReading.systolic,
+            savedReading.diastolic,
+            savedReading.pulse,
             recordedAt
           )
           setShareImageUrl(imageUrl)
@@ -666,6 +693,7 @@ export default function Index() {
         if (selectedHand === 'left' || selectedHand === 'right') {
           savePreferredMeasureHand(selectedHand)
         }
+        openDietAdviceAfterSave(savedReading, setDietAdviceUi)
       }
     } catch (e) {
       Taro.showToast({ title: '保存失败', icon: 'none' })
@@ -848,7 +876,7 @@ export default function Index() {
         {/* 活动入口：横幅图占位，点击进入活动页 */}
         {/* <View
           className='home-promo-entry'
-          onClick={() => Taro.navigateTo({ url: '/pages/promo-activity/index' })}
+          onClick={() => Taro.navigateTo({ url: '/pages/promo-list/index' })}
         >
           <Image
             className='home-promo-entry-img'
@@ -1169,6 +1197,13 @@ export default function Index() {
           </View>
         </View>
       )}
+
+      <DietAdviceCard
+        visible={dietAdviceUi.visible}
+        savedLatest={dietAdviceUi.savedLatest}
+        onViewAdvice={handleViewDietAdvice}
+        onClose={closeDietAdviceCard}
+      />
 
     </>
   )

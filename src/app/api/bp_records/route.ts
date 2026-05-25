@@ -40,18 +40,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '此接口只支持单个记录插入' }, { status: 400 });
     }
 
-    // 验证必需字段
-    if (!body.systolic || !body.diastolic || !body.pulse) {
-      return NextResponse.json({ error: '缺少必需字段: systolic, diastolic, pulse' }, { status: 400 });
+    const systolic = Number(body.systolic)
+    const diastolic = Number(body.diastolic)
+    const pulse = Number(body.pulse)
+
+    if (!Number.isFinite(systolic) || !Number.isFinite(diastolic) || !Number.isFinite(pulse)) {
+      return NextResponse.json(
+        { error: '缺少有效数值: systolic, diastolic, pulse' },
+        { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } }
+      );
     }
-    if (!body.user_id) {
-      return NextResponse.json({ error: '缺少 user_id 字段' }, { status: 400 });
+    if (!body.user_id || typeof body.user_id !== 'string') {
+      return NextResponse.json(
+        { error: '缺少 user_id 字段' },
+        { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } }
+      );
+    }
+
+    const row = {
+      user_id: body.user_id,
+      systolic: Math.round(systolic),
+      diastolic: Math.round(diastolic),
+      pulse: Math.round(pulse),
+      recorded_at: body.recorded_at,
+      hand: body.hand === 'left' || body.hand === 'right' ? body.hand : null,
+      note: typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null,
+    }
+
+    if (!row.recorded_at) {
+      return NextResponse.json(
+        { error: '缺少 recorded_at 字段' },
+        { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } }
+      );
     }
 
     // 插入记录
     const { data, error } = await supabase
       .from('bp_records')
-      .insert([body])
+      .insert([row])
       .select()
       .single();
 

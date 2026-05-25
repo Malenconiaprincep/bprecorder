@@ -2,16 +2,22 @@ export default defineAppConfig({
   permission: {
     'scope.camera': {
       desc: '用于拍摄血压计屏幕进行识别'
+    },
+    'scope.userLocation': {
+      desc: '用于结合您所在地天气生成更准确的生活饮食建议'
     }
   },
+  requiredPrivateInfos: ['getLocation'],
   pages: [
     'pages/index/index',
     'pages/analysis/index',
     'pages/groups/index',
     'pages/profile/index',
+    'pages/promo-list/index',
     'pages/promo-activity/index',
     'pages/weekly-report/index',
     'pages/input/index',
+    'pages/diet-advice/index',
     'pages/camera/index',
     'pages/calendar/index',
     'pages/groups/detail',

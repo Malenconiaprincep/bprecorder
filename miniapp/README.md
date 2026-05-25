@@ -30,13 +30,17 @@ const supabaseAnonKey = 'YOUR_SUPABASE_KEY'
 
 ### 3. 运行开发环境
 
-**微信小程序：**
+**微信小程序（推荐）：**
 
 ```bash
+cd miniapp
 npm run dev:weapp
 ```
 
-运行后，使用微信开发者工具导入 `miniapp/dist` 目录即可预览。
+等终端出现 `Watching...` 后，用微信开发者工具打开 **`miniapp` 目录**（不是只打开 `dist`；`project.config.json` 里 `miniprogramRoot` 指向 `dist/`）。
+
+> `dev:weapp` 使用 `NODE_ENV=production --watch`（与 Taro 官方建议一致），产物与正式 build 一致，模拟器不易白屏。  
+> 若需对接本地 `localhost:3000` 后端，用：`npm run dev:weapp:local`（需本机已启动 Next API，并在开发者工具勾选「不校验合法域名」）。
 
 ## 项目结构
 

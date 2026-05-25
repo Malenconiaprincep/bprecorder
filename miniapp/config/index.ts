@@ -63,6 +63,10 @@ export default defineConfig(async (merge, { command, mode }) => {
       },
       webpackChain(chain) {
         chain.resolve.plugin('tsconfig-paths').use(TsconfigPathsPlugin)
+        chain.watchOptions({
+          ignored: ['**/node_modules/**', '**/.git/**'],
+          aggregateTimeout: 300,
+        })
         chain.merge({
           plugin: {
             install: {

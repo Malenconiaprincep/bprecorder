@@ -204,12 +204,34 @@ export async function addRecord(record: Omit<BPRecord, 'id' | 'created_at'>): Pr
       data: record
     })
 
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      return { data: res.data, error: null }
-    } else {
-      const errorMsg = res.data?.error || res.data?.message || `请求失败 (${res.statusCode})`
-      return { data: null, error: errorMsg }
+    const errMsg = typeof res.errMsg === 'string' ? res.errMsg : ''
+    if (errMsg && !errMsg.includes('ok')) {
+      return { data: null, error: errMsg }
     }
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      let payload = res.data
+      if (typeof payload === 'string') {
+        try {
+          payload = JSON.parse(payload)
+        } catch {
+          /* 非 JSON 时保持原样 */
+        }
+      }
+      if (payload && typeof payload === 'object' && 'error' in payload && (payload as { error?: string }).error) {
+        return { data: null, error: String((payload as { error: string }).error) }
+      }
+      const row = Array.isArray(payload) ? payload[0] : payload
+      return { data: (row as BPRecord) || null, error: null }
+    }
+
+    const raw = res.data
+    const errorMsg =
+      (typeof raw === 'object' && raw !== null
+        ? (raw as { error?: string; message?: string }).error ||
+          (raw as { message?: string }).message
+        : null) || `请求失败 (${res.statusCode})`
+    return { data: null, error: errorMsg }
   } catch (e: any) {
     console.error('addRecord error:', e)
     return { data: null, error: e.message || '网络请求失败' }

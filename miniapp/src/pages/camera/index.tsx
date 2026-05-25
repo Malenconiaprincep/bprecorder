@@ -3,6 +3,19 @@ import { View, Text, Image, Textarea } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { addRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
+import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
+import DietAdviceCard from '../../components/DietAdviceCard'
+import {
+  DIET_ADVICE_UI_INITIAL,
+  markDietAdvicePromptDismissed,
+  openDietAdviceAfterSave,
+  requestDietAdviceDetailWithAd,
+  type DietAdviceUiState,
+} from '../../utils/triggerDietAdvice'
+import {
+  getDietAdvicePromptSkipReason,
+  isWeappDevelopRuntime,
+} from '../../utils/dietAdvicePromptPolicy'
 import './index.scss'
 // @ts-ignore
 import iconCamera from '../../assets/icons/camera.png'
@@ -18,6 +31,8 @@ export default function CameraPage() {
   const [note, setNote] = useState('')
   const [noteExpanded, setNoteExpanded] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [dietAdviceUi, setDietAdviceUi] = useState<DietAdviceUiState>(DIET_ADVICE_UI_INITIAL)
+  const [pendingNavigateBack, setPendingNavigateBack] = useState(false)
 
   const handleChooseImage = async () => {
     try {
@@ -46,6 +61,22 @@ export default function CameraPage() {
     }
   }
 
+  const handleViewDietAdvice = () => {
+    const userInfo = getUserInfo()
+    const latest = dietAdviceUi.savedLatest
+    if (!userInfo || !latest) return
+    requestDietAdviceDetailWithAd(userInfo.openid, latest, closeDietAdviceAndBack)
+  }
+
+  const closeDietAdviceAndBack = () => {
+    markDietAdvicePromptDismissed()
+    setDietAdviceUi(DIET_ADVICE_UI_INITIAL)
+    if (pendingNavigateBack) {
+      setPendingNavigateBack(false)
+      Taro.navigateBack()
+    }
+  }
+
   const handleSave = async () => {
     if (!result) return
     if (saving) return
@@ -57,14 +88,23 @@ export default function CameraPage() {
     }
 
     setSaving(true)
+    const recordedAt = new Date().toISOString()
+    const savedReading = {
+      systolic: result.systolic,
+      diastolic: result.diastolic,
+      pulse: result.pulse,
+      note: note || undefined,
+      recordedAt,
+    }
+
     try {
       const { error } = await addRecord({
         user_id: userInfo.openid,
-        systolic: result.systolic,
-        diastolic: result.diastolic,
-        pulse: result.pulse,
-        note: note || undefined,
-        recorded_at: new Date().toISOString()
+        systolic: savedReading.systolic,
+        diastolic: savedReading.diastolic,
+        pulse: savedReading.pulse,
+        note: savedReading.note,
+        recorded_at: recordedAt
       })
 
       if (error) {
@@ -72,9 +112,21 @@ export default function CameraPage() {
         setSaving(false)
       } else {
         Taro.showToast({ title: '保存成功', icon: 'success' })
-        setTimeout(() => {
-          Taro.navigateBack()
-        }, 1500)
+        setAnalysisNeedRefresh(true)
+        setSaving(false)
+        const opened = openDietAdviceAfterSave(savedReading, setDietAdviceUi)
+        if (opened) {
+          setPendingNavigateBack(true)
+        } else {
+          const skip = getDietAdvicePromptSkipReason(
+            savedReading.systolic,
+            savedReading.diastolic
+          )
+          if (skip && isWeappDevelopRuntime()) {
+            Taro.showToast({ title: skip, icon: 'none', duration: 2800 })
+          }
+          setTimeout(() => Taro.navigateBack(), 1500)
+        }
       }
     } catch (e) {
       Taro.showToast({ title: '保存失败', icon: 'none' })
@@ -176,6 +228,12 @@ export default function CameraPage() {
           ) : null}
         </View>
       )}
+      <DietAdviceCard
+        visible={dietAdviceUi.visible}
+        savedLatest={dietAdviceUi.savedLatest}
+        onViewAdvice={handleViewDietAdvice}
+        onClose={closeDietAdviceAndBack}
+      />
     </View>
   )
 }
