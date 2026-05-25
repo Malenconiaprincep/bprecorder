@@ -19,6 +19,7 @@ import { computeHandSplitOverview } from '../../utils/bpHandAverages'
 import DietAdviceCard from '../../components/DietAdviceCard'
 import {
   DIET_ADVICE_UI_INITIAL,
+  consumePendingDietAdviceEntry,
   markDietAdvicePromptDismissed,
   openDietAdviceAfterSave,
   requestDietAdviceDetailWithAd,
@@ -281,6 +282,8 @@ export default function Index() {
 
   // 页面每次显示时刷新数据（从输入页返回时，跳过首次）
   useDidShow(() => {
+    consumePendingDietAdviceEntry(setDietAdviceUi)
+
     // 每次显示页面时同步字体模式（解决从设置页面返回后样式不更新的问题）
     const currentMode = getCurrentFontSizeMode()
     if (currentMode !== fontSizeMode) {

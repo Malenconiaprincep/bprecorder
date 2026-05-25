@@ -19,8 +19,8 @@
   justify-content: flex-end;
   align-items: stretch;
   padding: 0;
-  /* 仅预留原生 Tab 高度，不再叠加 safe-area（Tab 已含底部安全区） */
-  // padding-bottom: 100rpx;
+  /* 入口 Bottom Sheet 贴底，Tab 页由 TabBar 自身占位 */
+  padding-bottom: 0;
 }
 
 .health-advice-mask--entry .health-advice-card--entry {

@@ -6,6 +6,7 @@ import { tryGetDietAdviceGps } from './dietAdviceLocation'
 import { showDietAdviceRewardAd } from './dietAdviceRewardAd'
 import {
   DIET_ADVICE_DETAIL_STORAGE_KEY,
+  DIET_ADVICE_ENTRY_PENDING_KEY,
   DIET_ADVICE_GEN_PARAMS_KEY,
   type DietAdviceGenParams,
 } from '../types/dietAdvice'
@@ -59,6 +60,41 @@ export function openDietAdviceAfterSave(
   markDietAdvicePromptShown()
   setUi({ visible: true, savedLatest: latest })
   return true
+}
+
+/**
+ * 手动输入等非 Tab 页保存后：写入暂存并回首页展示（避免 TabBar 遮挡 Bottom Sheet）
+ */
+export function stashDietAdviceEntryForHome(latest: DietAdviceLatestInput): boolean {
+  if (!shouldShowDietAdvicePrompt(latest.systolic, latest.diastolic)) {
+    return false
+  }
+  markDietAdvicePromptShown()
+  try {
+    Taro.setStorageSync(DIET_ADVICE_ENTRY_PENDING_KEY, latest)
+  } catch (e) {
+    console.warn('[diet-advice] stash entry pending failed', e)
+    return false
+  }
+  return true
+}
+
+/** 首页 onShow：消费手动输入页暂存的入口弹层 */
+export function consumePendingDietAdviceEntry(
+  setUi: (state: DietAdviceUiState) => void
+): boolean {
+  try {
+    const latest = Taro.getStorageSync(DIET_ADVICE_ENTRY_PENDING_KEY) as
+      | DietAdviceLatestInput
+      | undefined
+    if (!latest?.systolic || !latest?.diastolic) return false
+    Taro.removeStorageSync(DIET_ADVICE_ENTRY_PENDING_KEY)
+    setUi({ visible: true, savedLatest: latest })
+    return true
+  } catch (e) {
+    console.warn('[diet-advice] consume entry pending failed', e)
+    return false
+  }
 }
 
 /**

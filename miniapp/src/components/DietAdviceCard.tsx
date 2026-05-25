@@ -1,11 +1,6 @@
 import { View, Text, Image } from '@tarojs/components'
 import type { DietAdviceLatestInput } from '../utils/dietAdvice'
-import {
-  DIET_ADVICE_ENTRY_DEBUG_MOCK,
-  DIET_ADVICE_ENTRY_DEBUG_PIN_VISIBLE,
-} from '../utils/dietAdvicePromptPolicy'
 import { DIET_ADVICE_FEATURE_NAME } from '../types/dietAdvice'
-import Taro from '@tarojs/taro'
 import './DietAdviceCard.scss'
 // @ts-ignore
 import aiMascotEntry from '../assets/diet/ai-mascot.png'
@@ -30,30 +25,15 @@ export default function DietAdviceCard({
   onViewAdvice,
   onClose,
 }: DietAdviceCardProps) {
-  const pinned = DIET_ADVICE_ENTRY_DEBUG_PIN_VISIBLE
-  const latest = savedLatest ?? (pinned ? DIET_ADVICE_ENTRY_DEBUG_MOCK : null)
-  const show = pinned || (visible && !!latest)
-  if (!show || !latest) return null
+  if (!visible || !savedLatest) return null
 
-  const notifyPinnedClose = () => {
-    Taro.showToast({ title: '调试中：入口固定显示', icon: 'none', duration: 1500 })
-  }
-
-  const handleClose = () => {
-    if (pinned) {
-      notifyPinnedClose()
-      return
-    }
-    onClose()
-  }
-
-  const handleMaskClick = () => handleClose()
+  const handleMaskClick = () => onClose()
 
   const stopPropagation = (e: { stopPropagation?: () => void }) => {
     e.stopPropagation?.()
   }
 
-  const { systolic, diastolic } = latest
+  const { systolic, diastolic } = savedLatest
 
   return (
     <View className='health-advice-mask health-advice-mask--entry' onClick={handleMaskClick} catchMove>
@@ -126,7 +106,7 @@ export default function DietAdviceCard({
                 className='health-entry-skip-btn'
                 onClick={(e) => {
                   stopPropagation(e)
-                  handleClose()
+                  onClose()
                 }}
               >
                 <Text className='health-entry-skip-btn-text'>暂不需要</Text>

@@ -5,13 +5,8 @@ import { addRecord, updateRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { getPreferredMeasureHand, savePreferredMeasureHand, clearPreferredMeasureHand } from '../../lib/settings'
-import DietAdviceCard from '../../components/DietAdviceCard'
 import {
-  DIET_ADVICE_UI_INITIAL,
-  markDietAdvicePromptDismissed,
-  openDietAdviceAfterSave,
-  requestDietAdviceDetailWithAd,
-  type DietAdviceUiState,
+  stashDietAdviceEntryForHome,
 } from '../../utils/triggerDietAdvice'
 import {
   getDietAdvicePromptSkipReason,
@@ -110,8 +105,6 @@ export default function InputPage() {
   const [saving, setSaving] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
   const [recordId, setRecordId] = useState<number | null>(null)
-  const [dietAdviceUi, setDietAdviceUi] = useState<DietAdviceUiState>(DIET_ADVICE_UI_INITIAL)
-  const [pendingNavigateBack, setPendingNavigateBack] = useState(false)
 
   // 日期时间状态，默认值为当前时间
   const getCurrentDateTime = () => {
@@ -231,22 +224,6 @@ export default function InputPage() {
   }
 
 
-  const handleViewDietAdvice = () => {
-    const userInfo = getUserInfo()
-    const latest = dietAdviceUi.savedLatest
-    if (!userInfo || !latest) return
-    requestDietAdviceDetailWithAd(userInfo.openid, latest, closeDietAdviceAndBack)
-  }
-
-  const closeDietAdviceAndBack = () => {
-    markDietAdvicePromptDismissed()
-    setDietAdviceUi(DIET_ADVICE_UI_INITIAL)
-    if (pendingNavigateBack) {
-      setPendingNavigateBack(false)
-      Taro.navigateBack()
-    }
-  }
-
   const handleSave = async () => {
     const s = parseBpInput(systolic, '收缩压')
     const d = parseBpInput(diastolic, '舒张压')
@@ -317,19 +294,17 @@ export default function InputPage() {
               note: note || undefined,
               recordedAt,
             }
-            const opened = openDietAdviceAfterSave(savedReading, setDietAdviceUi)
-            if (opened) {
-              setPendingNavigateBack(true)
-            } else {
+            const stashed = stashDietAdviceEntryForHome(savedReading)
+            if (!stashed) {
               const skip = getDietAdvicePromptSkipReason(s, d)
               if (skip && isWeappDevelopRuntime()) {
                 safeShowToast({ title: skip, icon: 'none', duration: 2800 })
               }
-              setTimeout(() => Taro.navigateBack(), 1500)
             }
+            setTimeout(() => Taro.switchTab({ url: '/pages/index/index' }), 1500)
           } catch (postErr) {
             console.error('post-save UI failed (record already saved):', postErr)
-            setTimeout(() => Taro.navigateBack(), 1500)
+            setTimeout(() => Taro.switchTab({ url: '/pages/index/index' }), 1500)
           }
         }
       }
@@ -459,13 +434,6 @@ export default function InputPage() {
           {saving ? '保存中...' : (isEdit ? '更新记录' : '保存记录')}
         </Button>
       </View>
-
-      <DietAdviceCard
-        visible={dietAdviceUi.visible}
-        savedLatest={dietAdviceUi.savedLatest}
-        onViewAdvice={handleViewDietAdvice}
-        onClose={closeDietAdviceAndBack}
-      />
     </View>
   )
 }

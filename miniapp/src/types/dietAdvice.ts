@@ -85,6 +85,9 @@ export const DIET_ADVICE_DETAIL_STORAGE_KEY = 'diet_advice_detail'
 /** 跳转详情页生成建议时的参数（看完广告后写入） */
 export const DIET_ADVICE_GEN_PARAMS_KEY = 'diet_advice_gen_params'
 
+/** 手动输入保存后暂存，供首页展示入口弹层（switchTab 无法带 query） */
+export const DIET_ADVICE_ENTRY_PENDING_KEY = 'diet_advice_entry_pending'
+
 export type DietAdviceGenParams = {
   userId: string
   latest: {
