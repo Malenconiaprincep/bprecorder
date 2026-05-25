@@ -222,20 +222,6 @@ export default function DietAdvicePage() {
                 </Text>
               </View>
             ) : null}
-            {wx?.climateKind === 'rainy' || wx?.weatherText?.includes('雨') ? (
-              <View className='diet-monitor-card__decor'>
-                <View className='diet-monitor-card__cloud'>
-                  <View className='diet-monitor-card__cloud-bubble diet-monitor-card__cloud-bubble--1' />
-                  <View className='diet-monitor-card__cloud-bubble diet-monitor-card__cloud-bubble--2' />
-                  <View className='diet-monitor-card__cloud-bubble diet-monitor-card__cloud-bubble--3' />
-                </View>
-                <View className='diet-monitor-card__drops'>
-                  <View className='diet-monitor-card__drop' />
-                  <View className='diet-monitor-card__drop diet-monitor-card__drop--2' />
-                  <View className='diet-monitor-card__drop diet-monitor-card__drop--3' />
-                </View>
-              </View>
-            ) : null}
           </View>
         ) : null}
 
