@@ -1,9 +1,14 @@
 import { View, Text, Image } from '@tarojs/components'
 import type { DietAdviceLatestInput } from '../utils/dietAdvice'
+import {
+  DIET_ADVICE_ENTRY_DEBUG_MOCK,
+  DIET_ADVICE_ENTRY_DEBUG_PIN_VISIBLE,
+} from '../utils/dietAdvicePromptPolicy'
 import { DIET_ADVICE_FEATURE_NAME } from '../types/dietAdvice'
+import Taro from '@tarojs/taro'
 import './DietAdviceCard.scss'
 // @ts-ignore
-import aiMascotEntry from '../assets/diet/ai-mascot-entry.png'
+import aiMascotEntry from '../assets/diet/ai-mascot.png'
 // @ts-ignore
 import aiHealthBanner from '../assets/diet/ai-health-banner.png'
 
@@ -25,18 +30,33 @@ export default function DietAdviceCard({
   onViewAdvice,
   onClose,
 }: DietAdviceCardProps) {
-  if (!visible || !savedLatest) return null
+  const pinned = DIET_ADVICE_ENTRY_DEBUG_PIN_VISIBLE
+  const latest = savedLatest ?? (pinned ? DIET_ADVICE_ENTRY_DEBUG_MOCK : null)
+  const show = pinned || (visible && !!latest)
+  if (!show || !latest) return null
 
-  const handleMaskClick = () => onClose()
+  const notifyPinnedClose = () => {
+    Taro.showToast({ title: '调试中：入口固定显示', icon: 'none', duration: 1500 })
+  }
+
+  const handleClose = () => {
+    if (pinned) {
+      notifyPinnedClose()
+      return
+    }
+    onClose()
+  }
+
+  const handleMaskClick = () => handleClose()
 
   const stopPropagation = (e: { stopPropagation?: () => void }) => {
     e.stopPropagation?.()
   }
 
-  const { systolic, diastolic } = savedLatest
+  const { systolic, diastolic } = latest
 
   return (
-    <View className='health-advice-mask' onClick={handleMaskClick} catchMove>
+    <View className='health-advice-mask health-advice-mask--entry' onClick={handleMaskClick} catchMove>
       <View className='health-advice-card health-advice-card--entry' onClick={stopPropagation}>
         <View className='health-sheet-handle' />
 
@@ -68,40 +88,51 @@ export default function DietAdviceCard({
 
         <View className='health-body health-body--entry'>
           <View className='health-entry-hero'>
-            <View className='health-entry-banner-wrap'>
-              <Image
-                className='health-entry-banner'
-                src={aiHealthBanner}
-                mode='aspectFit'
+            <View className='health-entry-promo'>
+              <View className='health-entry-promo-copy'>
+                <Text className='health-entry-promo-line1'>AI 可以帮你</Text>
+                <View className='health-entry-promo-line2'>
+                  <Text className='health-entry-promo-line2-text'>生成今日</Text>
+                  <Text className='health-entry-promo-line2-highlight'>健康建议</Text>
+                </View>
+                <View className='health-entry-promo-underline' />
+                <Text className='health-entry-promo-desc'>根据你的血压状态，</Text>
+                <Text className='health-entry-promo-desc'>生成专属饮食与生活建议</Text>
+              </View>
+              <View
+                className='health-entry-promo-decor'
+                style={{ backgroundImage: `url(${aiHealthBanner})` }}
               />
             </View>
 
-            <View
-              className='health-entry-cta'
-            onClick={(e) => {
-              stopPropagation(e)
-              onViewAdvice?.()
-            }}
-          >
-            <View className='health-entry-cta-text'>
-              <Text className='health-entry-cta-title'>生成 AI 食谱</Text>
-              <Text className='health-entry-cta-sub'>为你定制今日饮食建议</Text>
-            </View>
-            <View className='health-entry-cta-arrow'>
-              <Text className='health-entry-cta-arrow-icon'>›</Text>
-            </View>
-          </View>
-          </View>
+            <View className='health-entry-actions'>
+              <View
+                className='health-entry-cta'
+                onClick={(e) => {
+                  stopPropagation(e)
+                  onViewAdvice?.()
+                }}
+              >
+                <View className='health-entry-cta-text'>
+                  <Text className='health-entry-cta-title'>生成 AI 食谱</Text>
+                  <Text className='health-entry-cta-sub'>为你定制今日饮食建议</Text>
+                </View>
+                <View className='health-entry-cta-arrow'>
+                  <Text className='health-entry-cta-arrow-icon'>›</Text>
+                </View>
+              </View>
 
-          <Text
-            className='health-entry-skip'
-            onClick={(e) => {
-              stopPropagation(e)
-              onClose()
-            }}
-          >
-            暂不需要
-          </Text>
+              <View
+                className='health-entry-skip-btn'
+                onClick={(e) => {
+                  stopPropagation(e)
+                  handleClose()
+                }}
+              >
+                <Text className='health-entry-skip-btn-text'>暂不需要</Text>
+              </View>
+            </View>
+          </View>
 
           <View className='health-entry-disclaimer'>
             <Text className='health-entry-disclaimer-text'>{DIET_ADVICE_ENTRY_DISCLAIMER}</Text>

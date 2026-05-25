@@ -1,4 +1,15 @@
 import Taro from '@tarojs/taro'
+import type { DietAdviceLatestInput } from './dietAdvice'
+
+/** 调试：入口 Bottom Sheet 始终显示（上线前务必改为 false） */
+export const DIET_ADVICE_ENTRY_DEBUG_PIN_VISIBLE = true
+
+/** 固定显示时使用的示例血压（与设计稿一致） */
+export const DIET_ADVICE_ENTRY_DEBUG_MOCK: DietAdviceLatestInput = {
+  systolic: 148,
+  diastolic: 90,
+  pulse: 72,
+}
 
 const STORAGE_PROMPT_SHOWN_DATE = 'diet_advice_prompt_shown_date'
 const STORAGE_PROMPT_DISMISS_DATE = 'diet_advice_prompt_dismiss_date'
