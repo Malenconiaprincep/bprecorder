@@ -268,87 +268,6 @@
   color: #cbd5e1;
 }
 
-/* 开发调试（仅 development 包） */
-.dev-tools-card {
-  background: #fffbeb;
-  border: 1rpx solid #fde68a;
-  border-radius: 24rpx;
-  padding: 28rpx 32rpx;
-  margin-bottom: 30rpx;
-}
-
-.dev-tools-title {
-  display: block;
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #a16207;
-  margin-bottom: 20rpx;
-}
-
-.dev-tools-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24rpx;
-}
-
-.dev-tools-label-wrap {
-  flex: 1;
-  min-width: 0;
-}
-
-.dev-tools-label {
-  display: block;
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8rpx;
-}
-
-.dev-tools-hint {
-  display: block;
-  font-size: 24rpx;
-  color: #78716c;
-  line-height: 1.5;
-}
-
-.dev-tools-reset {
-  margin-top: 20rpx;
-  padding-top: 20rpx;
-  border-top: 1rpx dashed #fde68a;
-}
-
-.dev-tools-subtitle {
-  display: block;
-  font-size: 24rpx;
-  color: #64748b;
-  margin-top: 20rpx;
-  margin-bottom: 12rpx;
-}
-
-.dev-tools-template-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-}
-
-.dev-tools-template-chip {
-  padding: 12rpx 20rpx;
-  background: #ffffff;
-  border: 1rpx solid #bae6fd;
-  border-radius: 999rpx;
-}
-
-.dev-tools-template-chip-text {
-  font-size: 24rpx;
-  color: #0369a1;
-}
-
-.dev-tools-reset-text {
-  font-size: 26rpx;
-  color: #b45309;
-}
-
 /* 退出登录按钮 */
 .logout-btn {
   padding: 32rpx;
@@ -367,6 +286,10 @@
   text-align: center;
   padding: 40rpx 0;
   margin-top: 20rpx;
+}
+
+.version-info--dev .version-text {
+  color: #94a3b8;
 }
 
 .version-text {

@@ -19,7 +19,9 @@ import { computeHandSplitOverview } from '../../utils/bpHandAverages'
 import DietAdviceCard from '../../components/DietAdviceCard'
 import {
   DIET_ADVICE_UI_INITIAL,
+  applyDevPreviewEntryCard,
   consumePendingDietAdviceEntry,
+  getDevDietAdvicePreviewEntry,
   markDietAdvicePromptDismissed,
   openDietAdviceAfterSave,
   requestDietAdviceDetailWithAd,
@@ -273,6 +275,14 @@ export default function Index() {
     }
   }, [])
 
+  React.useEffect(() => {
+    const hidePreviewCard = () => setDietAdviceUi(DIET_ADVICE_UI_INITIAL)
+    Taro.eventCenter.on('dietAdvicePreviewOff', hidePreviewCard)
+    return () => {
+      Taro.eventCenter.off('dietAdvicePreviewOff', hidePreviewCard)
+    }
+  }, [])
+
   // 每次识别出结果时，用本地已保存的手臂偏好（无则不高亮、保存时不写 hand）
   React.useEffect(() => {
     if (analyzeResult) {
@@ -282,7 +292,10 @@ export default function Index() {
 
   // 页面每次显示时刷新数据（从输入页返回时，跳过首次）
   useDidShow(() => {
-    consumePendingDietAdviceEntry(setDietAdviceUi)
+    const consumed = consumePendingDietAdviceEntry(setDietAdviceUi)
+    if (!consumed) {
+      applyDevPreviewEntryCard(setDietAdviceUi)
+    }
 
     // 每次显示页面时同步字体模式（解决从设置页面返回后样式不更新的问题）
     const currentMode = getCurrentFontSizeMode()
@@ -630,7 +643,9 @@ export default function Index() {
   }
 
   const closeDietAdviceCard = () => {
-    markDietAdvicePromptDismissed()
+    if (!getDevDietAdvicePreviewEntry()) {
+      markDietAdvicePromptDismissed()
+    }
     setDietAdviceUi(DIET_ADVICE_UI_INITIAL)
   }
 

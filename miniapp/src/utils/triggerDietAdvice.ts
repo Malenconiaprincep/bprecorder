@@ -17,13 +17,23 @@ import {
 import {
   markDietAdvicePromptShown,
   shouldShowDietAdvicePrompt,
+  getDevDietAdvicePreviewEntry,
 } from './dietAdvicePromptPolicy'
 
 export {
   markDietAdvicePromptDismissed,
   markDietAdvicePromptShown,
   shouldShowDietAdvicePrompt,
+  getDevDietAdvicePreviewEntry,
 } from './dietAdvicePromptPolicy'
+
+/** 开发预览用示例血压 */
+export const DIET_ADVICE_ENTRY_PREVIEW_MOCK: DietAdviceLatestInput = {
+  systolic: 118,
+  diastolic: 78,
+  pulse: 70,
+  recordedAt: new Date().toISOString(),
+}
 
 /** 保存后仅展示入口弹层，不自动生成 */
 export type DietAdviceUiState = {
@@ -99,6 +109,15 @@ export function consumePendingDietAdviceEntry(
     console.warn('[diet-advice] consume entry pending failed', e)
     return false
   }
+}
+
+/** 开发模式：首页固定展示保存后引导卡 */
+export function applyDevPreviewEntryCard(
+  setUi: (state: DietAdviceUiState) => void
+): boolean {
+  if (!getDevDietAdvicePreviewEntry()) return false
+  setUi({ visible: true, savedLatest: DIET_ADVICE_ENTRY_PREVIEW_MOCK })
+  return true
 }
 
 /**

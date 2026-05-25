@@ -73,9 +73,11 @@ export default function DietAdviceCard({
                 <Text className='health-entry-promo-line1'>AI 可以帮你</Text>
                 <View className='health-entry-promo-line2'>
                   <Text className='health-entry-promo-line2-text'>生成今日</Text>
-                  <Text className='health-entry-promo-line2-highlight'>健康建议</Text>
+                  <View className='health-entry-promo-line2-highlight-wrap'>
+                    <Text className='health-entry-promo-line2-highlight'>健康建议</Text>
+                    <View className='health-entry-promo-underline' />
+                  </View>
                 </View>
-                <View className='health-entry-promo-underline' />
                 <Text className='health-entry-promo-desc'>根据你的血压状态，</Text>
                 <Text className='health-entry-promo-desc'>生成专属饮食与生活建议</Text>
               </View>

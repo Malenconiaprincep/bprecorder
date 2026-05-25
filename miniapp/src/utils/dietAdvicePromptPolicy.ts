@@ -4,6 +4,8 @@ const STORAGE_PROMPT_SHOWN_DATE = 'diet_advice_prompt_shown_date'
 const STORAGE_PROMPT_DISMISS_DATE = 'diet_advice_prompt_dismiss_date'
 /** 开发包专用：保存后是否忽略正式策略、每次都弹食谱引导 */
 const STORAGE_DEV_ALWAYS_PROMPT = 'diet_advice_dev_always_prompt'
+/** 开发包专用：首页固定预览保存后引导卡（无需真实保存） */
+const STORAGE_DEV_PREVIEW_ENTRY = 'diet_advice_dev_preview_entry'
 
 /** Webpack development 构建 */
 const IS_WEBPACK_DEV_BUILD = process.env.NODE_ENV === 'development'
@@ -52,6 +54,25 @@ export function setDevDietAdviceAlwaysPrompt(enabled: boolean): void {
     Taro.setStorageSync(STORAGE_DEV_ALWAYS_PROMPT, enabled ? '1' : '0')
   } catch (e) {
     console.warn('[diet-advice] set dev always prompt failed', e)
+  }
+}
+
+/** 开发环境：首页是否固定展示保存后引导卡（示例血压，无需保存） */
+export function getDevDietAdvicePreviewEntry(): boolean {
+  if (!isWeappDevelopRuntime()) return false
+  try {
+    return Taro.getStorageSync(STORAGE_DEV_PREVIEW_ENTRY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function setDevDietAdvicePreviewEntry(enabled: boolean): void {
+  if (!isWeappDevelopRuntime()) return
+  try {
+    Taro.setStorageSync(STORAGE_DEV_PREVIEW_ENTRY, enabled ? '1' : '0')
+  } catch (e) {
+    console.warn('[diet-advice] set dev preview entry failed', e)
   }
 }
 

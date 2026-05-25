@@ -1,23 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { View, Text, Image, Button, Input, Textarea, Switch } from '@tarojs/components'
+import { View, Text, Image, Button, Input, Textarea } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, getUserInfo, silentLogin, uploadAvatar } from '../../lib/auth'
 import { getRecords, getRecordsInRange, BPRecord, addRecordsBatch } from '../../lib/supabase'
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import { FontSizeMode, getCurrentFontSizeMode, setFontSizeMode, getFontSizeModeClass, applyFontSizeMode } from '../../lib/settings'
 import FontSizeModeModal from '../../components/FontSizeModeModal'
-import {
-  isWeappDevelopRuntime,
-  getDevDietAdviceAlwaysPrompt,
-  setDevDietAdviceAlwaysPrompt,
-  clearDietAdvicePromptDayFlags,
-} from '../../utils/dietAdvicePromptPolicy'
-import {
-  DIET_WEATHER_TEMPLATE_CATALOG,
-  fetchDietWeatherTemplatePreview,
-} from '../../utils/dietWeatherTemplates'
-import { DIET_ADVICE_DETAIL_STORAGE_KEY, DIET_ADVICE_FEATURE_NAME } from '../../types/dietAdvice'
-import type { DietAdviceData } from '../../types/dietAdvice'
+import { isWeappDevelopRuntime } from '../../utils/dietAdvicePromptPolicy'
 import * as XLSX from 'xlsx'
 import './index.scss'
 // @ts-ignore
@@ -84,9 +73,6 @@ export default function Profile() {
   // 字体模式相关状态
   const [fontSizeMode, setFontSizeModeState] = useState<FontSizeMode>('normal')
   const [showFontModeModal, setShowFontModeModal] = useState(false)
-  const [devDietAlwaysPrompt, setDevDietAlwaysPrompt] = useState(
-    () => isWeappDevelopRuntime() && getDevDietAdviceAlwaysPrompt()
-  )
 
   // 数据导入相关状态
   const [showImportModal, setShowImportModal] = useState(false)
@@ -239,10 +225,6 @@ export default function Profile() {
 
   // 页面每次显示时刷新数据
   useDidShow(() => {
-    if (isWeappDevelopRuntime()) {
-      setDevDietAlwaysPrompt(getDevDietAdviceAlwaysPrompt())
-    }
-
     if (USE_TEST_DATA) return
 
     const userInfo = getUserInfo()
@@ -250,55 +232,6 @@ export default function Profile() {
       fetchRecords(userInfo.openid)
     }
   })
-
-  const onDevDietAlwaysPromptChange = (e: { detail: { value: boolean } }) => {
-    const on = !!e.detail.value
-    setDevDietAdviceAlwaysPrompt(on)
-    setDevDietAdviceAlwaysPrompt(on)
-    Taro.showToast({
-      title: on ? '已开启：每次保存都弹食谱' : '已关闭：走正式弹出规则',
-      icon: 'none',
-      duration: 2500,
-    })
-  }
-
-  const onClearDietPromptFlags = () => {
-    clearDietAdvicePromptDayFlags()
-    Taro.showToast({ title: '已清除今日弹窗记录', icon: 'none' })
-  }
-
-  const onPreviewDietWeatherTemplate = async (kind: (typeof DIET_WEATHER_TEMPLATE_CATALOG)[number]['kind']) => {
-    const weather = await fetchDietWeatherTemplatePreview(kind)
-    if (!weather) {
-      Taro.showToast({ title: '预览失败，请确认本地 API 已启动', icon: 'none' })
-      return
-    }
-    const mock: DietAdviceData = {
-      title: `今日${DIET_ADVICE_FEATURE_NAME}`,
-      summary: weather.climateTip,
-      saltReminder: '今日饮食宜清淡少盐。',
-      card: {
-        badgeLabel: weather.climateLabel,
-        badgeTone: weather.climateKind === 'hot' ? 'hot' : 'mild',
-        tipEmoji: '☀️',
-        pillars: weather.pillars,
-        tags: weather.tags,
-      },
-      recommendations: ['番茄豆腐汤', '清炒西兰花', '玉米燕麦粥'],
-      avoidTips: ['少咸菜', '少油炸'],
-      fullPlan: {
-        breakfast: '燕麦粥 + 水煮蛋',
-        lunch: '清蒸鱼 + 糙米饭',
-        dinner: '番茄豆腐汤',
-        tips: ['多喝水'],
-      },
-      disclaimer: '预览数据，仅供参考。',
-      weather,
-      recipeReady: true,
-    }
-    Taro.setStorageSync(DIET_ADVICE_DETAIL_STORAGE_KEY, mock)
-    Taro.navigateTo({ url: '/pages/diet-advice/index' })
-  }
 
   // 点击登录/完善资料
   const onClickLogin = async () => {
@@ -1198,40 +1131,6 @@ export default function Profile() {
         ))}
       </View>
 
-      {isWeappDevelopRuntime() && (
-        <View className='dev-tools-card'>
-          <Text className='dev-tools-title'>开发者调试</Text>
-          <View className='dev-tools-row'>
-            <View className='dev-tools-label-wrap'>
-              <Text className='dev-tools-label'>保存后始终弹出食谱</Text>
-              <Text className='dev-tools-hint'>
-                开启后每次保存都会出引导卡，忽略血压与「每天一次」限制
-              </Text>
-            </View>
-            <Switch
-              checked={devDietAlwaysPrompt}
-              color='#38bdf8'
-              onChange={onDevDietAlwaysPromptChange}
-            />
-          </View>
-          <View className='dev-tools-reset' onClick={onClearDietPromptFlags}>
-            <Text className='dev-tools-reset-text'>清除今日「已弹/已跳过」记录</Text>
-          </View>
-          <Text className='dev-tools-subtitle'>预览天气卡片模版（4 套）</Text>
-          <View className='dev-tools-template-row'>
-            {DIET_WEATHER_TEMPLATE_CATALOG.map((t) => (
-              <View
-                key={t.kind}
-                className='dev-tools-template-chip'
-                onClick={() => onPreviewDietWeatherTemplate(t.kind)}
-              >
-                <Text className='dev-tools-template-chip-text'>{t.label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
       {/* 导入/导出选择 */}
       {showDataTransferModal && (
         <View className='modal-mask' onClick={closeDataTransferModal} catchMove>
@@ -1540,7 +1439,14 @@ export default function Profile() {
         </View>
       )}
 
-      <View className='version-info'>
+      <View
+        className={`version-info${isWeappDevelopRuntime() ? ' version-info--dev' : ''}`}
+        onClick={() => {
+          if (isWeappDevelopRuntime()) {
+            Taro.navigateTo({ url: '/pages/dev-tools/index' })
+          }
+        }}
+      >
         <Text className='version-text'>v3.1.0</Text>
       </View>
 

@@ -23,6 +23,7 @@ export default defineAppConfig({
     'pages/input/index',
     'pages/camera/index',
     'pages/calendar/index',
+    'pages/dev-tools/index',
     'pages/groups/detail',
     'pages/groups/join',
     'pages/groups/member'
