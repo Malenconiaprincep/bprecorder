@@ -5,6 +5,9 @@ export default defineAppConfig({
     },
     'scope.userLocation': {
       desc: '用于结合您所在地天气生成更准确的生活饮食建议'
+    },
+    'scope.writePhotosAlbum': {
+      desc: '用于保存生活饮食建议长图到相册'
     }
   },
   requiredPrivateInfos: ['getLocation'],
@@ -16,8 +19,8 @@ export default defineAppConfig({
     'pages/promo-list/index',
     'pages/promo-activity/index',
     'pages/weekly-report/index',
-    'pages/input/index',
     'pages/diet-advice/index',
+    'pages/input/index',
     'pages/camera/index',
     'pages/calendar/index',
     'pages/groups/detail',

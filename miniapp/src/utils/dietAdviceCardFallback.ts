@@ -29,8 +29,31 @@ function normalizeIcon(icon?: string): DietWeatherPillar['icon'] {
   return 'water'
 }
 
+function parsePillarString(raw: string, index: number): DietWeatherPillar | null {
+  const s = raw.trim().replace(/\\n/g, '\n')
+  const colonIdx = s.search(/[：:]/)
+  if (colonIdx === -1) return null
+  const title = s.slice(0, colonIdx).trim()
+  const text = s.slice(colonIdx + 1).trim()
+  if (!title || !text) return null
+  const keys: DietWeatherPillar['key'][] = ['hydration', 'lightDiet', 'climateCare']
+  return {
+    key: keys[index] || 'hydration',
+    title,
+    text,
+    icon: 'water',
+  }
+}
+
 function normalizePillars(raw: unknown): DietWeatherPillar[] | null {
   if (!Array.isArray(raw) || raw.length < 3) return null
+
+  if (typeof raw[0] === 'string') {
+    const pillars = raw.slice(0, 3).map((s, i) => parsePillarString(String(s), i))
+    if (pillars.some((p) => !p)) return null
+    return pillars as DietWeatherPillar[]
+  }
+
   const pillars = raw.slice(0, 3).map((p, i) => {
     const row = p as { key?: string; title?: string; text?: string; icon?: string }
     const title = String(row.title || '').trim()

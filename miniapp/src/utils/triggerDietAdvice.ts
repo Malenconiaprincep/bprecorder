@@ -3,7 +3,11 @@ import { getRecordsForHomeStats, BPRecord } from '../lib/supabase'
 import { buildDietAdviceRecentSummary } from './dietAdviceSummary'
 import { fetchFullDietAdvice, type DietAdviceLatestInput } from './dietAdvice'
 import { tryGetDietAdviceGps } from './dietAdviceLocation'
-import { showDietAdviceRewardAd } from './dietAdviceRewardAd'
+import {
+  DIET_ADVICE_USE_MOCK_DETAIL,
+  buildDietAdviceDetailMock,
+} from './dietAdviceDetailMock'
+// import { showDietAdviceRewardAd } from './dietAdviceRewardAd'
 import {
   DIET_ADVICE_DETAIL_STORAGE_KEY,
   DIET_ADVICE_ENTRY_PENDING_KEY,
@@ -98,28 +102,38 @@ export function consumePendingDietAdviceEntry(
 }
 
 /**
- * 用户点击查看生活饮食建议：激励视频后跳转详情页并在该页生成内容
+ * 用户点击查看生活饮食建议：跳转详情页并在该页生成内容
+ * （调试阶段跳过激励视频，上线前恢复 showDietAdviceRewardAd）
  */
 export function requestDietAdviceDetailWithAd(
   userId: string,
   latest: DietAdviceLatestInput,
   onCloseEntry: () => void
 ): void {
-  showDietAdviceRewardAd({
-    onUnlocked: () => {
-      onCloseEntry()
-      const params: DietAdviceGenParams = { userId, latest }
-      Taro.setStorageSync(DIET_ADVICE_GEN_PARAMS_KEY, params)
-      Taro.removeStorageSync(DIET_ADVICE_DETAIL_STORAGE_KEY)
-      Taro.navigateTo({ url: '/pages/diet-advice/index?generate=1' })
-    },
-  })
+  const goGenerate = () => {
+    onCloseEntry()
+    const params: DietAdviceGenParams = { userId, latest }
+    Taro.setStorageSync(DIET_ADVICE_GEN_PARAMS_KEY, params)
+    Taro.removeStorageSync(DIET_ADVICE_DETAIL_STORAGE_KEY)
+    Taro.navigateTo({ url: '/pages/diet-advice/index?generate=1' })
+  }
+
+  goGenerate()
+
+  // showDietAdviceRewardAd({ onUnlocked: goGenerate })
 }
 
 /** 详情页内：定位 + 一次 Qwen，写入详情缓存 */
 export async function generateDietAdviceOnDetailPage(
   params: DietAdviceGenParams
 ): Promise<boolean> {
+  if (DIET_ADVICE_USE_MOCK_DETAIL) {
+    await new Promise((r) => setTimeout(r, 500))
+    Taro.setStorageSync(DIET_ADVICE_DETAIL_STORAGE_KEY, buildDietAdviceDetailMock())
+    Taro.removeStorageSync(DIET_ADVICE_GEN_PARAMS_KEY)
+    return true
+  }
+
   try {
     const { recentSummary } = await buildPayload(params.userId, params.latest)
     const location = await tryGetDietAdviceGps()
