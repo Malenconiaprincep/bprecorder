@@ -44,7 +44,7 @@ import iconList from '../../assets/icons/list.png'
 import iconShare from '../../assets/icons/share.png'
 // 活动横幅图 assets/promo/promo-banner.png
 // @ts-ignore
-import promoBanner from '../../assets/promo/promo-banner.png'
+// import promoBanner from '../../assets/promo/promo-banner.png'
 
 /** 本地时区自然日 YYYY-MM-DD（勿用 ISO 的 `T` 前片段或 toISOString 的日期，那是 UTC 日历日） */
 const getLocalDateKey = (input: string | Date): string => {

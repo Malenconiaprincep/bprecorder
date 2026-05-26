@@ -5,7 +5,7 @@ import './DietAdviceCard.scss'
 // @ts-ignore
 import aiMascotEntry from '../assets/diet/ai-mascot.png'
 // @ts-ignore
-import aiHealthBanner from '../assets/diet/ai-health-banner.png'
+import aiHealthPromoDecor from '../assets/diet/ai-health-promo-decor.png'
 
 /** 入口弹层底部免责说明 */
 export const DIET_ADVICE_ENTRY_DISCLAIMER =
@@ -81,10 +81,14 @@ export default function DietAdviceCard({
                 <Text className='health-entry-promo-desc'>根据你的血压状态，</Text>
                 <Text className='health-entry-promo-desc'>生成专属饮食与生活建议</Text>
               </View>
-              <View
-                className='health-entry-promo-decor'
-                style={{ backgroundImage: `url(${aiHealthBanner})` }}
-              />
+              <View className='health-entry-promo-decor-wrap'>
+                <Image
+                  className='health-entry-promo-decor'
+                  src={aiHealthPromoDecor}
+                  mode='heightFix'
+                />
+                <View className='health-entry-promo-decor-fade' />
+              </View>
             </View>
 
             <View className='health-entry-actions'>

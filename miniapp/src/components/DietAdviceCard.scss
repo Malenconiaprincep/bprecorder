@@ -331,16 +331,16 @@
   gap: 20rpx;
 }
 
-/* 文案用原生 Text 渲染，避免整图拉伸发糊；右侧插图用背景定位裁切 */
+/* 底色与插图资源左缘色一致（#edf3fc），避免右侧插图出现分界 */
 .health-entry-promo {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8rpx;
+  gap: 0;
   min-height: 200rpx;
-  padding: 28rpx 8rpx 28rpx 28rpx;
+  padding: 28rpx 0 28rpx 28rpx;
   border-radius: 20rpx;
-  background: linear-gradient(120deg, #f8fbff 0%, #eef6ff 42%, #f3f6ff 100%);
+  background: #edf3fc;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -404,14 +404,32 @@
   margin-top: 14rpx;
 }
 
-.health-entry-promo-decor {
+/* 右侧装饰图：底色对齐 + 左侧渐变遮罩柔化接缝（不改 PNG 透明度） */
+.health-entry-promo-decor-wrap {
+  position: relative;
   flex-shrink: 0;
-  width: 248rpx;
+  width: 216rpx;
   height: 200rpx;
-  background-repeat: no-repeat;
-  background-position: right center;
-  /* 832×399 资源，按高度等比缩放后右对齐裁切，避免固定宽高拉伸变形 */
-  background-size: auto 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.health-entry-promo-decor {
+  height: 200rpx;
+  width: 216rpx;
+  display: block;
+}
+
+.health-entry-promo-decor-fade {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 56rpx;
+  background: linear-gradient(90deg, #edf3fc 0%, rgba(237, 243, 252, 0) 100%);
+  pointer-events: none;
 }
 
 .health-entry-cta {

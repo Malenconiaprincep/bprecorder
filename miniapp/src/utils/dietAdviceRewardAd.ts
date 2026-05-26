@@ -1,4 +1,5 @@
 import Taro from '@tarojs/taro'
+import { getDevSkipDietAdviceRewardAd } from './dietAdvicePromptPolicy'
 import { REWARD_VIDEO_ADS_ENABLED, SHARED_REWARD_AD_UNIT_ID } from './rewardAdUnit'
 
 interface RewardedVideoAdLike {
@@ -36,7 +37,7 @@ export function showDietAdviceRewardAd(options: {
   onUnlocked: () => void
   onDismiss?: () => void
 }): void {
-  if (!REWARD_VIDEO_ADS_ENABLED) {
+  if (!REWARD_VIDEO_ADS_ENABLED || getDevSkipDietAdviceRewardAd()) {
     options.onUnlocked()
     return
   }

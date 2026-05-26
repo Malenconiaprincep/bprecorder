@@ -25,9 +25,12 @@ export default defineConfig(async (merge, { command, mode }) => {
     },
     copy: {
       patterns: [
+        {
+          from: 'src/assets/mini-program-qrcode.png',
+          to: 'assets/mini-program-qrcode.png',
+        },
       ],
-      options: {
-      }
+      options: {},
     },
     framework: 'react',
     compiler: {

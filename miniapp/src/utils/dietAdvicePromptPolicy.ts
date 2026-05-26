@@ -6,6 +6,8 @@ const STORAGE_PROMPT_DISMISS_DATE = 'diet_advice_prompt_dismiss_date'
 const STORAGE_DEV_ALWAYS_PROMPT = 'diet_advice_dev_always_prompt'
 /** 开发包专用：首页固定预览保存后引导卡（无需真实保存） */
 const STORAGE_DEV_PREVIEW_ENTRY = 'diet_advice_dev_preview_entry'
+/** 开发包专用：进入生活饮食建议详情时跳过激励视频 */
+const STORAGE_DEV_SKIP_DIET_REWARD_AD = 'diet_advice_dev_skip_reward_ad'
 
 /** Webpack development 构建 */
 const IS_WEBPACK_DEV_BUILD = process.env.NODE_ENV === 'development'
@@ -73,6 +75,29 @@ export function setDevDietAdvicePreviewEntry(enabled: boolean): void {
     Taro.setStorageSync(STORAGE_DEV_PREVIEW_ENTRY, enabled ? '1' : '0')
   } catch (e) {
     console.warn('[diet-advice] set dev preview entry failed', e)
+  }
+}
+
+/**
+ * 开发环境：进入生活饮食建议详情是否跳过激励视频（默认开启）
+ */
+export function getDevSkipDietAdviceRewardAd(): boolean {
+  if (!isWeappDevelopRuntime()) return false
+  try {
+    const v = Taro.getStorageSync(STORAGE_DEV_SKIP_DIET_REWARD_AD)
+    if (v === '' || v === undefined || v === null) return true
+    return v === '1' || v === 1 || v === true
+  } catch {
+    return true
+  }
+}
+
+export function setDevSkipDietAdviceRewardAd(enabled: boolean): void {
+  if (!isWeappDevelopRuntime()) return
+  try {
+    Taro.setStorageSync(STORAGE_DEV_SKIP_DIET_REWARD_AD, enabled ? '1' : '0')
+  } catch (e) {
+    console.warn('[diet-advice] set dev skip reward ad failed', e)
   }
 }
 

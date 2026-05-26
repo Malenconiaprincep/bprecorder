@@ -62,8 +62,22 @@
   line-height: 1.5;
 }
 
+.dev-tools-action {
+  margin-top: 16rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  text-align: center;
+}
+
+.dev-tools-action-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
 .dev-tools-reset {
-  margin-top: 8rpx;
+  margin-top: 16rpx;
   padding-top: 20rpx;
   border-top: 1rpx dashed #fde68a;
 }

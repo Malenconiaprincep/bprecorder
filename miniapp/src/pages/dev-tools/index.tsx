@@ -7,19 +7,27 @@ import {
   setDevDietAdviceAlwaysPrompt,
   getDevDietAdvicePreviewEntry,
   setDevDietAdvicePreviewEntry,
+  getDevSkipDietAdviceRewardAd,
+  setDevSkipDietAdviceRewardAd,
   clearDietAdvicePromptDayFlags,
 } from '../../utils/dietAdvicePromptPolicy'
+import { buildDietAdviceDetailMock } from '../../utils/dietAdviceDetailMock'
 import {
   DIET_WEATHER_TEMPLATE_CATALOG,
   fetchDietWeatherTemplatePreview,
 } from '../../utils/dietWeatherTemplates'
-import { DIET_ADVICE_DETAIL_STORAGE_KEY, DIET_ADVICE_FEATURE_NAME } from '../../types/dietAdvice'
+import {
+  DIET_ADVICE_DETAIL_STORAGE_KEY,
+  DIET_ADVICE_GEN_PARAMS_KEY,
+  DIET_ADVICE_FEATURE_NAME,
+} from '../../types/dietAdvice'
 import type { DietAdviceData } from '../../types/dietAdvice'
 import './index.scss'
 
 export default function DevToolsPage() {
   const [devDietAlwaysPrompt, setDevDietAlwaysPromptState] = useState(false)
   const [devPreviewEntry, setDevPreviewEntryState] = useState(false)
+  const [devSkipRewardAd, setDevSkipRewardAdState] = useState(true)
 
   useLoad(() => {
     if (!isWeappDevelopRuntime()) {
@@ -32,6 +40,7 @@ export default function DevToolsPage() {
     if (!isWeappDevelopRuntime()) return
     setDevDietAlwaysPromptState(getDevDietAdviceAlwaysPrompt())
     setDevPreviewEntryState(getDevDietAdvicePreviewEntry())
+    setDevSkipRewardAdState(getDevSkipDietAdviceRewardAd())
   })
 
   const onDevDietAlwaysPromptChange = (e: { detail: { value: boolean } }) => {
@@ -59,6 +68,24 @@ export default function DevToolsPage() {
     } else {
       Taro.eventCenter.trigger('dietAdvicePreviewOff')
     }
+  }
+
+  const onDevSkipRewardAdChange = (e: { detail: { value: boolean } }) => {
+    const on = !!e.detail.value
+    setDevSkipDietAdviceRewardAd(on)
+    setDevSkipRewardAdState(on)
+    Taro.showToast({
+      title: on ? '已开启：跳过激励视频' : '已关闭：进入详情需看广告',
+      icon: 'none',
+      duration: 2500,
+    })
+  }
+
+  const onOpenDietDetailForLongImage = () => {
+    const mock = buildDietAdviceDetailMock()
+    Taro.setStorageSync(DIET_ADVICE_DETAIL_STORAGE_KEY, mock)
+    Taro.removeStorageSync(DIET_ADVICE_GEN_PARAMS_KEY)
+    Taro.navigateTo({ url: '/pages/diet-advice/index' })
   }
 
   const onClearDietPromptFlags = () => {
@@ -141,6 +168,24 @@ export default function DevToolsPage() {
             color='#38bdf8'
             onChange={onDevPreviewEntryChange}
           />
+        </View>
+
+        <View className='dev-tools-row'>
+          <View className='dev-tools-label-wrap'>
+            <Text className='dev-tools-label'>跳过食谱激励视频</Text>
+            <Text className='dev-tools-hint'>
+              开启后点「生成 AI 食谱」直接进入详情，不播广告
+            </Text>
+          </View>
+          <Switch
+            checked={devSkipRewardAd}
+            color='#38bdf8'
+            onChange={onDevSkipRewardAdChange}
+          />
+        </View>
+
+        <View className='dev-tools-action' onClick={onOpenDietDetailForLongImage}>
+          <Text className='dev-tools-action-text'>打开详情页 · 测保存长图</Text>
         </View>
 
         <View className='dev-tools-reset' onClick={onClearDietPromptFlags}>
