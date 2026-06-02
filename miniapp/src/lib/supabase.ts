@@ -1,5 +1,4 @@
 import Taro from '@tarojs/taro'
-import { API_BASE_URL } from '../utils/api'
 import { getUserInfo } from './auth'
 
 // Supabase 配置
@@ -184,58 +183,59 @@ export async function getRecordsInRange(
   }
 }
 
+/** 插入成功后异步刷新最近登录时间（不阻塞保存） */
+function touchLastLoginAt(openid: string) {
+  void request('/wx_users', {
+    method: 'PATCH',
+    params: { openid: `eq.${openid}` },
+    data: { last_login_at: new Date().toISOString() },
+  })
+}
+
 /**
- * 添加血压记录（单个）
+ * 添加血压记录（单个，直连 Supabase REST）
  */
 export async function addRecord(record: Omit<BPRecord, 'id' | 'created_at'>): Promise<{ data: BPRecord | null; error: string | null }> {
-  // 获取 openid，用于更新 last_login_at
-  const userInfo = getUserInfo()
-  const openid = userInfo?.openid
+  const systolic = Number(record.systolic)
+  const diastolic = Number(record.diastolic)
+  const pulse = Number(record.pulse)
 
-  // 调用 Next.js API，在插入成功后更新 last_login_at
-  try {
-    const res = await Taro.request({
-      url: `${API_BASE_URL}/api/bp_records`,
-      method: 'POST',
-      header: {
-        'Content-Type': 'application/json',
-        ...(openid ? { 'x-openid': openid } : {})
-      },
-      data: record
-    })
-
-    const errMsg = typeof res.errMsg === 'string' ? res.errMsg : ''
-    if (errMsg && !errMsg.includes('ok')) {
-      return { data: null, error: errMsg }
-    }
-
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      let payload = res.data
-      if (typeof payload === 'string') {
-        try {
-          payload = JSON.parse(payload)
-        } catch {
-          /* 非 JSON 时保持原样 */
-        }
-      }
-      if (payload && typeof payload === 'object' && 'error' in payload && (payload as { error?: string }).error) {
-        return { data: null, error: String((payload as { error: string }).error) }
-      }
-      const row = Array.isArray(payload) ? payload[0] : payload
-      return { data: (row as BPRecord) || null, error: null }
-    }
-
-    const raw = res.data
-    const errorMsg =
-      (typeof raw === 'object' && raw !== null
-        ? (raw as { error?: string; message?: string }).error ||
-          (raw as { message?: string }).message
-        : null) || `请求失败 (${res.statusCode})`
-    return { data: null, error: errorMsg }
-  } catch (e: any) {
-    console.error('addRecord error:', e)
-    return { data: null, error: e.message || '网络请求失败' }
+  if (!Number.isFinite(systolic) || !Number.isFinite(diastolic) || !Number.isFinite(pulse)) {
+    return { data: null, error: '缺少有效数值: systolic, diastolic, pulse' }
   }
+  if (!record.user_id || typeof record.user_id !== 'string') {
+    return { data: null, error: '缺少 user_id 字段' }
+  }
+  if (!record.recorded_at) {
+    return { data: null, error: '缺少 recorded_at 字段' }
+  }
+
+  const row = {
+    user_id: record.user_id,
+    systolic: Math.round(systolic),
+    diastolic: Math.round(diastolic),
+    pulse: Math.round(pulse),
+    recorded_at: record.recorded_at,
+    hand: record.hand === 'left' || record.hand === 'right' ? record.hand : null,
+    note: typeof record.note === 'string' && record.note.trim() ? record.note.trim() : null,
+  }
+
+  const result = await request<BPRecord[]>('/bp_records', {
+    method: 'POST',
+    data: row,
+  })
+
+  if (result.error) {
+    return { data: null, error: result.error }
+  }
+
+  const inserted = result.data && Array.isArray(result.data) ? result.data[0] : null
+  const openid = getUserInfo()?.openid
+  if (openid && inserted) {
+    touchLastLoginAt(openid)
+  }
+
+  return { data: inserted, error: null }
 }
 
 /**
