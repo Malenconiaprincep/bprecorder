@@ -94,7 +94,58 @@ export function promoDisplayPrizeTiers(status: PromoConsecutiveStatusPayload): P
   ]
 }
 
-export async function fetchPromoConsecutive202604Status(): Promise<{
+export type PromoCampaignListItem = {
+  slug: string
+  title: string
+  window_start: string
+  window_end: string
+  required_streak_days: number
+  activity_phase: PromoConsecutivePhase
+}
+
+export async function fetchPromoCampaignList(): Promise<{
+  ok: boolean
+  campaigns?: PromoCampaignListItem[]
+  error?: string
+  httpStatus?: number
+}> {
+  const url = `${API_BASE_URL}/api/promo/campaigns?_=${Date.now()}`
+  const doGet = async (header: Record<string, string>) =>
+    Taro.request({ url, method: 'GET', header })
+
+  try {
+    await silentLogin()
+    let headers = await buildPromoHeaders()
+    if (!canPromoRequest(headers)) {
+      return { ok: false, error: '请先登录' }
+    }
+    let res = await doGet(headers)
+    if (res.statusCode === 401) {
+      await silentLogin()
+      headers = await buildPromoHeaders()
+      if (!canPromoRequest(headers)) {
+        return { ok: false, error: (res.data as { error?: string })?.error || '请先登录' }
+      }
+      res = await doGet(headers)
+    }
+    if (res.statusCode >= 200 && res.statusCode < 300 && res.data?.success) {
+      return {
+        ok: true,
+        campaigns: (res.data.campaigns || []) as PromoCampaignListItem[],
+      }
+    }
+    const data = res.data as { error?: string } | undefined
+    return {
+      ok: false,
+      error: data?.error || '加载活动列表失败',
+      httpStatus: res.statusCode,
+    }
+  } catch (e: any) {
+    return { ok: false, error: e.message || '网络错误' }
+  }
+}
+
+export async function fetchPromoCampaignStatus(slug?: string): Promise<{
   ok: boolean
   status?: PromoConsecutiveStatusPayload
   error?: string
@@ -102,8 +153,12 @@ export async function fetchPromoConsecutive202604Status(): Promise<{
   httpStatus?: number
   code?: string
 }> {
-  const promoStatusUrl = () =>
-    `${API_BASE_URL}/api/promo/campaign?_=${Date.now()}`
+  const promoStatusUrl = () => {
+    const base = `${API_BASE_URL}/api/promo/campaign`
+    const q = new URLSearchParams({ _: String(Date.now()) })
+    if (slug?.trim()) q.set('slug', slug.trim())
+    return `${base}?${q.toString()}`
+  }
 
   const doGet = async (header: Record<string, string>) =>
     Taro.request({
@@ -142,19 +197,30 @@ export async function fetchPromoConsecutive202604Status(): Promise<{
   }
 }
 
-export async function submitPromoConsecutive202604Claim(params: {
-  recipientName: string
-  phone: string
-  address: string
-}): Promise<{ ok: boolean; prizeLabel?: string; error?: string }> {
+/** @deprecated 使用 fetchPromoCampaignStatus */
+export const fetchPromoConsecutive202604Status = fetchPromoCampaignStatus
+
+export async function submitPromoCampaignClaim(
+  params: {
+    recipientName: string
+    phone: string
+    address: string
+  },
+  slug?: string
+): Promise<{ ok: boolean; prizeLabel?: string; error?: string }> {
   const body = {
     recipientName: params.recipientName.trim(),
     phone: params.phone.trim(),
     address: params.address.trim(),
   }
+  const claimUrl = () => {
+    const base = `${API_BASE_URL}/api/promo/campaign`
+    if (slug?.trim()) return `${base}?slug=${encodeURIComponent(slug.trim())}`
+    return base
+  }
   const doPost = async (header: Record<string, string>) =>
     Taro.request({
-      url: `${API_BASE_URL}/api/promo/campaign`,
+      url: claimUrl(),
       method: 'POST',
       header,
       data: body,
@@ -183,3 +249,6 @@ export async function submitPromoConsecutive202604Claim(params: {
     return { ok: false, error: e.message || '网络错误' }
   }
 }
+
+/** @deprecated 使用 submitPromoCampaignClaim */
+export const submitPromoConsecutive202604Claim = submitPromoCampaignClaim

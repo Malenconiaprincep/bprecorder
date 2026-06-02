@@ -1,5 +1,5 @@
 export default definePageConfig({
-  navigationBarTitleText: '活动中心',
+  navigationBarTitleText: '活动详情',
   navigationBarBackgroundColor: '#e0f2fe',
   navigationBarTextStyle: 'black',
   enablePullDownRefresh: true,

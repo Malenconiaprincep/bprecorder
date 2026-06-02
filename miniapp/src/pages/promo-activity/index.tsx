@@ -3,8 +3,8 @@ import { View, Text, ScrollView, Input, Textarea } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, usePullDownRefresh, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { silentLogin, getUserInfo } from '../../lib/auth'
 import {
-  fetchPromoConsecutive202604Status,
-  submitPromoConsecutive202604Claim,
+  fetchPromoCampaignStatus,
+  submitPromoCampaignClaim,
   promoDisplayPrizeTiers,
   type PromoConsecutiveStatusPayload,
 } from '../../lib/promo'
@@ -26,6 +26,7 @@ function prizeSlotVisualClass(index: number): string {
 }
 
 export default function PromoActivityPage() {
+  const [campaignSlug, setCampaignSlug] = useState<string | undefined>()
   const [promoStatus, setPromoStatus] = useState<PromoConsecutiveStatusPayload | null>(null)
   /** 首屏即加载中，避免短暂误显示「未登录」 */
   const [loading, setLoading] = useState(() => !USE_TEST_DATA)
@@ -38,7 +39,7 @@ export default function PromoActivityPage() {
   const [address, setAddress] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (slugOverride?: string) => {
     if (USE_TEST_DATA) {
       setLoading(false)
       return
@@ -62,8 +63,10 @@ export default function PromoActivityPage() {
 
     setSessionReady(true)
 
+    const slug = slugOverride ?? campaignSlug
+
     try {
-      const res = await fetchPromoConsecutive202604Status()
+      const res = await fetchPromoCampaignStatus(slug)
       if (res.ok && res.status) {
         setPromoStatus(res.status)
         setStatusError(null)
@@ -83,14 +86,27 @@ export default function PromoActivityPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [campaignSlug])
 
-  useLoad(() => {
-    void refresh()
+  useLoad((options) => {
+    const slug =
+      typeof options?.slug === 'string' && options.slug.trim()
+        ? options.slug.trim()
+        : undefined
+    setCampaignSlug(slug)
+    void refresh(slug)
   })
 
   useDidShow(() => {
-    void refresh()
+    const inst = Taro.getCurrentInstance()
+    const slug =
+      typeof inst.router?.params?.slug === 'string' && inst.router.params.slug.trim()
+        ? inst.router.params.slug.trim()
+        : campaignSlug
+    if (slug !== campaignSlug) {
+      setCampaignSlug(slug)
+    }
+    void refresh(slug)
   })
 
   usePullDownRefresh(() => {
@@ -101,8 +117,10 @@ export default function PromoActivityPage() {
   })
 
   useShareAppMessage(() => ({
-    title: promoStatus?.title ? `${promoStatus.title} · 活动中心` : '活动中心 · 血压记录',
-    path: '/pages/promo-activity/index',
+    title: promoStatus?.title ? `${promoStatus.title} · 活动详情` : '活动详情 · 血压记录',
+    path: campaignSlug
+      ? `/pages/promo-activity/index?slug=${encodeURIComponent(campaignSlug)}`
+      : '/pages/promo-activity/index',
   }))
 
   useShareTimeline(() => ({
@@ -132,11 +150,14 @@ export default function PromoActivityPage() {
     }
     setSubmitting(true)
     try {
-      const r = await submitPromoConsecutive202604Claim({
-        recipientName: recipientName.trim(),
-        phone: p,
-        address: address.trim(),
-      })
+      const r = await submitPromoCampaignClaim(
+        {
+          recipientName: recipientName.trim(),
+          phone: p,
+          address: address.trim(),
+        },
+        campaignSlug
+      )
       if (r.ok) {
         setShowClaimModal(false)
         Taro.showToast({

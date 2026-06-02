@@ -6,12 +6,12 @@ import { getRecords, getRecordsInRange, BPRecord, addRecordsBatch } from '../../
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import { FontSizeMode, getCurrentFontSizeMode, setFontSizeMode, getFontSizeModeClass, applyFontSizeMode } from '../../lib/settings'
 import FontSizeModeModal from '../../components/FontSizeModeModal'
+import { isWeappDevelopRuntime } from '../../utils/dietAdvicePromptPolicy'
 import * as XLSX from 'xlsx'
 import './index.scss'
 // @ts-ignore
 import DEFAULT_AVATAR from '../../assets/icons/avatar.png'
 // @ts-ignore
-import iconGroups from '../../assets/icons/groups.png'
 // @ts-ignore
 import iconChart from '../../assets/icons/chart.png'
 // @ts-ignore
@@ -96,6 +96,9 @@ export default function Profile() {
 
   // 加入交流群弹窗状态
   const [showGroupModal, setShowGroupModal] = useState(false)
+
+  // 导入/导出入口选择
+  const [showDataTransferModal, setShowDataTransferModal] = useState(false)
 
   // 数据导出相关状态
   const [showExportModal, setShowExportModal] = useState(false)
@@ -357,7 +360,7 @@ export default function Profile() {
       Taro.showToast({ title: '请先登录', icon: 'none' })
       return
     }
-    Taro.navigateTo({ url: '/pages/promo-activity/index' })
+    Taro.navigateTo({ url: '/pages/promo-list/index' })
   }
 
   const showDevTip = () => {
@@ -573,8 +576,26 @@ export default function Profile() {
     })
   }
 
-  const goToGroups = () => {
-    Taro.switchTab({ url: '/pages/groups/index' })
+  const openDataTransferModal = () => {
+    if (!hasOpenid) {
+      Taro.showToast({ title: '请先登录', icon: 'none' })
+      return
+    }
+    setShowDataTransferModal(true)
+  }
+
+  const closeDataTransferModal = () => {
+    setShowDataTransferModal(false)
+  }
+
+  const pickDataImport = () => {
+    setShowDataTransferModal(false)
+    openImportModal()
+  }
+
+  const pickDataExport = () => {
+    setShowDataTransferModal(false)
+    openExportModal()
   }
 
   // 打开数据导入弹窗
@@ -1005,9 +1026,7 @@ export default function Profile() {
   // 关怀模式下只显示核心功能，减少选项
   const allMenuItems = [
     { title: '活动中心', icon: iconChart, onClick: goPromoActivity, showInElder: true },
-    { title: '我的组', icon: iconGroups, onClick: goToGroups, showInElder: false },
-    { title: '数据导入', icon: iconImport, onClick: openImportModal, showInElder: false },
-    { title: '数据导出', icon: iconExport, onClick: openExportModal, showInElder: false },
+    { title: '导入与导出', icon: iconImport, onClick: openDataTransferModal, showInElder: false },
     // { title: '提醒设置', icon: iconClock, onClick: showDevTip, showInElder: true },
     {
       title: '显示模式',
@@ -1111,6 +1130,38 @@ export default function Profile() {
           </View>
         ))}
       </View>
+
+      {/* 导入/导出选择 */}
+      {showDataTransferModal && (
+        <View className='modal-mask' onClick={closeDataTransferModal} catchMove>
+          <View className='data-transfer-modal' onClick={(e) => e.stopPropagation()}>
+            <View className='data-transfer-header'>
+              <Text className='data-transfer-title'>导入与导出</Text>
+              <Text className='data-transfer-close' onClick={closeDataTransferModal}>
+                ×
+              </Text>
+            </View>
+            <View className='data-transfer-options'>
+              <View className='data-transfer-option' onClick={pickDataImport}>
+                <Image className='data-transfer-icon' src={iconImport} mode='aspectFit' />
+                <View className='data-transfer-option-text'>
+                  <Text className='data-transfer-option-title'>数据导入</Text>
+                  <Text className='data-transfer-option-desc'>从 CSV / Excel 批量导入记录</Text>
+                </View>
+                <Text className='data-transfer-arrow'>›</Text>
+              </View>
+              <View className='data-transfer-option' onClick={pickDataExport}>
+                <Image className='data-transfer-icon' src={iconExport} mode='aspectFit' />
+                <View className='data-transfer-option-text'>
+                  <Text className='data-transfer-option-title'>数据导出</Text>
+                  <Text className='data-transfer-option-desc'>按时间范围导出为 Excel</Text>
+                </View>
+                <Text className='data-transfer-arrow'>›</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* 数据导入弹窗 */}
       {showImportModal && (
@@ -1388,8 +1439,15 @@ export default function Profile() {
         </View>
       )}
 
-      <View className='version-info'>
-        <Text className='version-text'>v3.0.0</Text>
+      <View
+        className={`version-info${isWeappDevelopRuntime() ? ' version-info--dev' : ''}`}
+        onClick={() => {
+          if (isWeappDevelopRuntime()) {
+            Taro.navigateTo({ url: '/pages/dev-tools/index' })
+          }
+        }}
+      >
+        <Text className='version-text'>v3.1.0</Text>
       </View>
 
       {/* 字体模式选择弹窗 */}
@@ -1400,6 +1458,7 @@ export default function Profile() {
         title='选择显示模式'
         showClose
       />
+
     </View>
   )
 }

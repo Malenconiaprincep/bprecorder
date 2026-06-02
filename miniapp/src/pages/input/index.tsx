@@ -5,7 +5,26 @@ import { addRecord, updateRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { getPreferredMeasureHand, savePreferredMeasureHand, clearPreferredMeasureHand } from '../../lib/settings'
+import {
+  stashDietAdviceEntryForHome,
+} from '../../utils/triggerDietAdvice'
+import {
+  getDietAdvicePromptSkipReason,
+  isWeappDevelopRuntime,
+} from '../../utils/dietAdvicePromptPolicy'
+import type { DietAdviceLatestInput } from '../../utils/dietAdvice'
+import { localDateTimeToISO } from '../../utils/recordedAt'
+import { safeShowToast } from '../../utils/safeToast'
 import './index.scss'
+
+function parseBpInput(value: string, label: string): number | null {
+  const n = parseInt(String(value).trim(), 10)
+  if (!Number.isFinite(n) || n <= 0) {
+    safeShowToast({ title: `请填写有效的${label}`, icon: 'none' })
+    return null
+  }
+  return n
+}
 
 /** 测量时间选择器分钟步长 */
 const TIME_STEP_MINUTES = 5
@@ -204,74 +223,95 @@ export default function InputPage() {
     setSelectedTime(timeOptions[timeIndex])
   }
 
+
   const handleSave = async () => {
-    if (!systolic || !diastolic || !pulse) {
-      Taro.showToast({ title: '请填写完整数据', icon: 'none' })
-      return
-    }
+    const s = parseBpInput(systolic, '收缩压')
+    const d = parseBpInput(diastolic, '舒张压')
+    const p = parseBpInput(pulse, '心率')
+    if (s == null || d == null || p == null) return
 
     const userInfo = getUserInfo()
     if (!userInfo) {
-      Taro.showToast({ title: '请先登录', icon: 'none' })
+      safeShowToast({ title: '请先登录', icon: 'none' })
+      return
+    }
+
+    let recordedAt: string
+    try {
+      recordedAt = localDateTimeToISO(selectedDate, selectedTime)
+    } catch {
+      safeShowToast({ title: '测量时间无效，请重新选择', icon: 'none' })
       return
     }
 
     setSaving(true)
     try {
       if (isEdit && recordId) {
-        // 编辑模式
-        // 将选择的日期时间转换为ISO字符串（添加秒数）
-        const recordedAt = new Date(`${selectedDate}T${selectedTime}:00`).toISOString()
         const { error } = await updateRecord(recordId, {
-          systolic: parseInt(systolic),
-          diastolic: parseInt(diastolic),
-          pulse: parseInt(pulse),
+          systolic: s,
+          diastolic: d,
+          pulse: p,
           hand: hand || undefined,
           note: note || undefined,
-          recorded_at: recordedAt
+          recorded_at: recordedAt,
         })
 
         if (error) {
-          Taro.showToast({ title: error, icon: 'none' })
+          safeShowToast({ title: error, icon: 'none' })
         } else {
           if (hand === 'left' || hand === 'right') {
             savePreferredMeasureHand(hand)
           }
-          Taro.showToast({ title: '更新成功', icon: 'success' })
-          setAnalysisNeedRefresh(true) // 有数据变更，下次进分析页需拉取
-          setTimeout(() => {
-            Taro.navigateBack()
-          }, 1500)
+          safeShowToast({ title: '更新成功', icon: 'success' })
+          setAnalysisNeedRefresh(true)
+          setTimeout(() => Taro.navigateBack(), 1500)
         }
       } else {
-        // 新增模式
-        // 将选择的日期时间转换为ISO字符串（添加秒数）
-        const recordedAt = new Date(`${selectedDate}T${selectedTime}:00`).toISOString()
         const { error } = await addRecord({
           user_id: userInfo.openid,
-          systolic: parseInt(systolic),
-          diastolic: parseInt(diastolic),
-          pulse: parseInt(pulse),
+          systolic: s,
+          diastolic: d,
+          pulse: p,
           hand: hand || undefined,
           note: note || undefined,
-          recorded_at: recordedAt
+          recorded_at: recordedAt,
         })
 
         if (error) {
-          Taro.showToast({ title: error, icon: 'none' })
+          safeShowToast({ title: error, icon: 'none', duration: 3000 })
         } else {
           if (hand === 'left' || hand === 'right') {
             savePreferredMeasureHand(hand)
           }
-          Taro.showToast({ title: '保存成功', icon: 'success' })
-          setAnalysisNeedRefresh(true) // 有数据变更，下次进分析页需拉取
-          setTimeout(() => {
-            Taro.navigateBack()
-          }, 1500)
+          safeShowToast({ title: '保存成功', icon: 'success' })
+          setAnalysisNeedRefresh(true)
+
+          try {
+            const savedReading: DietAdviceLatestInput = {
+              systolic: s,
+              diastolic: d,
+              pulse: p,
+              note: note || undefined,
+              recordedAt,
+            }
+            const stashed = stashDietAdviceEntryForHome(savedReading)
+            if (!stashed) {
+              const skip = getDietAdvicePromptSkipReason(s, d)
+              if (skip && isWeappDevelopRuntime()) {
+                safeShowToast({ title: skip, icon: 'none', duration: 2800 })
+              }
+            }
+            setTimeout(() => Taro.switchTab({ url: '/pages/index/index' }), 1500)
+          } catch (postErr) {
+            console.error('post-save UI failed (record already saved):', postErr)
+            setTimeout(() => Taro.switchTab({ url: '/pages/index/index' }), 1500)
+          }
         }
       }
-    } catch (e) {
-      Taro.showToast({ title: '保存失败', icon: 'none' })
+    } catch (e: unknown) {
+      console.error('handleSave error:', e)
+      const msg = e instanceof Error ? e.message : '保存失败'
+      safeShowToast({ title: msg, icon: 'none', duration: 3000 })
     } finally {
       setSaving(false)
     }

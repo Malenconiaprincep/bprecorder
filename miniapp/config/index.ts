@@ -25,9 +25,12 @@ export default defineConfig(async (merge, { command, mode }) => {
     },
     copy: {
       patterns: [
+        {
+          from: 'src/assets/mini-program-qrcode.png',
+          to: 'assets/mini-program-qrcode.png',
+        },
       ],
-      options: {
-      }
+      options: {},
     },
     framework: 'react',
     compiler: {
@@ -63,6 +66,10 @@ export default defineConfig(async (merge, { command, mode }) => {
       },
       webpackChain(chain) {
         chain.resolve.plugin('tsconfig-paths').use(TsconfigPathsPlugin)
+        chain.watchOptions({
+          ignored: ['**/node_modules/**', '**/.git/**'],
+          aggregateTimeout: 300,
+        })
         chain.merge({
           plugin: {
             install: {
