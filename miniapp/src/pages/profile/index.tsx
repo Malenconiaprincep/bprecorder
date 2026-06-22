@@ -1548,7 +1548,7 @@ export default function Profile() {
           }
         }}
       >
-        <Text className='version-text'>v3.1.0</Text>
+        <Text className='version-text'>v3.2.0</Text>
       </View>
 
       {/* 字体模式选择弹窗 */}
