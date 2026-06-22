@@ -145,8 +145,9 @@ export async function getSubscribeTemplateId(): Promise<string> {
       method: 'GET',
     })
     if (response.statusCode === 200 && response.data?.success && response.data.templateId) {
-      cachedTemplateId = response.data.templateId
-      return cachedTemplateId
+      const id = String(response.data.templateId)
+      cachedTemplateId = id
+      return id
     }
   } catch (e) {
     console.warn('[reminders] fetch template id failed, use local fallback', e)
@@ -158,10 +159,15 @@ export async function getSubscribeTemplateId(): Promise<string> {
 
 type SubscribeAuthStatus = 'accept' | 'reject' | 'ban' | 'filter' | undefined
 
+/** 微信小程序订阅参数（Taro Option 类型误要求 entityIds，运行时只需 tmplIds） */
+function buildWeappSubscribeOption(templateId: string): Taro.requestSubscribeMessage.Option {
+  return { tmplIds: [templateId] } as Taro.requestSubscribeMessage.Option
+}
+
 /** 必须在用户点击事件中调用 */
 export async function requestSubscribeAuth(templateId: string): Promise<SubscribeAuthStatus> {
   try {
-    const res = await Taro.requestSubscribeMessage({ tmplIds: [templateId] })
+    const res = await Taro.requestSubscribeMessage(buildWeappSubscribeOption(templateId))
     return res[templateId] as SubscribeAuthStatus
   } catch (e) {
     console.warn('[reminders] requestSubscribeMessage failed', e)
