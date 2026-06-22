@@ -5,6 +5,7 @@ import { addRecord, updateRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { getPreferredMeasureHand, savePreferredMeasureHand, clearPreferredMeasureHand } from '../../lib/settings'
+import { getLocalReminderSettings, promptRenewReminderAfterSave } from '../../lib/reminders'
 import {
   stashDietAdviceEntryForHome,
 } from '../../utils/triggerDietAdvice'
@@ -281,6 +282,7 @@ export default function InputPage() {
           }
           safeShowToast({ title: '保存成功', icon: 'success' })
           setAnalysisNeedRefresh(true)
+          promptRenewReminderAfterSave(userInfo.openid, getLocalReminderSettings().reminderTime)
 
           try {
             const savedReading: DietAdviceLatestInput = {

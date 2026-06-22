@@ -82,7 +82,13 @@ SUPABASE_SERVICE_ROLE_KEY=你的_Supabase_Service_Role_Key
 WX_APPID=你的微信小程序_AppID
 WX_SECRET=你的微信小程序_Secret
 
-# JWT 密钥（用于签名和验证 Token）
+# 测量提醒订阅消息（可选，默认已内置模板 ID）
+# WX_SUBSCRIBE_TEMPLATE_ID=n_7gRV7nCOVIiK2TBvOZOfFVxOGqxMqNm1_j1ntEiDU
+# 若模板字段名与默认不一致，用 JSON 覆盖，例如：{"thing1":"血压测量","time2":"09:00"}
+# WX_SUBSCRIBE_TEMPLATE_DATA={"thing1":"血压测量提醒","time2":"09:00","thing3":"今日尚未记录"}
+# Vercel Cron 鉴权（部署提醒定时任务时必填）
+# CRON_SECRET=随机字符串
+
 # ⚠️ 重要：必须是至少 32 个字符的随机字符串，不能使用默认值！
 # 生成方法：node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 JWT_SECRET=生成的随机密钥（至少32个字符）
@@ -126,6 +132,8 @@ npm run dev
    - `GEMINI_API_KEY`（如果使用 Gemini）
    - `DASHSCOPE_API_KEY`（如果使用 Qwen 或作为备用）
    - `JWT_SECRET`、`WX_APPID`、`WX_SECRET` 等
+   - `CRON_SECRET`（测量提醒 Cron）
+   - 可选 `WX_SUBSCRIBE_TEMPLATE_ID`、`WX_SUBSCRIBE_TEMPLATE_DATA`
 4. 点击 Deploy。
 
 ## 技术栈

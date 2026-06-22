@@ -5,7 +5,16 @@ import { logout, saveWxUserInfo, getWxUserInfo, WxUserInfo, wxLoginWithBackend, 
 import { getRecords, getRecordsInRange, BPRecord, addRecordsBatch } from '../../lib/supabase'
 import { USE_TEST_DATA, getTestData } from '../../utils/testData'
 import { FontSizeMode, getCurrentFontSizeMode, setFontSizeMode, getFontSizeModeClass, applyFontSizeMode } from '../../lib/settings'
+import {
+  authorizeReminderSubscribe,
+  fetchServerReminderSettings,
+  getLocalReminderSettings,
+  saveLocalReminderSettings,
+  snapReminderTimeToSlot,
+  updateServerReminderSettings,
+} from '../../lib/reminders'
 import FontSizeModeModal from '../../components/FontSizeModeModal'
+import ReminderSettingsModal from '../../components/ReminderSettingsModal'
 import { isWeappDevelopRuntime } from '../../utils/dietAdvicePromptPolicy'
 import * as XLSX from 'xlsx'
 import './index.scss'
@@ -73,6 +82,11 @@ export default function Profile() {
   // 字体模式相关状态
   const [fontSizeMode, setFontSizeModeState] = useState<FontSizeMode>('normal')
   const [showFontModeModal, setShowFontModeModal] = useState(false)
+
+  const [reminderEnabled, setReminderEnabled] = useState(false)
+  const [reminderTime, setReminderTime] = useState('09:00')
+  const [showReminderModal, setShowReminderModal] = useState(false)
+  const [reminderSaving, setReminderSaving] = useState(false)
 
   // 数据导入相关状态
   const [showImportModal, setShowImportModal] = useState(false)
@@ -176,10 +190,30 @@ export default function Profile() {
     }
   }
 
+  const applyReminderSettings = (settings: { reminderEnabled: boolean; reminderTime: string }) => {
+    const snappedTime = snapReminderTimeToSlot(settings.reminderTime)
+    setReminderEnabled(settings.reminderEnabled)
+    setReminderTime(snappedTime)
+    saveLocalReminderSettings({ ...settings, reminderTime: snappedTime })
+  }
+
+  const loadReminderSettings = async (userOpenid: string) => {
+    const local = getLocalReminderSettings()
+    applyReminderSettings(local)
+
+    const remote = await fetchServerReminderSettings(userOpenid)
+    if (remote) {
+      applyReminderSettings(remote)
+    }
+  }
+
   useLoad(async () => {
     // 初始化字体模式
     const currentMode = getCurrentFontSizeMode()
     setFontSizeModeState(currentMode)
+
+    const localReminder = getLocalReminderSettings()
+    applyReminderSettings(localReminder)
 
     // 测试模式下直接加载测试数据
     if (USE_TEST_DATA) {
@@ -196,15 +230,15 @@ export default function Profile() {
     const userInfo = getUserInfo()
     if (userInfo && userInfo.openid && !userInfo.openid.startsWith('wx_')) {
       setOpenid(userInfo.openid)
-      // 获取记录数据
       await fetchRecords(userInfo.openid)
+      await loadReminderSettings(userInfo.openid)
     } else {
       // 尝试静默登录
       const result = await silentLogin()
       if (result.success && result.userInfo) {
         setOpenid(result.userInfo.openid)
-        // 获取记录数据
         await fetchRecords(result.userInfo.openid)
+        await loadReminderSettings(result.userInfo.openid)
       }
     }
 
@@ -383,8 +417,49 @@ export default function Profile() {
     Taro.navigateTo({ url: '/pages/promo-list/index' })
   }
 
-  const showDevTip = () => {
-    Taro.showToast({ title: '功能开发中，敬请期待', icon: 'none' })
+  const openReminderModal = () => {
+    if (!openid) {
+      Taro.showToast({ title: '请先登录', icon: 'none' })
+      return
+    }
+    setShowReminderModal(true)
+  }
+
+  const handleReminderSave = async () => {
+    if (!openid || reminderSaving) return
+
+    setReminderSaving(true)
+    try {
+      if (reminderEnabled) {
+        const auth = await authorizeReminderSubscribe(openid, reminderTime)
+        if (!auth.ok) {
+          Taro.showToast({ title: auth.message, icon: 'none' })
+          return
+        }
+      }
+
+      const result = await updateServerReminderSettings(openid, {
+        reminderEnabled,
+        reminderTime,
+      })
+
+      if (!result.success) {
+        Taro.showToast({ title: result.error || '保存失败', icon: 'none' })
+        return
+      }
+
+      if (result.settings) {
+        applyReminderSettings(result.settings)
+      }
+
+      setShowReminderModal(false)
+      Taro.showToast({
+        title: reminderEnabled ? '提醒已开启' : '提醒已关闭',
+        icon: 'success',
+      })
+    } finally {
+      setReminderSaving(false)
+    }
   }
 
   // 导出区间最多一年
@@ -1047,7 +1122,13 @@ export default function Profile() {
   const allMenuItems = [
     { title: '活动中心', icon: iconChart, onClick: goPromoActivity, showInElder: true },
     { title: '导入与导出', icon: iconImport, onClick: openDataTransferModal, showInElder: false },
-    // { title: '提醒设置', icon: iconClock, onClick: showDevTip, showInElder: true },
+    {
+      title: '提醒设置',
+      icon: iconClock,
+      onClick: openReminderModal,
+      extra: reminderEnabled ? reminderTime : '已关闭',
+      showInElder: true,
+    },
     {
       title: '显示模式',
       icon: iconMode,
@@ -1477,6 +1558,17 @@ export default function Profile() {
         onClose={() => setShowFontModeModal(false)}
         title='选择显示模式'
         showClose
+      />
+
+      <ReminderSettingsModal
+        visible={showReminderModal}
+        enabled={reminderEnabled}
+        reminderTime={reminderTime}
+        saving={reminderSaving}
+        onEnabledChange={setReminderEnabled}
+        onTimeChange={setReminderTime}
+        onSave={handleReminderSave}
+        onClose={() => setShowReminderModal(false)}
       />
 
     </View>
