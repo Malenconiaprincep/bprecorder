@@ -24,6 +24,7 @@ export default defineAppConfig({
     'pages/camera/index',
     'pages/calendar/index',
     'pages/dev-tools/index',
+    'pages/login-debug/index',
     'pages/groups/detail',
     'pages/groups/join',
     'pages/groups/member'
@@ -34,8 +35,7 @@ export default defineAppConfig({
     navigationBarTitleText: '血压记录',
     navigationBarTextStyle: 'black',
     backgroundColor: '#f0f6ff',
-    enablePullDownRefresh: false,
-    disableScroll: false
+    enablePullDownRefresh: false
   },
   tabBar: {
     color: '#94a3b8',

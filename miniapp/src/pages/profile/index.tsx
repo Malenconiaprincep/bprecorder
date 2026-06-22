@@ -258,12 +258,32 @@ export default function Profile() {
           }
         } else {
           Taro.hideLoading()
-          Taro.showToast({ title: result.error || '登录失败', icon: 'none' })
+          Taro.showModal({
+            title: '登录失败',
+            content: `${result.error || '未知错误'}\n\n可打开「登录诊断」页复制完整报告发给客服。`,
+            confirmText: '去诊断',
+            cancelText: '关闭',
+            success: (res) => {
+              if (res.confirm) {
+                Taro.navigateTo({ url: '/pages/login-debug/index' })
+              }
+            },
+          })
           return
         }
       } catch (e) {
         Taro.hideLoading()
-        Taro.showToast({ title: '登录失败，请重试', icon: 'none' })
+        Taro.showModal({
+          title: '登录失败',
+          content: '登录过程出现异常，可打开「登录诊断」页复制完整报告发给客服。',
+          confirmText: '去诊断',
+          cancelText: '关闭',
+          success: (res) => {
+            if (res.confirm) {
+              Taro.navigateTo({ url: '/pages/login-debug/index' })
+            }
+          },
+        })
         return
       }
       Taro.hideLoading()
