@@ -12,10 +12,6 @@ import {
   requestDietAdviceDetailWithAd,
   type DietAdviceUiState,
 } from '../../utils/triggerDietAdvice'
-import {
-  getDietAdvicePromptSkipReason,
-  isWeappDevelopRuntime,
-} from '../../utils/dietAdvicePromptPolicy'
 import './index.scss'
 // @ts-ignore
 import iconCamera from '../../assets/icons/camera.png'
@@ -118,13 +114,6 @@ export default function CameraPage() {
         if (opened) {
           setPendingNavigateBack(true)
         } else {
-          const skip = getDietAdvicePromptSkipReason(
-            savedReading.systolic,
-            savedReading.diastolic
-          )
-          if (skip && isWeappDevelopRuntime()) {
-            Taro.showToast({ title: skip, icon: 'none', duration: 2800 })
-          }
           setTimeout(() => Taro.navigateBack(), 1500)
         }
       }

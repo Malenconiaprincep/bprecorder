@@ -56,6 +56,12 @@ export function isBPNeedAttention(result: BPStatusResult): boolean {
   return result.color !== 'ideal'
 }
 
+/** 保存后是否值得弹出饮食/生活建议（稍高及以上，不含正常与偏低） */
+export function isBPElevatedForDietAdvice(systolic: number, diastolic: number): boolean {
+  const { color } = getBPStatus(systolic, diastolic)
+  return color === 'prehigh' || color === 'high-1' || color === 'high-3'
+}
+
 /** 仅看收缩压（分析页「平均收缩压」旁状态标签） */
 export function getBPStatusSystolicOnly(systolic: number): BPStatusResult {
   const s = systolic

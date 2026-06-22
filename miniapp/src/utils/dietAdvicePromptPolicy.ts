@@ -1,8 +1,9 @@
 import Taro from '@tarojs/taro'
+import { isBPElevatedForDietAdvice } from './bpStatus'
 
 const STORAGE_PROMPT_SHOWN_DATE = 'diet_advice_prompt_shown_date'
 const STORAGE_PROMPT_DISMISS_DATE = 'diet_advice_prompt_dismiss_date'
-/** 开发包专用：保存后是否忽略正式策略、每次都弹食谱引导 */
+/** 开发包专用：保存后是否忽略「每天一次」限制（仍须血压偏高） */
 const STORAGE_DEV_ALWAYS_PROMPT = 'diet_advice_dev_always_prompt'
 /** 开发包专用：首页固定预览保存后引导卡（无需真实保存） */
 const STORAGE_DEV_PREVIEW_ENTRY = 'diet_advice_dev_preview_entry'
@@ -36,7 +37,7 @@ export function getLocalDateKey(): string {
 }
 
 /**
- * 开发环境：是否每次保存后都弹出食谱引导（默认开启，可在「我的」里关）
+ * 开发环境：保存后是否忽略「每天一次」限制（默认开启；仍须血压偏高才弹）
  * 生产包恒为 false
  */
 export function getDevDietAdviceAlwaysPrompt(): boolean {
@@ -115,12 +116,17 @@ export function clearDietAdvicePromptDayFlags(): void {
  * 保存后是否应弹出「生成 AI 食谱」引导（非每次记录都弹）
  *
  * 正式策略：
- * - 每次新增保存后：当天最多自动弹出 1 次入口（不限血压档位）
+ * - 仅当本次血压为「稍高」及以上（≥120/80 或 ≥140/90 等）时才考虑弹出
+ * - 当天最多自动弹出 1 次入口
  * - 用户当天点过「暂不需要」或关闭入口：当天不再弹
  *
- * 开发策略（开发版 / dev 构建 + 开关开启）：每次保存都弹，便于调 UI
+ * 开发策略（开发版 / dev 构建 + 开关开启）：忽略「每天一次」限制，但仍需血压偏高才弹
  */
-export function shouldShowDietAdvicePrompt(_systolic: number, _diastolic: number): boolean {
+export function shouldShowDietAdvicePrompt(systolic: number, diastolic: number): boolean {
+  if (!isBPElevatedForDietAdvice(systolic, diastolic)) {
+    return false
+  }
+
   if (getDevDietAdviceAlwaysPrompt()) {
     return true
   }
@@ -142,25 +148,6 @@ export function shouldShowDietAdvicePrompt(_systolic: number, _diastolic: number
     console.warn('[diet-advice] read prompt policy storage failed', e)
     return false
   }
-}
-
-/** 未弹出时的原因（便于开发排查） */
-export function getDietAdvicePromptSkipReason(
-  systolic: number,
-  diastolic: number
-): string | null {
-  if (shouldShowDietAdvicePrompt(systolic, diastolic)) return null
-  if (getDevDietAdviceAlwaysPrompt()) return null
-  try {
-    const today = getLocalDateKey()
-    const dismissed = Taro.getStorageSync(STORAGE_PROMPT_DISMISS_DATE) as string
-    if (dismissed === today) return '今日已选择暂不需要'
-    const shown = Taro.getStorageSync(STORAGE_PROMPT_SHOWN_DATE) as string
-    if (shown === today) return '今日已弹出过生活饮食建议'
-  } catch {
-    return '读取弹窗策略失败'
-  }
-  return null
 }
 
 /** 已展示引导弹窗（当天不再自动弹；开发「始终弹出」模式下不写入） */

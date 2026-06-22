@@ -144,9 +144,9 @@ export default function DevToolsPage() {
 
         <View className='dev-tools-row'>
           <View className='dev-tools-label-wrap'>
-            <Text className='dev-tools-label'>保存后始终弹出食谱</Text>
+            <Text className='dev-tools-label'>保存后忽略每日限次</Text>
             <Text className='dev-tools-hint'>
-              开启后每次保存都会出引导卡，忽略血压与「每天一次」限制
+              开启后每次偏高保存都会出引导卡，忽略「每天一次」；正常血压仍不弹
             </Text>
           </View>
           <Switch

@@ -8,10 +8,6 @@ import { getPreferredMeasureHand, savePreferredMeasureHand, clearPreferredMeasur
 import {
   stashDietAdviceEntryForHome,
 } from '../../utils/triggerDietAdvice'
-import {
-  getDietAdvicePromptSkipReason,
-  isWeappDevelopRuntime,
-} from '../../utils/dietAdvicePromptPolicy'
 import type { DietAdviceLatestInput } from '../../utils/dietAdvice'
 import { localDateTimeToISO } from '../../utils/recordedAt'
 import { safeShowToast } from '../../utils/safeToast'
@@ -294,13 +290,7 @@ export default function InputPage() {
               note: note || undefined,
               recordedAt,
             }
-            const stashed = stashDietAdviceEntryForHome(savedReading)
-            if (!stashed) {
-              const skip = getDietAdvicePromptSkipReason(s, d)
-              if (skip && isWeappDevelopRuntime()) {
-                safeShowToast({ title: skip, icon: 'none', duration: 2800 })
-              }
-            }
+            stashDietAdviceEntryForHome(savedReading)
             setTimeout(() => Taro.switchTab({ url: '/pages/index/index' }), 1500)
           } catch (postErr) {
             console.error('post-save UI failed (record already saved):', postErr)
