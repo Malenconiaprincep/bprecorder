@@ -84,8 +84,8 @@ WX_SECRET=你的微信小程序_Secret
 
 # 测量提醒订阅消息（可选，默认已内置模板 ID）
 # WX_SUBSCRIBE_TEMPLATE_ID=n_7gRV7nCOVIiK2TBvOZOfFVxOGqxMqNm1_j1ntEiDU
-# 若模板字段名与默认不一致，用 JSON 覆盖，例如：{"thing1":"血压测量","time2":"09:00"}
-# WX_SUBSCRIBE_TEMPLATE_DATA={"thing1":"血压测量提醒","time2":"09:00","thing3":"今日尚未记录"}
+# 若模板字段名与默认不一致，用 JSON 覆盖（支持 {reminderTime}、{reminderDateTime}）
+# WX_SUBSCRIBE_TEMPLATE_DATA={"thing2":"自定义文案","time4":"{reminderDateTime}"}
 # Vercel Cron 鉴权（部署提醒定时任务时必填）
 # CRON_SECRET=随机字符串
 

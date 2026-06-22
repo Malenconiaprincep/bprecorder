@@ -50,6 +50,7 @@ async function runSendReminders(request: NextRequest) {
   let sent = 0
   let skipped = 0
   const errors: string[] = []
+  const skippedDetails: Array<{ openid: string; reason: string }> = []
   const skip = devForce
     ? { skipTimeWindow: true, skipRecordedCheck: true }
     : {}
@@ -67,15 +68,18 @@ async function runSendReminders(request: NextRequest) {
       sent += 1
     } else {
       skipped += 1
+      skippedDetails.push({ openid: user.openid, reason: result.reason })
     }
   }
 
   return NextResponse.json({
     success: true,
     devForce,
+    reminderDevMode: isReminderDevModeEnabled(),
     scanned,
     sent,
     skipped,
+    skippedDetails,
     errors,
   })
 }

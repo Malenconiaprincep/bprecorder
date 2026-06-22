@@ -94,8 +94,11 @@ export function computeNextScheduledFor(
 
   let targetDateKey = localDateKey
   if (nowMinutes >= targetMinutes) {
-    const nextDay = new Date(now.getTime() + 36 * 60 * 60 * 1000)
-    targetDateKey = getLocalDateKey(nextDay, timeZone)
+    // 本地日历 +1 天（勿用 +36h，晚于提醒时刻保存会误跳到后天）
+    const tzOffset = timeZone === 'Asia/Shanghai' ? '+08:00' : '+08:00'
+    const anchor = new Date(`${localDateKey}T12:00:00${tzOffset}`)
+    anchor.setUTCDate(anchor.getUTCDate() + 1)
+    targetDateKey = getLocalDateKey(anchor, timeZone)
   }
 
   const hh = String(parsed.hour).padStart(2, '0')

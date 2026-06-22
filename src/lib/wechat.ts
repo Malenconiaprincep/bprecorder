@@ -2,7 +2,11 @@
  * 微信小程序服务端 API：access_token 缓存 + 订阅消息下发
  */
 
-import { resolveSubscribeTemplateId } from './subscribeConfig'
+import {
+  DEFAULT_SUBSCRIBE_TEMPLATE_DATA,
+  resolveSubscribeTemplateId,
+} from './subscribeConfig'
+import { getLocalDateKey } from './reminderSchedule'
 
 const TOKEN_CACHE: { token: string; expiresAt: number } = { token: '', expiresAt: 0 }
 
@@ -35,25 +39,52 @@ export function getSubscribeTemplateId(): string {
   return resolveSubscribeTemplateId()
 }
 
-/** 订阅消息模板字段，可通过 WX_SUBSCRIBE_TEMPLATE_DATA JSON 覆盖 */
-export function buildReminderTemplateData(reminderTime: string): Record<string, { value: string }> {
-  const raw = process.env.WX_SUBSCRIBE_TEMPLATE_DATA?.trim()
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as Record<string, string>
-      return Object.fromEntries(
-        Object.entries(parsed).map(([key, value]) => [key, { value: String(value).slice(0, 20) }])
-      )
-    } catch {
-      /* fall through */
-    }
-  }
+function formatReminderDateTime(reminderTime: string, now = new Date()): string {
+  const dateKey = getLocalDateKey(now, 'Asia/Shanghai')
+  const [year, month, day] = dateKey.split('-').map(Number)
+  return `${year}年${month}月${day}日 ${reminderTime}`
+}
 
-  return {
-    thing1: { value: '血压测量提醒' },
-    time2: { value: reminderTime.slice(0, 20) },
-    thing3: { value: '今日尚未记录，记得测量' },
+function clampTemplateValue(key: string, value: string): string {
+  if (/^(thing|phrase|name)\d*$/.test(key)) {
+    return value.slice(0, 20)
   }
+  return value
+}
+
+function interpolateTemplateValue(
+  template: string,
+  reminderTime: string,
+  now = new Date()
+): string {
+  return template
+    .replaceAll('{reminderTime}', reminderTime)
+    .replaceAll('{reminderDateTime}', formatReminderDateTime(reminderTime, now))
+}
+
+function parseTemplateDataSource(raw: string | undefined): Record<string, string> | null {
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as Record<string, string>
+  } catch {
+    return null
+  }
+}
+
+/** 订阅消息模板字段，可通过 WX_SUBSCRIBE_TEMPLATE_DATA JSON 覆盖 */
+export function buildReminderTemplateData(
+  reminderTime: string,
+  now = new Date()
+): Record<string, { value: string }> {
+  const envOverrides = parseTemplateDataSource(process.env.WX_SUBSCRIBE_TEMPLATE_DATA?.trim())
+  const source = { ...DEFAULT_SUBSCRIBE_TEMPLATE_DATA, ...envOverrides }
+
+  return Object.fromEntries(
+    Object.entries(source).map(([key, value]) => [
+      key,
+      { value: clampTemplateValue(key, interpolateTemplateValue(String(value), reminderTime, now)) },
+    ])
+  )
 }
 
 export async function sendSubscribeMessage(params: {
