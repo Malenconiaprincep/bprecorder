@@ -430,14 +430,6 @@ export default function Profile() {
 
     setReminderSaving(true)
     try {
-      if (reminderEnabled) {
-        const auth = await authorizeReminderSubscribe(openid, reminderTime)
-        if (!auth.ok) {
-          Taro.showToast({ title: auth.message, icon: 'none' })
-          return
-        }
-      }
-
       const result = await updateServerReminderSettings(openid, {
         reminderEnabled,
         reminderTime,
@@ -450,6 +442,14 @@ export default function Profile() {
 
       if (result.settings) {
         applyReminderSettings(result.settings)
+      }
+
+      if (reminderEnabled) {
+        const auth = await authorizeReminderSubscribe(openid, reminderTime, { replacePending: true })
+        if (!auth.ok) {
+          Taro.showToast({ title: auth.message, icon: 'none', duration: 3000 })
+          return
+        }
       }
 
       setShowReminderModal(false)

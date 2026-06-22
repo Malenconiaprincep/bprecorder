@@ -180,6 +180,8 @@ export async function registerSubscribeToken(params: {
   templateId: string
   status: 'accept' | 'reject' | 'ban'
   reminderTime?: string
+  /** false = 续订时新增额度；默认 true = 更新已有未消耗额度 */
+  replacePending?: boolean
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const response = await Taro.request({
@@ -193,6 +195,7 @@ export async function registerSubscribeToken(params: {
         templateId: params.templateId,
         status: params.status,
         reminderTime: params.reminderTime,
+        replacePending: params.replacePending !== false,
       },
     })
 
@@ -208,7 +211,8 @@ export async function registerSubscribeToken(params: {
 /** 开启/续订提醒：请求授权并登记额度（需在用户点击回调中调用） */
 export async function authorizeReminderSubscribe(
   openid: string,
-  reminderTime: string
+  reminderTime: string,
+  options?: { replacePending?: boolean }
 ): Promise<{ ok: boolean; message: string }> {
   const templateId = await getSubscribeTemplateId()
 
@@ -219,6 +223,7 @@ export async function authorizeReminderSubscribe(
       templateId,
       status: 'accept',
       reminderTime,
+      replacePending: options?.replacePending !== false,
     })
     if (!reg.success) {
       return { ok: false, message: reg.error || '登记提醒失败' }
@@ -276,11 +281,37 @@ export function promptRenewReminderAfterSave(openid: string, reminderTime: strin
     cancelText: '暂不',
     success: async (res) => {
       if (!res.confirm) return
-      const result = await authorizeReminderSubscribe(openid, reminderTime)
+      const result = await authorizeReminderSubscribe(openid, reminderTime, { replacePending: false })
       Taro.showToast({
         title: result.message,
         icon: result.ok ? 'success' : 'none',
       })
     },
   })
+}
+
+/** 开发测试：忽略「今日已测 / 时间窗口」，有订阅额度即尝试发送 */
+export async function triggerDevTestReminderSend(
+  openid: string
+): Promise<{ ok: boolean; message: string }> {
+  try {
+    const response = await Taro.request({
+      url: `${API_BASE_URL}/api/cron/send-reminders/test`,
+      method: 'POST',
+      header: { 'x-openid': openid },
+    })
+
+    const data = response.data as { success?: boolean; message?: string; error?: string; sent?: boolean }
+    if (response.statusCode === 200 && data?.success && data.sent) {
+      return { ok: true, message: data.message || '测试提醒已发送' }
+    }
+
+    return {
+      ok: false,
+      message: data?.message || data?.error || `测试发送失败 (${response.statusCode})`,
+    }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : '网络请求失败'
+    return { ok: false, message: msg }
+  }
 }

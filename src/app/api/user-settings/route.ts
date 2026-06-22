@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { normalizeReminderTime, parseReminderTime, snapReminderTimeToSlot } from '@/lib/reminderSchedule'
+import { syncPendingTokenSchedule } from '@/lib/subscribeTokenStore'
 
 // Supabase 配置
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -191,6 +192,21 @@ export async function POST(request: NextRequest) {
         status: 500,
         headers: corsHeaders,
       })
+    }
+
+    if (updateData.reminder_time) {
+      const { data: userRow } = await supabase
+        .from('wx_users')
+        .select('reminder_timezone')
+        .eq('openid', openid)
+        .single()
+
+      await syncPendingTokenSchedule(
+        supabase,
+        openid,
+        updateData.reminder_time,
+        userRow?.reminder_timezone || 'Asia/Shanghai'
+      )
     }
 
     const { data: latest } = await supabase

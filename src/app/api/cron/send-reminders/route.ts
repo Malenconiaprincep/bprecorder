@@ -1,24 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import {
-  buildReminderTemplateData,
-  getSubscribeTemplateId,
-  sendSubscribeMessage,
-} from '@/lib/wechat'
-import {
-  getLocalDateKey,
-  getMinutesFromReminderTime,
-  userRecordedOnLocalDate,
-} from '@/lib/reminderSchedule'
+import { trySendReminderForUser } from '@/lib/reminderSend'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-/** 允许 cron 触发的时间窗口：提醒时刻起 45 分钟内 */
-const REMINDER_WINDOW_MINUTES = 45
 
 function isAuthorizedCron(request: NextRequest): boolean {
   const secret = process.env.CRON_SECRET?.trim()
@@ -31,22 +19,26 @@ function isAuthorizedCron(request: NextRequest): boolean {
   return header === secret
 }
 
-/**
- * GET/POST - 定时扫描并发送测量提醒（Vercel Cron）
- * 需配置 CRON_SECRET；Vercel 会自动带 Authorization: Bearer ${CRON_SECRET}
- */
-async function runSendReminders() {
-  const templateId = getSubscribeTemplateId()
+function isReminderDevModeEnabled(): boolean {
+  return process.env.REMINDER_DEV_MODE === '1' || process.env.NODE_ENV === 'development'
+}
+
+async function runSendReminders(request: NextRequest) {
   if (!supabaseUrl || !supabaseServiceKey) {
     return NextResponse.json({ success: false, error: '服务器配置错误' }, { status: 500 })
   }
+
+  const devForce =
+    isReminderDevModeEnabled() &&
+    (request.nextUrl.searchParams.get('devForce') === '1' ||
+      request.headers.get('x-reminder-dev-force') === '1')
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
   const now = new Date()
 
   const { data: users, error: usersError } = await supabase
     .from('wx_users')
-    .select('openid, reminder_time, reminder_timezone')
+    .select('openid')
     .eq('reminder_enabled', true)
 
   if (usersError) {
@@ -58,86 +50,29 @@ async function runSendReminders() {
   let sent = 0
   let skipped = 0
   const errors: string[] = []
+  const skip = devForce
+    ? { skipTimeWindow: true, skipRecordedCheck: true }
+    : {}
 
   for (const user of users || []) {
     scanned += 1
-    const openid = user.openid
-    const reminderTime = user.reminder_time || '09:00'
-    const timeZone = user.reminder_timezone || 'Asia/Shanghai'
+    const result = await trySendReminderForUser(supabase, user.openid, now, skip)
 
-    const deltaMinutes = getMinutesFromReminderTime(now, reminderTime, timeZone)
-    if (deltaMinutes < 0 || deltaMinutes > REMINDER_WINDOW_MINUTES) {
-      skipped += 1
+    if (!result.ok) {
+      errors.push(`${user.openid}: ${result.error}`)
       continue
     }
 
-    const todayKey = getLocalDateKey(now, timeZone)
-    const dayStart = new Date(`${todayKey}T00:00:00+08:00`)
-    const dayEnd = new Date(`${todayKey}T23:59:59.999+08:00`)
-
-    const { data: records, error: recordsError } = await supabase
-      .from('bp_records')
-      .select('recorded_at')
-      .eq('user_id', openid)
-      .gte('recorded_at', dayStart.toISOString())
-      .lte('recorded_at', dayEnd.toISOString())
-      .limit(20)
-
-    if (recordsError) {
-      errors.push(`${openid}: records ${recordsError.message}`)
-      continue
-    }
-
-    if (userRecordedOnLocalDate(records || [], todayKey, timeZone)) {
-      skipped += 1
-      continue
-    }
-
-    const { data: tokens, error: tokenError } = await supabase
-      .from('subscribe_message_tokens')
-      .select('id, template_id')
-      .eq('openid', openid)
-      .eq('status', 'accept')
-      .eq('consumed', false)
-      .lte('scheduled_for', now.toISOString())
-      .order('scheduled_for', { ascending: true })
-      .limit(1)
-
-    if (tokenError) {
-      errors.push(`${openid}: tokens ${tokenError.message}`)
-      continue
-    }
-
-    const token = tokens?.[0]
-    if (!token) {
-      skipped += 1
-      continue
-    }
-
-    const sendResult = await sendSubscribeMessage({
-      openid,
-      templateId: token.template_id || templateId,
-      data: buildReminderTemplateData(reminderTime),
-    })
-
-    if (sendResult.ok) {
-      await supabase
-        .from('subscribe_message_tokens')
-        .update({ consumed: true, sent_at: now.toISOString(), send_error: null })
-        .eq('id', token.id)
+    if (result.sent) {
       sent += 1
     } else {
-      const errMsg = sendResult.errmsg || 'send failed'
-      await supabase
-        .from('subscribe_message_tokens')
-        .update({ send_error: errMsg })
-        .eq('id', token.id)
-      errors.push(`${openid}: ${errMsg}`)
+      skipped += 1
     }
   }
 
   return NextResponse.json({
     success: true,
+    devForce,
     scanned,
     sent,
     skipped,
@@ -149,12 +84,12 @@ export async function GET(request: NextRequest) {
   if (!isAuthorizedCron(request)) {
     return NextResponse.json({ success: false, error: '未授权' }, { status: 401 })
   }
-  return runSendReminders()
+  return runSendReminders(request)
 }
 
 export async function POST(request: NextRequest) {
   if (!isAuthorizedCron(request)) {
     return NextResponse.json({ success: false, error: '未授权' }, { status: 401 })
   }
-  return runSendReminders()
+  return runSendReminders(request)
 }

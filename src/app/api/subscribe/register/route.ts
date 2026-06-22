@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSubscribeTemplateId } from '@/lib/wechat'
-import {
-  computeNextScheduledFor,
-  normalizeReminderTime,
-  parseReminderTime,
-} from '@/lib/reminderSchedule'
+import { normalizeReminderTime, parseReminderTime, snapReminderTimeToSlot } from '@/lib/reminderSchedule'
+import { registerSubscribeTokenRow } from '@/lib/subscribeTokenStore'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -27,7 +24,7 @@ type SubscribeStatus = 'accept' | 'reject' | 'ban'
 
 /**
  * POST - 小程序 requestSubscribeMessage 成功后上报额度
- * body: { templateId, status, reminderTime? }
+ * body: { templateId, status, reminderTime?, replacePending? }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -40,7 +37,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '服务器配置错误' }, { status: 500, headers: corsHeaders })
     }
 
-    let body: { templateId?: string; status?: SubscribeStatus; reminderTime?: string }
+    let body: {
+      templateId?: string
+      status?: SubscribeStatus
+      reminderTime?: string
+      replacePending?: boolean
+    }
     try {
       body = await request.json()
     } catch {
@@ -58,6 +60,15 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    const reminderTimeInput = body.reminderTime
+      ? snapReminderTimeToSlot(String(body.reminderTime))
+      : null
+
+    const userUpdate: { reminder_time?: string } = {}
+    if (reminderTimeInput && parseReminderTime(reminderTimeInput)) {
+      userUpdate.reminder_time = reminderTimeInput
+    }
+
     const { data: user, error: userError } = await supabase
       .from('wx_users')
       .select('reminder_time, reminder_timezone')
@@ -69,25 +80,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '用户不存在' }, { status: 404, headers: corsHeaders })
     }
 
-    const reminderTime = normalizeReminderTime(body.reminderTime || user?.reminder_time || '09:00')
+    if (Object.keys(userUpdate).length > 0) {
+      await supabase.from('wx_users').update(userUpdate).eq('openid', openid)
+    }
+
+    const reminderTime = normalizeReminderTime(reminderTimeInput || user?.reminder_time || '09:00')
     const timeZone = user?.reminder_timezone || 'Asia/Shanghai'
-    const scheduledFor = computeNextScheduledFor(new Date(), reminderTime, timeZone)
 
-    const { data: inserted, error: insertError } = await supabase
-      .from('subscribe_message_tokens')
-      .insert({
-        openid,
-        template_id: templateId,
-        status,
-        scheduled_for: scheduledFor,
-        consumed: status !== 'accept',
-        sent_at: null,
-      })
-      .select('id, scheduled_for')
-      .single()
+    const row = await registerSubscribeTokenRow(supabase, {
+      openid,
+      templateId,
+      status,
+      reminderTime,
+      timeZone,
+      replacePending: body.replacePending !== false,
+    })
 
-    if (insertError) {
-      console.error('[subscribe/register] insert failed', insertError)
+    if (!row.id && status === 'accept') {
       return NextResponse.json({ success: false, error: '保存订阅额度失败' }, { status: 500, headers: corsHeaders })
     }
 
@@ -95,8 +104,9 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         registered: status === 'accept',
-        tokenId: inserted?.id,
-        scheduledFor: inserted?.scheduled_for,
+        tokenId: row.id,
+        scheduledFor: row.scheduledFor,
+        updated: row.updated,
         reminderTime: parseReminderTime(reminderTime) ? reminderTime : '09:00',
       },
       { headers: corsHeaders }

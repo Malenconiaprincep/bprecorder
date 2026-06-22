@@ -22,6 +22,8 @@ import {
   DIET_ADVICE_FEATURE_NAME,
 } from '../../types/dietAdvice'
 import type { DietAdviceData } from '../../types/dietAdvice'
+import { getUserInfo } from '../../lib/auth'
+import { triggerDevTestReminderSend } from '../../lib/reminders'
 import './index.scss'
 
 export default function DevToolsPage() {
@@ -91,6 +93,26 @@ export default function DevToolsPage() {
   const onClearDietPromptFlags = () => {
     clearDietAdvicePromptDayFlags()
     Taro.showToast({ title: '已清除今日弹窗记录', icon: 'none' })
+  }
+
+  const onDevTestReminderSend = async () => {
+    const user = getUserInfo()
+    if (!user?.openid) {
+      Taro.showToast({ title: '请先登录', icon: 'none' })
+      return
+    }
+
+    Taro.showLoading({ title: '发送中...' })
+    try {
+      const result = await triggerDevTestReminderSend(user.openid)
+      Taro.showToast({
+        title: result.message,
+        icon: result.ok ? 'success' : 'none',
+        duration: 3000,
+      })
+    } finally {
+      Taro.hideLoading()
+    }
   }
 
   const onPreviewDietWeatherTemplate = async (
@@ -190,6 +212,14 @@ export default function DevToolsPage() {
 
         <View className='dev-tools-reset' onClick={onClearDietPromptFlags}>
           <Text className='dev-tools-reset-text'>清除今日「已弹/已跳过」记录</Text>
+        </View>
+
+        <Text className='dev-tools-subtitle'>测量提醒（开发测试）</Text>
+        <Text className='dev-tools-hint dev-tools-hint-block'>
+          忽略「今日已测」和提醒时间，有订阅额度即发送。需 Vercel 配置 REMINDER_DEV_MODE=1
+        </Text>
+        <View className='dev-tools-action dev-tools-action--reminder' onClick={onDevTestReminderSend}>
+          <Text className='dev-tools-action-text'>立即测试发送提醒</Text>
         </View>
 
         <Text className='dev-tools-subtitle'>预览天气卡片模版（4 套）</Text>
