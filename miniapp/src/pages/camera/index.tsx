@@ -3,7 +3,7 @@ import { View, Text, Image, Textarea } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { addRecord } from '../../lib/supabase'
 import { getUserInfo } from '../../lib/auth'
-import { getLocalReminderSettings, promptRenewReminderAfterSave } from '../../lib/reminders'
+import { getLocalReminderSettings, syncReminderTokenAfterRecordSave } from '../../lib/reminders'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import DietAdviceCard from '../../components/DietAdviceCard'
 import {
@@ -111,7 +111,7 @@ export default function CameraPage() {
         Taro.showToast({ title: '保存成功', icon: 'success' })
         setAnalysisNeedRefresh(true)
         setSaving(false)
-        promptRenewReminderAfterSave(userInfo.openid, getLocalReminderSettings().reminderTime)
+        syncReminderTokenAfterRecordSave(userInfo.openid, getLocalReminderSettings().reminderTime)
         const opened = openDietAdviceAfterSave(savedReading, setDietAdviceUi)
         if (opened) {
           setPendingNavigateBack(true)

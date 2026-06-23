@@ -71,45 +71,59 @@ export function getMinutesFromReminderTime(
   if (!parsed) return Number.POSITIVE_INFINITY
 
   const local = getTimeZoneParts(now, timeZone)
-  const nowMinutes = local.hour * 60 + local.minute
+  const hour = local.hour === 24 ? 0 : local.hour
+  const nowMinutes = hour * 60 + local.minute
   const targetMinutes = parsed.hour * 60 + parsed.minute
   return nowMinutes - targetMinutes
 }
 
+function getTimezoneOffsetSuffix(timeZone: string): string {
+  return timeZone === 'Asia/Shanghai' ? '+08:00' : '+08:00'
+}
+
+/** 本地日历 dateKey + N 天 → 新 dateKey */
+export function addCalendarDaysToDateKey(
+  dateKey: string,
+  days: number,
+  timeZone: string = DEFAULT_TIMEZONE
+): string {
+  const tzOffset = getTimezoneOffsetSuffix(timeZone)
+  const anchor = new Date(`${dateKey}T12:00:00${tzOffset}`)
+  anchor.setUTCDate(anchor.getUTCDate() + days)
+  return getLocalDateKey(anchor, timeZone)
+}
+
+/**
+ * - next_occurrence：今日提醒时刻未到 → 今天；已过 → 明天（最多 +1 天）
+ * - renew_tomorrow：续订固定排「本地明天」同一提醒时刻（与弹窗「续订明日提醒」一致）
+ */
+export type ReminderScheduleMode = 'next_occurrence' | 'renew_tomorrow'
+
 /**
  * 计算下一次提醒发送时刻（UTC ISO）
- * 若今日 reminder_time 尚未到达则返回今日该时刻，否则返回明日
  */
 export function computeNextScheduledFor(
   now: Date,
   reminderTime: string,
-  timeZone: string = DEFAULT_TIMEZONE
+  timeZone: string = DEFAULT_TIMEZONE,
+  mode: ReminderScheduleMode = 'next_occurrence'
 ): string {
   const parsed = parseReminderTime(reminderTime) || { hour: 9, minute: 0 }
-  const local = getTimeZoneParts(now, timeZone)
-  const localDateKey = `${local.year}-${String(local.month).padStart(2, '0')}-${String(local.day).padStart(2, '0')}`
+  const localDateKey = getLocalDateKey(now, timeZone)
 
-  const nowMinutes = local.hour * 60 + local.minute
-  const targetMinutes = parsed.hour * 60 + parsed.minute
-
-  let targetDateKey = localDateKey
-  if (nowMinutes >= targetMinutes) {
-    // 本地日历 +1 天（勿用 +36h，晚于提醒时刻保存会误跳到后天）
-    const tzOffset = timeZone === 'Asia/Shanghai' ? '+08:00' : '+08:00'
-    const anchor = new Date(`${localDateKey}T12:00:00${tzOffset}`)
-    anchor.setUTCDate(anchor.getUTCDate() + 1)
-    targetDateKey = getLocalDateKey(anchor, timeZone)
+  let targetDateKey: string
+  if (mode === 'renew_tomorrow') {
+    targetDateKey = addCalendarDaysToDateKey(localDateKey, 1, timeZone)
+  } else {
+    const deltaMinutes = getMinutesFromReminderTime(now, reminderTime, timeZone)
+    const daysAhead = deltaMinutes >= 0 ? 1 : 0
+    targetDateKey =
+      daysAhead === 0 ? localDateKey : addCalendarDaysToDateKey(localDateKey, daysAhead, timeZone)
   }
 
   const hh = String(parsed.hour).padStart(2, '0')
   const mm = String(parsed.minute).padStart(2, '0')
-  const isoLike = `${targetDateKey}T${hh}:${mm}:00+08:00`
-
-  if (timeZone === 'Asia/Shanghai') {
-    return new Date(isoLike).toISOString()
-  }
-
-  // 其他时区：用 Intl 反推 UTC（简化：仍按 +08:00 构造，多数用户在上海时区）
+  const isoLike = `${targetDateKey}T${hh}:${mm}:00${getTimezoneOffsetSuffix(timeZone)}`
   return new Date(isoLike).toISOString()
 }
 

@@ -11,7 +11,7 @@ import {
 } from '../../lib/supabase'
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
 import { FontSizeMode, getCurrentFontSizeMode, initFontSizeMode, getFontSizeModeClass, saveLocalFontSizeMode, applyFontSizeMode, getPreferredMeasureHand, savePreferredMeasureHand, clearPreferredMeasureHand } from '../../lib/settings'
-import { getLocalReminderSettings, promptRenewReminderAfterSave } from '../../lib/reminders'
+import { getLocalReminderSettings, syncReminderTokenAfterRecordSave } from '../../lib/reminders'
 import { API_BASE_URL, ANALYZE_KEY_API_BASE_URL } from '../../utils/api'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { generateShareImage } from '../../utils/shareImage'
@@ -689,6 +689,8 @@ export default function Index() {
       } else {
         Taro.showToast({ title: '保存成功', icon: 'success' })
         setShowResultModal(false)
+        setSavingRecord(false)
+        syncReminderTokenAfterRecordSave(userInfo.openid, getLocalReminderSettings().reminderTime)
 
         // 生成分享图片
         try {
@@ -713,7 +715,6 @@ export default function Index() {
           savePreferredMeasureHand(selectedHand)
         }
         openDietAdviceAfterSave(savedReading, setDietAdviceUi)
-        promptRenewReminderAfterSave(userInfo.openid, getLocalReminderSettings().reminderTime)
       }
     } catch (e) {
       Taro.showToast({ title: '保存失败', icon: 'none' })

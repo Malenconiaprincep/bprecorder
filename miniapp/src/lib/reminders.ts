@@ -4,7 +4,6 @@ import { SUBSCRIBE_TEMPLATE_ID } from '../config/subscribe'
 
 const REMINDER_ENABLED_KEY = 'bp_reminder_enabled'
 const REMINDER_TIME_KEY = 'bp_reminder_time'
-const REMINDER_RENEW_PROMPT_DATE_KEY = 'bp_reminder_renew_prompt_date'
 
 export type ReminderSettings = {
   reminderEnabled: boolean
@@ -180,7 +179,7 @@ export async function registerSubscribeToken(params: {
   templateId: string
   status: 'accept' | 'reject' | 'ban'
   reminderTime?: string
-  /** false = 续订时新增额度；默认 true = 更新已有未消耗额度 */
+  /** false = 续订：排期到明天，并复用该用户最近一条 accept 记录 */
   replacePending?: boolean
 }): Promise<{ success: boolean; error?: string }> {
   try {
@@ -239,55 +238,32 @@ export async function authorizeReminderSubscribe(
   return { ok: false, message: '未能完成消息授权' }
 }
 
-function getLocalDateKey(): string {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-function hasPromptedRenewToday(): boolean {
-  try {
-    return Taro.getStorageSync(REMINDER_RENEW_PROMPT_DATE_KEY) === getLocalDateKey()
-  } catch {
-    return false
-  }
-}
-
-function markRenewPromptedToday(): void {
-  try {
-    Taro.setStorageSync(REMINDER_RENEW_PROMPT_DATE_KEY, getLocalDateKey())
-  } catch {
-    /* ignore */
-  }
-}
-
 /**
- * 保存记录成功后：若已开启提醒，引导续订明日额度（每天最多弹一次）
- * 注意：授权弹窗必须在用户点击「去授权」后触发
+ * 保存血压记录成功后：若已开启提醒，后台静默刷新订阅排期（不 await，不阻塞保存 UI）
  */
-export function promptRenewReminderAfterSave(openid: string, reminderTime: string): void {
+export function syncReminderTokenAfterRecordSave(openid: string, reminderTime?: string): void {
   const local = getLocalReminderSettings()
   if (!local.reminderEnabled) return
-  if (hasPromptedRenewToday()) return
 
-  markRenewPromptedToday()
+  const time = reminderTime || local.reminderTime
+  setTimeout(() => {
+    void Taro.request({
+      url: `${API_BASE_URL}/api/subscribe/refresh-after-record`,
+      method: 'POST',
+      header: {
+        'Content-Type': 'application/json',
+        'x-openid': openid,
+      },
+      data: { reminderTime: time },
+    }).catch((e) => {
+      console.warn('[reminders] refresh-after-record failed', e)
+    })
+  }, 0)
+}
 
-  Taro.showModal({
-    title: '续订测量提醒',
-    content: '一次性订阅每次授权可提醒一次。是否授权接收下次测量提醒？',
-    confirmText: '去授权',
-    cancelText: '暂不',
-    success: async (res) => {
-      if (!res.confirm) return
-      const result = await authorizeReminderSubscribe(openid, reminderTime, { replacePending: false })
-      Taro.showToast({
-        title: result.message,
-        icon: result.ok ? 'success' : 'none',
-      })
-    },
-  })
+/** @deprecated 已改为 syncReminderTokenAfterRecordSave，保存记录后服务端自动续期 */
+export function promptRenewReminderAfterSave(openid: string, reminderTime: string): void {
+  syncReminderTokenAfterRecordSave(openid, reminderTime)
 }
 
 /** 开发测试：忽略「今日已测 / 时间窗口」，有订阅额度即尝试发送 */

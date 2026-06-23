@@ -41,7 +41,7 @@ export default function ReminderSettingsModal({
         </View>
 
         <Text className='reminder-desc'>
-          通过微信订阅消息提醒您按时测量。提醒时间为整点或半点（如 9:00、9:30），与消息发送时间一致。每次授权可提醒一次，保存记录后可续订明日提醒。
+          通过微信订阅消息提醒您按时测量。提醒时间为整点或半点（如 9:00、9:30）。首次需授权一次，之后每次保存血压记录将自动安排次日提醒。
         </Text>
 
         <View className='reminder-row'>
