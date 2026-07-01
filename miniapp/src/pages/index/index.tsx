@@ -12,7 +12,7 @@ import {
 import { silentLogin, getUserInfo, UserInfo } from '../../lib/auth'
 import { FontSizeMode, getCurrentFontSizeMode, initFontSizeMode, getFontSizeModeClass, saveLocalFontSizeMode, applyFontSizeMode, getPreferredMeasureHand, savePreferredMeasureHand, clearPreferredMeasureHand } from '../../lib/settings'
 import { getLocalReminderSettings, syncReminderTokenAfterRecordSave } from '../../lib/reminders'
-import { API_BASE_URL, ANALYZE_KEY_API_BASE_URL } from '../../utils/api'
+import { getDashScopeApiKey, getQwenChatUrl, getQwenVlModel } from '../../utils/qwenDirect'
 import { setAnalysisNeedRefresh } from '../../store/analysisRefresh'
 import { generateShareImage } from '../../utils/shareImage'
 import { getBPStatus } from '../../utils/bpStatus'
@@ -93,9 +93,7 @@ const formatDateLabel = (isoString: string) => {
   return `${month}月${day}日 ${weekDays[date.getDay()]}`
 }
 
-/** 真机直连 DashScope OpenAI 兼容接口（与 src/app/api/analyze/route.ts 中 Qwen 调用一致） */
-const QWEN_COMPAT_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
-const QWEN_VL_MODEL = 'qwen-vl-max'
+/** 真机直连 DashScope OpenAI 兼容接口（密钥在 build 时由 secrets.local.ts 注入） */
 const BP_IMAGE_PROMPT = `
     Analyze this image of a blood pressure monitor. 
     Extract the systolic (high), diastolic (low), and pulse (heart rate) numbers. 
@@ -487,90 +485,30 @@ export default function Index() {
 
         const tempFilePath = res.tempFilePaths[0]
         setAnalyzing(true)
-        const isDevtools = Taro.getSystemInfoSync().platform === 'devtools'
-        if (isDevtools) {
-          await analyzeImageUpload(tempFilePath)
-        } else {
-          await analyzeImageQwenDirect(tempFilePath)
-        }
+        await analyzeImageQwenDirect(tempFilePath)
       } catch (e) {
         console.log('User cancelled or error:', e)
       }
     })
   }
 
-  /** 微信开发者工具：multipart 上传至本站 /api/analyze（服务端 Qwen） */
-  const analyzeImageUpload = async (filePath: string) => {
-    try {
-      const uploadRes = await Taro.uploadFile({
-        url: `${API_BASE_URL}/api/analyze`,
-        filePath: filePath,
-        name: 'file'
-      })
-
-      if (uploadRes.statusCode !== 200) {
-        throw new Error('上传失败')
-      }
-
-      const result =
-        typeof uploadRes.data === 'string' ? JSON.parse(uploadRes.data) : uploadRes.data
-
-      if (result.error) {
-        Taro.showToast({
-          title: typeof result.error === 'string' ? result.error : '识别失败',
-          icon: 'none',
-          duration: 2000
-        })
-        setAnalyzing(false)
-        return
-      }
-
-      setAnalyzeResult({
-        systolic: result.systolic as number,
-        diastolic: result.diastolic as number,
-        pulse: result.pulse as number
-      })
-      setShowResultModal(true)
-      setAnalyzing(false)
-    } catch (e: any) {
-      console.error('Analyze error:', e)
-      Taro.showToast({
-        title: e.message || '识别失败，请重试',
-        icon: 'none',
-        duration: 2000
-      })
-      setAnalyzing(false)
-    }
-  }
-
-  /** 真机：拉取 DashScope key 后直连千问 VL（需在小程序后台配置 request 合法域名 dashscope.aliyuncs.com） */
+  /** 直连千问 VL（密钥与 host 在 build 时由 secrets.local.ts 注入） */
   const analyzeImageQwenDirect = async (filePath: string) => {
     try {
-      const keyRes = await Taro.request<{ apiKey?: string; error?: string }>({
-        url: `${ANALYZE_KEY_API_BASE_URL}/api/analyze/key`,
-        method: 'GET'
-      })
-
-      if (keyRes.statusCode !== 200 || !(keyRes.data as { apiKey?: string })?.apiKey) {
-        const msg =
-          (keyRes.data as { error?: string })?.error || '无法获取识别密钥'
-        throw new Error(msg)
-      }
-
-      const apiKey = (keyRes.data as { apiKey: string }).apiKey
+      const apiKey = getDashScopeApiKey()
       const base64Data = await readFileBase64(filePath)
       const mimeType = guessMimeFromPath(filePath)
       const dataUrl = `data:${mimeType};base64,${base64Data}`
 
       const aiRes = await Taro.request({
-        url: QWEN_COMPAT_URL,
+        url: getQwenChatUrl(),
         method: 'POST',
         header: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${apiKey}`
         },
         data: {
-          model: QWEN_VL_MODEL,
+          model: getQwenVlModel(),
           messages: [
             {
               role: 'user',

@@ -1,31 +1,14 @@
 import { NextResponse } from 'next/server';
 
-/** 与 analyze/route.ts 中 getQwenApiKeys 顺序一致，返回首个可用密钥（供真机直连 DashScope 使用） */
-function getFirstDashScopeKey(): string | null {
-  const keys: string[] = [];
-
-  if (process.env.DASHSCOPE_API_KEY?.trim()) {
-    keys.push(process.env.DASHSCOPE_API_KEY.trim());
-  }
-
-  let i = 1;
-  while (process.env[`DASHSCOPE_API_KEY_${i}`]?.trim()) {
-    keys.push(process.env[`DASHSCOPE_API_KEY_${i}`]!.trim());
-    i++;
-  }
-
-  if (process.env.DASHSCOPE_API_KEYS) {
-    const commaSeparatedKeys = process.env.DASHSCOPE_API_KEYS.split(',').map((k) => k.trim()).filter(Boolean);
-    keys.push(...commaSeparatedKeys);
-  }
-
-  return keys[0] ?? null;
-}
-
+/**
+ * 已停用：此前公开返回 DASHSCOPE_API_KEY，存在密钥泄漏风险。
+ * 小程序改为 build 时从 miniapp/config/secrets.local.ts 注入密钥。
+ */
 export async function GET() {
-  const apiKey = getFirstDashScopeKey();
-  if (!apiKey) {
-    return NextResponse.json({ error: 'DASHSCOPE_API_KEY not configured' }, { status: 503 });
-  }
-  return NextResponse.json({ apiKey });
+  return NextResponse.json(
+    {
+      error: 'This endpoint has been disabled for security. Configure DASHSCOPE_API_KEY in miniapp/config/secrets.local.ts and rebuild.',
+    },
+    { status: 410 }
+  );
 }

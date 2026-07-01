@@ -3,6 +3,9 @@ import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import { UnifiedWebpackPluginV5 } from 'weapp-tailwindcss/webpack'
 import devConfig from './dev'
 import prodConfig from './prod'
+import { loadBuildSecrets, toDefineConstants } from './buildSecrets'
+
+const buildSecrets = loadBuildSecrets()
 
 // https://taro-docs.jd.com/docs/next/config#defineconfig-helper
 export default defineConfig(async (merge, { command, mode }) => {
@@ -21,7 +24,8 @@ export default defineConfig(async (merge, { command, mode }) => {
     plugins: [],
     defineConstants: {
       // 默认 API 地址（会被 dev/prod 配置覆盖）
-      API_BASE_URL: '"https://bprecorder.aikee.xyz"'
+      API_BASE_URL: '"https://bprecorder.aikee.xyz"',
+      ...toDefineConstants(buildSecrets),
     },
     copy: {
       patterns: [

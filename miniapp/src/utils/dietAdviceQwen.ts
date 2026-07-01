@@ -1,7 +1,7 @@
 import type { DietAdviceRecentSummary, DietWeatherContext } from '../types/dietAdvice'
 import type { DietAdviceLatestInput } from './dietAdvice'
 import { normalizeDietAdviceCard } from './dietAdviceCardFallback'
-import { callQwenChat, fetchDashScopeApiKey, stripJsonFences } from './qwenDirect'
+import { callQwenChat, getDashScopeApiKey, stripJsonFences } from './qwenDirect'
 
 function formatWeatherForPrompt(ctx: DietWeatherContext): string {
   const lines = [
@@ -63,7 +63,7 @@ export async function generateFullDietAdviceDirect(
   recentSummary: DietAdviceRecentSummary,
   weatherCtx: DietWeatherContext
 ) {
-  const apiKey = await fetchDashScopeApiKey()
+  const apiKey = getDashScopeApiKey()
   const prompt = buildFullDietAdvicePrompt(latest, recentSummary, weatherCtx)
   const text = await callQwenChat(apiKey, prompt, { maxTokens: 2000 })
   const parsed = JSON.parse(stripJsonFences(text)) as {

@@ -1,11 +1,36 @@
 import Taro from '@tarojs/taro'
-import { ANALYZE_KEY_API_BASE_URL } from './api'
 
-/** 与拍照识别一致：DashScope OpenAI 兼容 Chat Completions */
-export const QWEN_CHAT_URL =
-  'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
+/** 构建时由 secrets.local.ts → openAiCompatible + /chat/completions 注入 */
+export function getQwenChatUrl(): string {
+  const url = typeof QWEN_CHAT_URL === 'string' ? QWEN_CHAT_URL.trim() : ''
+  if (!url) {
+    throw new Error(
+      '未配置 QWEN_CHAT_URL：请在 secrets.local.ts 填写 openAiCompatible（CSV 字段）后重新 build'
+    )
+  }
+  return url
+}
 
-export const QWEN_TEXT_MODEL = 'qwen-plus'
+export function getQwenVlModel(): string {
+  const model = typeof QWEN_VL_MODEL === 'string' ? QWEN_VL_MODEL.trim() : ''
+  return model || 'qwen-vl-max'
+}
+
+export function getQwenTextModel(): string {
+  const model = typeof QWEN_TEXT_MODEL === 'string' ? QWEN_TEXT_MODEL.trim() : ''
+  return model || 'qwen-plus'
+}
+
+/** 构建时打入包内，不再请求 /api/analyze/key */
+export function getDashScopeApiKey(): string {
+  const key = typeof DASHSCOPE_API_KEY === 'string' ? DASHSCOPE_API_KEY.trim() : ''
+  if (!key) {
+    throw new Error(
+      '未配置 DASHSCOPE_API_KEY：请复制 miniapp/config/secrets.example.ts 为 secrets.local.ts 并填写密钥后重新 build'
+    )
+  }
+  return key
+}
 
 export function stripJsonFences(s: string): string {
   let t = s.trim()
@@ -15,31 +40,17 @@ export function stripJsonFences(s: string): string {
   return t.replace(/```json|```/g, '').trim()
 }
 
-/** 从线上 /api/analyze/key 获取 DashScope 密钥（与拍照直连相同） */
-export async function fetchDashScopeApiKey(): Promise<string> {
-  const keyRes = await Taro.request<{ apiKey?: string; error?: string }>({
-    url: `${ANALYZE_KEY_API_BASE_URL}/api/analyze/key`,
-    method: 'GET',
-    timeout: 15000,
-  })
-  if (keyRes.statusCode !== 200 || !keyRes.data?.apiKey) {
-    const msg = keyRes.data?.error || '无法获取 AI 密钥'
-    throw new Error(msg)
-  }
-  return keyRes.data.apiKey
-}
-
 export async function callQwenChat(
   apiKey: string,
   prompt: string,
   options?: { maxTokens?: number; model?: string; timeout?: number }
 ): Promise<string> {
   const maxTokens = options?.maxTokens ?? 1200
-  const model = options?.model ?? QWEN_TEXT_MODEL
+  const model = options?.model ?? getQwenTextModel()
   const timeout = options?.timeout ?? 55000
 
   const aiRes = await Taro.request({
-    url: QWEN_CHAT_URL,
+    url: getQwenChatUrl(),
     method: 'POST',
     header: {
       'Content-Type': 'application/json',

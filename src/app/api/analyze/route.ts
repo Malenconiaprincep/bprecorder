@@ -81,10 +81,17 @@ const getAnyRouterApiKeys = (): string[] => {
 };
 
 // 使用 Qwen-VL 模型分析（使用指定的 API 密钥）
+function getDashScopeOpenAiBaseUrl(): string {
+  const fromEnv = process.env.DASHSCOPE_BASE_URL?.trim().replace(/\/$/, '');
+  if (fromEnv) return fromEnv;
+  // 工作空间 sk-ws- 密钥须配 MaaS openAiCompatible，见 miniapp/config/secrets.local.ts
+  return 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+}
+
 async function analyzeWithQwen(imageBase64: string, mimeType: string, apiKey: string): Promise<any> {
   const openai = new OpenAI({
     apiKey: apiKey,
-    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    baseURL: getDashScopeOpenAiBaseUrl(),
     timeout: 60000,
     maxRetries: 2,
   });

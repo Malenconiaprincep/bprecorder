@@ -1,4 +1,7 @@
 import { type UserConfigExport } from "@tarojs/cli";
+import { loadBuildSecrets, toDefineConstants } from "./buildSecrets";
+
+const buildSecrets = loadBuildSecrets();
 
 export default {
   mini: {},
@@ -18,7 +21,8 @@ export default {
   },
   defineConstants: {
     // 生产环境使用线上接口
-    API_BASE_URL: '"https://bprecorder.aikee.xyz"'
+    API_BASE_URL: '"https://bprecorder.aikee.xyz"',
+    ...toDefineConstants(buildSecrets),
   }
 } satisfies UserConfigExport
 
