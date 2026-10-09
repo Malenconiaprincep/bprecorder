@@ -1,4 +1,5 @@
 import Taro from '@tarojs/taro'
+import { API_BASE_URL } from '../utils/api'
 import { getUserInfo } from './auth'
 
 // Supabase 配置
@@ -30,7 +31,8 @@ async function request<T = any>(
 ): Promise<{ data: T | null; error: string | null }> {
   const { method = 'GET', data, params, accessToken } = options
 
-  let url = `${REST_URL}${endpoint}`
+  const isBackendRecordRequest = endpoint === '/bp_records' && !(method === 'POST' && Array.isArray(data))
+  let url = isBackendRecordRequest ? `${API_BASE_URL}/api/bp_records` : `${REST_URL}${endpoint}`
 
   // 添加查询参数
   if (params) {
@@ -45,7 +47,12 @@ async function request<T = any>(
       url,
       method,
       data,
-      header: getHeaders(accessToken)
+      header: isBackendRecordRequest
+        ? {
+            'Content-Type': 'application/json',
+            ...(getUserInfo()?.openid ? { 'x-openid': getUserInfo()!.openid } : {}),
+          }
+        : getHeaders(accessToken)
     })
 
     if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -158,29 +165,14 @@ export async function getRecordsInRange(
 ): Promise<{ data: BPRecord[] | null; error: string | null }> {
   const params = new URLSearchParams()
   params.append('user_id', `eq.${userId}`)
-  params.append('recorded_at', `gte.${startDate}`)
-  params.append('recorded_at', `lte.${endDate}`)
+  params.set('recorded_at_gte', `gte.${startDate}`)
+  params.set('recorded_at_lte', `lte.${endDate}`)
   params.append('order', 'recorded_at.asc')
   params.append('limit', '5000')
 
-  const url = `${REST_URL}/bp_records?${params.toString()}`
-
-  try {
-    const res = await Taro.request({
-      url,
-      method: 'GET',
-      header: getHeaders()
-    })
-
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      return { data: res.data as BPRecord[], error: null }
-    }
-    const errorMsg = (res.data as any)?.message || (res.data as any)?.error || `请求失败 (${res.statusCode})`
-    return { data: null, error: errorMsg }
-  } catch (e: any) {
-    console.error('getRecordsInRange error:', e)
-    return { data: null, error: e.message || '网络请求失败' }
-  }
+  return request<BPRecord[]>('/bp_records', {
+    params: Object.fromEntries(params.entries()),
+  })
 }
 
 /** 插入成功后异步刷新最近登录时间（不阻塞保存） */
@@ -220,7 +212,7 @@ export async function addRecord(record: Omit<BPRecord, 'id' | 'created_at'>): Pr
     note: typeof record.note === 'string' && record.note.trim() ? record.note.trim() : null,
   }
 
-  const result = await request<BPRecord[]>('/bp_records', {
+  const result = await request<BPRecord | BPRecord[]>('/bp_records', {
     method: 'POST',
     data: row,
   })
@@ -229,7 +221,9 @@ export async function addRecord(record: Omit<BPRecord, 'id' | 'created_at'>): Pr
     return { data: null, error: result.error }
   }
 
-  const inserted = result.data && Array.isArray(result.data) ? result.data[0] : null
+  const inserted = result.data
+    ? (Array.isArray(result.data) ? result.data[0] : result.data)
+    : null
   const openid = getUserInfo()?.openid
   if (openid && inserted) {
     touchLastLoginAt(openid)
@@ -245,7 +239,7 @@ export async function updateRecord(
   id: number,
   data: Partial<Omit<BPRecord, 'id' | 'user_id' | 'created_at'>>
 ): Promise<{ data: BPRecord | null; error: string | null }> {
-  const result = await request<BPRecord[]>(`/bp_records`, {
+  const result = await request<BPRecord | BPRecord[]>(`/bp_records`, {
     method: 'PATCH',
     params: {
       id: `eq.${id}`
@@ -253,8 +247,8 @@ export async function updateRecord(
     data
   })
 
-  if (result.data && Array.isArray(result.data)) {
-    return { data: result.data[0] || null, error: null }
+  if (result.data) {
+    return { data: Array.isArray(result.data) ? result.data[0] || null : result.data, error: null }
   }
   return { data: null, error: result.error }
 }
