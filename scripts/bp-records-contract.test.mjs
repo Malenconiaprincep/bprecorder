@@ -11,6 +11,12 @@ test('miniapp blood-pressure records use the configured backend domain', () => {
   assert.match(clientSource, /isBackendRecordRequest/)
 })
 
+test('miniapp record queries avoid URLSearchParams iteration unsupported by WeChat', () => {
+  assert.doesNotMatch(clientSource, /new URLSearchParams\(/)
+  assert.doesNotMatch(clientSource, /\.entries\(\)/)
+  assert.doesNotMatch(clientSource, /Object\.fromEntries/)
+})
+
 test('backend blood-pressure route supports the record lifecycle', () => {
   for (const method of ['GET', 'POST', 'PATCH', 'DELETE']) {
     assert.match(routeSource, new RegExp(`export async function ${method}\\(`))

@@ -163,15 +163,16 @@ export async function getRecordsInRange(
   startDate: string,
   endDate: string
 ): Promise<{ data: BPRecord[] | null; error: string | null }> {
-  const params = new URLSearchParams()
-  params.append('user_id', `eq.${userId}`)
-  params.set('recorded_at_gte', `gte.${startDate}`)
-  params.set('recorded_at_lte', `lte.${endDate}`)
-  params.append('order', 'recorded_at.asc')
-  params.append('limit', '5000')
-
   return request<BPRecord[]>('/bp_records', {
-    params: Object.fromEntries(params.entries()),
+    // 微信小程序的 URLSearchParams polyfill 不完整，不支持 entries()。
+    // 直接使用普通对象，避免首页同时请求周统计时整组 Promise 失败。
+    params: {
+      user_id: `eq.${userId}`,
+      recorded_at_gte: `gte.${startDate}`,
+      recorded_at_lte: `lte.${endDate}`,
+      order: 'recorded_at.asc',
+      limit: '5000',
+    },
   })
 }
 
@@ -185,7 +186,7 @@ function touchLastLoginAt(openid: string) {
 }
 
 /**
- * 添加血压记录（单个，直连 Supabase REST）
+ * 添加血压记录（单个，经后端接口写入）
  */
 export async function addRecord(record: Omit<BPRecord, 'id' | 'created_at'>): Promise<{ data: BPRecord | null; error: string | null }> {
   const systolic = Number(record.systolic)
