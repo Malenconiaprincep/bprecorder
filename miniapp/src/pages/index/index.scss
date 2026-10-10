@@ -1,0 +1,2070 @@
+.page {
+  height: 100vh;
+  background-color: #f0f6ff;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* 通用标题图标 */
+.title-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 12rpx;
+  vertical-align: middle;
+}
+
+.btn-icon {
+  width: 24rpx;
+  height: 24rpx;
+  margin-right: 8rpx;
+  vertical-align: middle;
+}
+
+.action-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 12rpx;
+}
+
+.pulse-icon {
+  width: 28rpx;
+  height: 28rpx;
+  vertical-align: middle;
+  margin-right: 4rpx;
+}
+
+.note-icon {
+  width: 24rpx;
+  height: 24rpx;
+  vertical-align: middle;
+  margin-right: 4rpx;
+}
+
+.empty-icon {
+  width: 80rpx;
+  height: 80rpx;
+  margin-bottom: 24rpx;
+}
+
+/* 底部占位符 */
+.bottom-spacer {
+  height: 100rpx;
+  width: 100%;
+}
+
+/* 顶部蓝色弧形背景 */
+.bg-curve {
+  position: absolute;
+  top: 0;
+  left: -10%;
+  right: -10%;
+  height: 400rpx;
+  background: linear-gradient(180deg, #b5e0f7 0%, #a8d8f0 100%);
+  border-radius: 0 0 50% 50%;
+  z-index: 0;
+}
+
+/* 血压卡片 */
+.bp-card {
+  position: relative;
+  z-index: 1;
+  margin: 0 30rpx 24rpx;
+  padding: 28rpx 32rpx 32rpx;
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  border-radius: 32rpx;
+  box-shadow: 0 16rpx 48rpx rgba(74, 168, 232, 0.3);
+}
+
+/* 连续打卡：融入卡片顶栏，不再单独飘在背景上 */
+.bp-card-streak {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: -4rpx 0 18rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.22);
+}
+
+.bp-card-streak-text {
+  font-size: 24rpx;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.5rpx;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.card-title {
+  font-size: 32rpx;
+  color: #ffffff;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.card-status {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+}
+
+.share-btn {
+  padding: 8rpx 22rpx !important;
+  margin: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-radius: 999rpx !important;
+  height: auto !important;
+  line-height: 1.2 !important;
+  min-width: auto !important;
+
+  &::after {
+    border: none !important;
+  }
+}
+
+.share-btn-text {
+  font-size: 26rpx;
+  color: #ffffff;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 最新血压卡片内：白底胶囊 + 彩色字，蓝底上对比清晰 */
+.bp-card .card-status.ideal,
+.bp-card .card-status.low,
+.bp-card .card-status.normal,
+.bp-card .card-status.prehigh,
+.bp-card .card-status.high-1,
+.bp-card .card-status.high-2,
+.bp-card .card-status.high-3 {
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.06);
+}
+
+.card-status-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  padding: 0 4rpx;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+/* 列表等其它场景仍用渐变底 + 白字（若用到 card-status） */
+.card-status.ideal {
+  background: linear-gradient(135deg, #14b885 0%, #0d9f6e 100%);
+}
+
+.card-status.low {
+  background: linear-gradient(135deg, #2ec0d6 0%, #14a3b8 100%);
+}
+
+.card-status.normal {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.card-status.prehigh {
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+}
+
+.card-status.high-1 {
+  background: linear-gradient(135deg, #fb923c 0%, #ea7c2e 100%);
+}
+
+.card-status.high-2 {
+  background: linear-gradient(135deg, #f08080 0%, #e85d5d 100%);
+}
+
+.card-status.high-3 {
+  background: linear-gradient(135deg, #d85750 0%, #c23d36 100%);
+}
+
+/* 渐变状态标签默认白字；下方 bp-card 内用更高优先级覆盖为彩色字 */
+.card-status.ideal .card-status-text,
+.card-status.low .card-status-text,
+.card-status.normal .card-status-text,
+.card-status.prehigh .card-status-text,
+.card-status.high-1 .card-status-text,
+.card-status.high-2 .card-status-text,
+.card-status.high-3 .card-status-text {
+  color: #ffffff;
+}
+
+.bp-card .card-status.ideal .card-status-text {
+  color: #047857;
+}
+
+.bp-card .card-status.low .card-status-text {
+  color: #0e7490;
+}
+
+.bp-card .card-status.normal .card-status-text {
+  color: #15803d;
+}
+
+.bp-card .card-status.prehigh .card-status-text {
+  color: #a16207;
+}
+
+.bp-card .card-status.high-1 .card-status-text {
+  color: #c2410c;
+}
+
+.bp-card .card-status.high-2 .card-status-text {
+  color: #be123c;
+}
+
+.bp-card .card-status.high-3 .card-status-text {
+  color: #9f1239;
+}
+
+.card-icon {
+  font-size: 40rpx;
+}
+
+.card-body {
+  text-align: center;
+}
+
+/* 血压 + 心率：左右对称两块，中间竖线 */
+.bp-main-metrics {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: 32rpx;
+  margin-bottom: 12rpx;
+}
+
+.bp-metric-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  min-width: 200rpx;
+}
+
+.bp-metric-pulse {
+  min-width: 160rpx;
+}
+
+.bp-numbers-row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.pulse-numbers-row {
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.bp-metric-divider {
+  width: 2rpx;
+  align-self: stretch;
+  min-height: 108rpx;
+  margin-top: 8rpx;
+  background: rgba(255, 255, 255, 0.28);
+  flex-shrink: 0;
+}
+
+.bp-value {
+  font-size: 96rpx;
+  font-weight: bold;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.bp-slash {
+  font-size: 64rpx;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0 8rpx;
+  line-height: 1;
+}
+
+.bp-unit {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 500;
+  letter-spacing: 1rpx;
+  margin-left: 0;
+}
+
+.pulse-value-inline {
+  font-size: 72rpx;
+  font-weight: bold;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.pulse-unit-inline {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 500;
+  margin-left: 0;
+}
+
+.bp-pulse-label {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 500;
+  margin-top: 2rpx;
+}
+
+.bp-info-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 6rpx;
+}
+
+.bp-desc {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  display: block;
+}
+
+.bp-diff-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  flex-wrap: wrap;
+}
+
+.bp-diff-label {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.bp-diff-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.bp-diff-text.diff-up {
+  color: rgba(255, 200, 200, 0.95);
+}
+
+.bp-diff-text.diff-down {
+  color: rgba(200, 255, 200, 0.95);
+}
+
+.bp-diff-separator {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 2rpx;
+}
+
+.pulse-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  padding-top: 20rpx;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.3);
+}
+
+.pulse-value {
+  font-size: 56rpx;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.pulse-unit {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-left: 12rpx;
+}
+
+.card-empty {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+.empty-bp {
+  font-size: 72rpx;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.5);
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.empty-bp-hint {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.empty-text {
+  font-size: 36rpx;
+  color: #ffffff;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 首页活动入口横幅（图：assets/promo/promo-banner.png） */
+.home-promo-entry {
+  margin: 0 30rpx 24rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  height: 200rpx;
+  box-shadow: 0 8rpx 28rpx rgba(14, 165, 233, 0.15);
+}
+
+.home-promo-entry-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 本周概览卡片 */
+.summary-card {
+  margin: 0 30rpx 24rpx;
+  padding: 28rpx 32rpx;
+  background: #ffffff;
+  border-radius: 32rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.05);
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.summary-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+}
+
+.summary-count {
+  font-size: 26rpx;
+  color: #64748b;
+}
+
+.summary-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-hands {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+/* 本周概览·分侧：参考轻量 Tab + 大号血压 + 状态药丸 */
+.summary-hand-refined {
+  width: 100%;
+  padding: 8rpx 0 4rpx;
+  box-sizing: border-box;
+}
+
+.summary-hand-tabs-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  width: 100%;
+  margin-bottom: 8rpx;
+}
+
+.summary-hand-tabs {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.summary-hand-tab {
+  padding: 6rpx 10rpx 12rpx;
+  border-bottom: 3rpx solid transparent;
+  box-sizing: border-box;
+}
+
+.summary-hand-tab--active {
+  border-bottom-color: #2563eb;
+}
+
+.summary-hand-tab-text {
+  font-size: 26rpx;
+  color: #94a3b8;
+  line-height: 1.2;
+}
+
+.summary-hand-tab--active .summary-hand-tab-text {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.summary-hand-tab-divider {
+  font-size: 22rpx;
+  color: #e2e8f0;
+  margin: 0 2rpx;
+  line-height: 1;
+}
+
+.summary-hand-avg-meta {
+  font-size: 24rpx;
+  color: #94a3b8;
+  line-height: 1.4;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.summary-hand-refined-main {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20rpx;
+  width: 100%;
+}
+
+.summary-hand-refined-bp {
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-hand-refined-bp-row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  line-height: 1.1;
+}
+
+.summary-hand-refined-sys {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #ea580c;
+}
+
+.summary-hand-refined-slash {
+  font-size: 40rpx;
+  font-weight: 500;
+  color: #cbd5e1;
+  margin: 0 6rpx;
+  line-height: 1;
+}
+
+.summary-hand-refined-dia {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.summary-hand-refined-unit {
+  font-size: 24rpx;
+  color: #94a3b8;
+  margin-left: 12rpx;
+  font-weight: 400;
+}
+
+.summary-hand-pill {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 22rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}
+
+.summary-hand-pill-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.summary-hand-pill-text {
+  font-size: 24rpx;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.summary-hand-pill--ideal {
+  background: #dcfce7;
+}
+.summary-hand-pill--ideal .summary-hand-pill-dot {
+  background: #22c55e;
+}
+.summary-hand-pill--ideal .summary-hand-pill-text {
+  color: #15803d;
+}
+
+.summary-hand-pill--low {
+  background: #cffafe;
+}
+.summary-hand-pill--low .summary-hand-pill-dot {
+  background: #06b6d4;
+}
+.summary-hand-pill--low .summary-hand-pill-text {
+  color: #0e7490;
+}
+
+.summary-hand-pill--prehigh {
+  background: #fef3c7;
+}
+.summary-hand-pill--prehigh .summary-hand-pill-dot {
+  background: #f59e0b;
+}
+.summary-hand-pill--prehigh .summary-hand-pill-text {
+  color: #a16207;
+}
+
+.summary-hand-pill--high-1 {
+  background: #ffedd5;
+}
+.summary-hand-pill--high-1 .summary-hand-pill-dot {
+  background: #ea580c;
+}
+.summary-hand-pill--high-1 .summary-hand-pill-text {
+  color: #c2410c;
+}
+
+.summary-hand-pill--high-2 {
+  background: #ffe4e6;
+}
+.summary-hand-pill--high-2 .summary-hand-pill-dot {
+  background: #e11d48;
+}
+.summary-hand-pill--high-2 .summary-hand-pill-text {
+  color: #be123c;
+}
+
+.summary-hand-pill--high-3 {
+  background: #fce7f3;
+}
+.summary-hand-pill--high-3 .summary-hand-pill-dot {
+  background: #be123c;
+}
+.summary-hand-pill--high-3 .summary-hand-pill-text {
+  color: #9f1239;
+}
+
+.summary-unlabeled-hint {
+  font-size: 22rpx;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin-top: 12rpx;
+  display: block;
+}
+
+.summary-empty {
+  text-align: center;
+  padding: 32rpx 0;
+}
+
+.summary-empty-text {
+  font-size: 32rpx;
+  color: #64748b;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.summary-empty-hint {
+  font-size: 26rpx;
+  color: #94a3b8;
+}
+
+.summary-avg {
+  flex: 1;
+}
+
+.avg-label {
+  font-size: 26rpx;
+  color: #64748b;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.avg-values {
+  display: flex;
+  align-items: baseline;
+}
+
+.avg-number {
+  font-size: 56rpx;
+  font-weight: bold;
+}
+
+.avg-number.systolic {
+  color: #ea580c;
+}
+
+.avg-number.diastolic {
+  color: #2563eb;
+}
+
+.avg-slash {
+  font-size: 40rpx;
+  color: #94a3b8;
+  margin: 0 8rpx;
+}
+
+.avg-unit {
+  font-size: 24rpx;
+  color: #94a3b8;
+  margin-left: 12rpx;
+}
+
+.summary-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20rpx 32rpx;
+  border-radius: 24rpx;
+}
+
+.summary-status.ideal {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.summary-status.low {
+  background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+}
+
+.summary-status.normal {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+}
+
+.summary-status.prehigh {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.summary-status.high-1 {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+}
+
+.summary-status.high-2 {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+}
+
+.summary-status.high-3 {
+  background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%);
+}
+
+.status-emoji {
+  font-size: 48rpx;
+  margin-bottom: 4rpx;
+}
+
+.status-text {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.summary-status.ideal .status-text {
+  color: #047857;
+}
+
+.summary-status.low .status-text {
+  color: #0e7490;
+}
+
+.summary-status.normal .status-text {
+  color: #15803d;
+}
+
+.summary-status.prehigh .status-text {
+  color: #a16207;
+}
+
+.summary-status.high-1 .status-text {
+  color: #c2410c;
+}
+
+.summary-status.high-2 .status-text {
+  color: #be123c;
+}
+
+.summary-status.high-3 .status-text {
+  color: #9f1239;
+}
+
+.summary-report-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28rpx;
+  padding: 22rpx 26rpx;
+  background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+  border-radius: 22rpx;
+  border: 1rpx solid #93c5fd;
+  box-shadow: 0 4rpx 16rpx rgba(37, 99, 235, 0.08);
+}
+
+.summary-report-entry:active {
+  opacity: 0.92;
+  transform: scale(0.99);
+}
+
+.summary-report-entry-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-report-entry-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1d4ed8;
+  letter-spacing: 0.5rpx;
+}
+
+.summary-report-entry-sub {
+  font-size: 24rpx;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.summary-report-entry-arrow {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-size: 40rpx;
+  color: #2563eb;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* 记录列表区域 */
+.records-section {
+  margin: 30rpx 30rpx 0 30rpx;
+  padding-bottom: 24rpx;
+}
+
+/* 首页底部小贴士 */
+.home-tip-card {
+  margin: 0 30rpx 24rpx;
+  padding: 24rpx 28rpx;
+  background: #eef2f7;
+  border-radius: 24rpx;
+  border: 1rpx solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.home-tip-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+}
+
+.home-tip-icon {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.home-tip-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
+}
+
+.home-tip-body {
+  font-size: 26rpx;
+  color: #64748b;
+  line-height: 1.55;
+  display: block;
+}
+
+.records-card {
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.section-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+  position: relative;
+}
+
+.section-subtitle {
+  font-size: 26rpx;
+  font-weight: 400;
+  color: #94a3b8;
+  margin-left: 12rpx;
+}
+
+.calendar-trigger-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 20rpx;
+  background: #f8fafc;
+  border-radius: 20rpx;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.calendar-trigger-btn:active,
+.calendar-trigger-btn--hover {
+  background: #e2e8f0;
+  transform: scale(0.98);
+}
+
+.calendar-trigger-text {
+  font-size: 26rpx;
+  color: #5bb8f5;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.calendar-trigger-badge {
+  font-size: 20rpx;
+  color: #5bb8f5;
+  background: #e0f2fe;
+  padding: 2rpx 8rpx;
+  border-radius: 10rpx;
+  font-weight: 500;
+}
+
+.filter-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  background: #e0f2fe;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.filter-hint-text {
+  font-size: 26rpx;
+  color: #5bb8f5;
+}
+
+.filter-hint-clear {
+  font-size: 24rpx;
+  color: #ef4444;
+  text-decoration: underline;
+}
+
+.records-load-footer {
+  padding: 28rpx 16rpx 8rpx;
+  text-align: center;
+}
+
+.records-load-footer-text {
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.empty-records {
+  padding: 60rpx 40rpx;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.empty-text {
+  font-size: 36rpx;
+  color: #64748b;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.empty-hint {
+  font-size: 28rpx;
+  color: #94a3b8;
+}
+
+.records-list {
+  /* 列表自然展开，不限制高度 */
+}
+
+/* 日期分组 */
+.date-group {
+  &:not(:last-child) {
+    margin-bottom: 24rpx;
+  }
+
+  &.highlighted {
+    animation: highlightPulse 1s ease-out;
+  }
+}
+
+@keyframes highlightPulse {
+  0% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(91, 184, 245, 0.1);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.date-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+  padding: 0 8rpx;
+}
+
+.date-label {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #475569;
+}
+
+.date-count {
+  font-size: 24rpx;
+  color: #94a3b8;
+  margin-left: auto;
+  background: #f1f5f9;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+/* 记录项 */
+.record-item {
+  display: flex;
+  flex-direction: column;
+  padding: 24rpx 8rpx 24rpx 0;
+  position: relative;
+
+  &.has-divider::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1rpx;
+    background: #e2e8f0;
+  }
+}
+
+/* 顶部：血压值 + 心率 + 状态标签（右上角） */
+.record-top {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 12rpx;
+}
+
+.record-bp-section {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+  flex: 1;
+  padding-left: 0;
+}
+
+.bp-display {
+  display: flex;
+  align-items: baseline;
+}
+
+/* 标准模式：略小于旧版 60rpx，与日期/时间层级更协调；关怀模式见 .page.elder-mode */
+.bp-num {
+  font-size: 48rpx;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.bp-num.systolic {
+  color: #ea580c;
+}
+
+.bp-num.diastolic {
+  color: #2563eb;
+}
+
+.bp-divider {
+  font-size: 34rpx;
+  color: #cbd5e1;
+  margin: 0 4rpx;
+  line-height: 1;
+}
+
+.pulse-display {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.pulse-icon {
+  width: 22rpx;
+  height: 22rpx;
+}
+
+.pulse-num {
+  font-size: 26rpx;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.status-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 4rpx 14rpx;
+  border-radius: 14rpx;
+  font-size: 24rpx;
+}
+
+/* 中间：日期时间和左右手信息 */
+.record-middle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10rpx;
+  padding-left: 0;
+}
+
+.datetime-text {
+  font-size: 26rpx;
+  color: #94a3b8;
+  flex: 1;
+}
+
+.bottom-info-text {
+  font-size: 24rpx;
+  color: #94a3b8;
+  margin-left: auto;
+  padding-right: 5rpx;
+}
+
+/* 备注单独一行 */
+.record-note-row {
+  margin-top: 4rpx;
+  margin-bottom: 4rpx;
+}
+
+.note-text {
+  font-size: 24rpx;
+  color: #94a3b8;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+.status-badge.ideal {
+  background: #d1fae5;
+}
+
+.status-badge.low {
+  background: #cffafe;
+}
+
+.status-badge.normal {
+  background: #dcfce7;
+}
+
+.status-badge.prehigh {
+  background: #fef3c7;
+}
+
+.status-badge.high-1 {
+  background: #ffedd5;
+}
+
+.status-badge.high-2 {
+  background: #ffe4e6;
+}
+
+.status-badge.high-3 {
+  background: #fecdd3;
+}
+
+.badge-text {
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.status-badge.ideal .badge-text {
+  color: #047857;
+}
+
+.status-badge.low .badge-text {
+  color: #0e7490;
+}
+
+.status-badge.normal .badge-text {
+  color: #15803d;
+}
+
+.status-badge.prehigh .badge-text {
+  color: #a16207;
+}
+
+.status-badge.high-1 .badge-text {
+  color: #c2410c;
+}
+
+.status-badge.high-2 .badge-text {
+  color: #be123c;
+}
+
+.status-badge.high-3 .badge-text {
+  color: #9f1239;
+}
+
+/* 操作按钮 - 顶部大按钮 */
+.actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  padding: 20rpx 30rpx 0 30rpx;
+  margin-bottom: 24rpx;
+  gap: 24rpx;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 36rpx 24rpx;
+  border-radius: 28rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+}
+
+.action-btn.blue {
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  box-shadow: 0 8rpx 32rpx rgba(74, 168, 232, 0.3);
+}
+
+.action-btn.white {
+  background: #ffffff;
+  border: 2rpx solid #e2e8f0;
+}
+
+.action-icon {
+  width: 48rpx;
+  height: 48rpx;
+  margin-right: 10rpx;
+  line-height: 40rpx;
+}
+
+.action-text-white {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.action-text-dark {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* 我的组快捷入口（首页：本周概览与测量记录之间） */
+.groups-shortcut {
+  position: relative;
+  z-index: 1;
+  margin: 0 30rpx 20rpx;
+  padding: 20rpx 28rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.groups-shortcut:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+  background: #f8fafc;
+}
+
+.groups-shortcut-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.groups-shortcut-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.groups-shortcut-icon {
+  width: 44rpx;
+  height: 44rpx;
+  flex-shrink: 0;
+}
+
+.groups-shortcut-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.groups-shortcut-info {
+  margin-left: 56rpx;
+}
+
+.groups-shortcut-desc {
+  font-size: 24rpx;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.groups-shortcut-hint {
+  color: #94a3b8;
+  font-size: 24rpx;
+}
+
+.groups-shortcut-groups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4rpx;
+  line-height: 1.4;
+}
+
+.groups-shortcut-group-item {
+  font-size: 24rpx;
+  color: #64748b;
+}
+
+.groups-shortcut-separator {
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.groups-shortcut-more {
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.groups-shortcut-arrow {
+  font-size: 36rpx;
+  color: #cbd5e1;
+  font-weight: 300;
+  flex-shrink: 0;
+}
+
+/* 识别中遮罩 */
+.analyze-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.analyze-content {
+  background: #ffffff;
+  padding: 60rpx 80rpx;
+  border-radius: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.analyze-text {
+  font-size: 32rpx;
+  color: #1e293b;
+}
+
+/* 结果弹窗 */
+.result-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.result-modal {
+  width: 600rpx;
+  background: #ffffff;
+  border-radius: 32rpx;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40rpx;
+  border-bottom: 1rpx solid #e2e8f0;
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.modal-close {
+  font-size: 48rpx;
+  color: #94a3b8;
+  line-height: 1;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-body {
+  padding: 40rpx;
+}
+
+.result-values {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+}
+
+.result-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.result-item.pulse {
+  margin-left: 40rpx;
+}
+
+.result-number {
+  font-size: 64rpx;
+  font-weight: bold;
+  color: #1e293b;
+  margin-bottom: 8rpx;
+}
+
+.result-label {
+  font-size: 24rpx;
+  color: #64748b;
+}
+
+.result-separator {
+  font-size: 48rpx;
+  color: #cbd5e1;
+  margin: 0 20rpx;
+}
+
+/* 左右手选择 */
+.hand-selector {
+  display: flex;
+  justify-content: center;
+  gap: 24rpx;
+  margin: 32rpx 0;
+}
+
+.hand-option {
+  padding: 16rpx 48rpx;
+  border-radius: 32rpx;
+  font-size: 28rpx;
+  color: #64748b;
+  background: #f1f5f9;
+  transition: all 0.2s;
+}
+
+.hand-option.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+}
+
+/* 备注输入 */
+.note-section {
+  margin: 32rpx 0;
+  padding-top: 32rpx;
+  border-top: 1rpx solid #e2e8f0;
+}
+
+.note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.note-label {
+  font-size: 26rpx;
+  color: #64748b;
+}
+
+.note-expand-icon {
+  font-size: 20rpx;
+  color: #94a3b8;
+  transition: transform 0.3s ease;
+  transform: rotate(0deg);
+}
+
+.note-expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.note-field {
+  width: 100%;
+  min-height: 80rpx;
+  font-size: 28rpx;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 2rpx solid #e2e8f0;
+  border-radius: 16rpx;
+  padding: 16rpx 24rpx;
+  box-sizing: border-box;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 24rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.modal-btn.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.cancel-btn {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  color: #ffffff;
+}
+
+/* ========== 关怀模式样式 ========== */
+.page.elder-mode {
+  /* 操作按钮放大 */
+  .actions {
+    padding: 20rpx 30rpx 0 30rpx;
+    margin-bottom: 24rpx;
+    gap: 24rpx;
+  }
+  
+  .action-btn {
+    padding: 44rpx 24rpx;
+    border-radius: 28rpx;
+  }
+  
+  .action-text-white,
+  .action-text-dark {
+    font-size: 40rpx;
+  }
+  
+  .action-icon {
+    width: 56rpx;
+    height: 56rpx;
+    margin-right: 12rpx;
+  }
+
+  .bp-card-streak-text {
+    font-size: 30rpx;
+  }
+
+  /* 血压卡片 */
+  .bp-card {
+    margin: 0 30rpx 24rpx;
+    padding: 32rpx 36rpx 36rpx;
+    border-radius: 32rpx;
+  }
+
+  .bp-main-metrics {
+    gap: 36rpx;
+  }
+
+  .bp-metric-block {
+    min-width: 220rpx;
+  }
+
+  .bp-metric-divider {
+    min-height: 120rpx;
+  }
+  
+  .card-title {
+    font-size: 38rpx;
+  }
+  
+  .title-icon {
+    width: 42rpx;
+    height: 42rpx;
+    margin-right: 14rpx;
+  }
+  
+  .bp-value {
+    font-size: 100rpx;
+  }
+  
+  .bp-slash {
+    font-size: 68rpx;
+    margin: 0 8rpx;
+  }
+  
+  .bp-unit {
+    font-size: 28rpx;
+  }
+  
+  .pulse-value-inline {
+    font-size: 80rpx;
+  }
+  
+  .pulse-unit-inline {
+    font-size: 26rpx;
+  }
+
+  .bp-pulse-label {
+    font-size: 26rpx;
+  }
+  
+  .card-status {
+    padding: 10rpx 22rpx;
+    border-radius: 22rpx;
+  }
+  
+  .card-status-text {
+    font-size: 32rpx;
+  }
+  
+  /* 血压差异 */
+  .bp-info-row {
+    margin-top: 16rpx;
+  }
+  
+  .bp-diff-inline {
+    margin-top: 8rpx;
+  }
+  
+  .bp-diff-label {
+    font-size: 28rpx;
+  }
+  
+  .bp-diff-text {
+    font-size: 28rpx;
+    font-weight: 600;
+  }
+  
+  .bp-diff-separator {
+    font-size: 24rpx;
+  }
+  
+  /* 隐藏分享按钮 */
+  .share-btn {
+    display: none;
+  }
+  
+  .empty-bp {
+    font-size: 100rpx;
+  }
+  
+  .empty-bp-hint {
+    font-size: 34rpx;
+  }
+  
+  /* 本周概览 */
+  .summary-card {
+    margin: 0 30rpx 24rpx;
+    padding: 36rpx;
+    border-radius: 32rpx;
+  }
+
+  .summary-hand-tab {
+    padding: 10rpx 14rpx 16rpx;
+  }
+
+  .summary-hand-tab-text {
+    font-size: 30rpx;
+  }
+
+  .summary-hand-tab-divider {
+    font-size: 26rpx;
+  }
+
+  .summary-hand-avg-meta {
+    font-size: 28rpx;
+    margin-bottom: 16rpx;
+  }
+
+  .summary-hand-refined-sys,
+  .summary-hand-refined-dia {
+    font-size: 68rpx;
+  }
+
+  .summary-hand-refined-slash {
+    font-size: 48rpx;
+    margin: 0 8rpx;
+  }
+
+  .summary-hand-refined-unit {
+    font-size: 28rpx;
+  }
+
+  .summary-hand-pill {
+    padding: 14rpx 26rpx;
+  }
+
+  .summary-hand-pill-dot {
+    width: 14rpx;
+    height: 14rpx;
+  }
+
+  .summary-hand-pill-text {
+    font-size: 28rpx;
+  }
+  
+  .summary-title {
+    font-size: 38rpx;
+  }
+  
+  .summary-count {
+    font-size: 30rpx;
+  }
+  
+  .avg-label {
+    font-size: 30rpx;
+    margin-bottom: 10rpx;
+  }
+  
+  .avg-number {
+    font-size: 72rpx;
+  }
+  
+  .avg-slash {
+    font-size: 52rpx;
+    margin: 0 10rpx;
+  }
+  
+  .avg-unit {
+    font-size: 30rpx;
+    margin-left: 14rpx;
+  }
+  
+  .summary-status {
+    padding: 24rpx 36rpx;
+    border-radius: 24rpx;
+  }
+  
+  .status-emoji {
+    font-size: 60rpx;
+    margin-bottom: 8rpx;
+  }
+  
+  .status-text {
+    font-size: 34rpx;
+  }
+  
+  .summary-empty-text {
+    font-size: 36rpx;
+  }
+  
+  .summary-empty-hint {
+    font-size: 30rpx;
+  }
+  
+  /* 隐藏我的组快捷入口 */
+  .groups-shortcut {
+    display: none;
+  }
+  
+  /* 记录列表 */
+  .records-section {
+    margin: 30rpx 30rpx 0 30rpx;
+  }
+
+  .home-tip-card {
+    margin: 0 30rpx 28rpx;
+    padding: 28rpx 32rpx;
+    border-radius: 28rpx;
+  }
+
+  .home-tip-icon {
+    font-size: 36rpx;
+  }
+
+  .home-tip-title {
+    font-size: 32rpx;
+  }
+
+  .home-tip-body {
+    font-size: 30rpx;
+  }
+  
+  .records-card {
+    padding: 36rpx;
+    border-radius: 32rpx;
+  }
+  
+  .section-title {
+    font-size: 38rpx;
+    margin-bottom: 28rpx;
+  }
+  
+  .section-subtitle {
+    font-size: 30rpx;
+  }
+  
+  /* 关怀模式：保留「查看全部记录」，放大便于点击 */
+  .calendar-trigger-btn {
+    padding: 14rpx 26rpx;
+    border-radius: 24rpx;
+  }
+
+  .calendar-trigger-text {
+    font-size: 30rpx;
+  }
+  
+  .filter-hint {
+    padding: 18rpx 26rpx;
+    margin-bottom: 22rpx;
+  }
+  
+  .filter-hint-text {
+    font-size: 30rpx;
+  }
+  
+  .filter-hint-clear {
+    font-size: 28rpx;
+  }
+  
+  /* 日期分组 */
+  .date-group:not(:last-child) {
+    margin-bottom: 28rpx;
+  }
+  
+  .date-header {
+    margin-bottom: 18rpx;
+    padding: 0 8rpx;
+  }
+  
+  .date-label {
+    font-size: 36rpx;
+  }
+  
+  .date-count {
+    font-size: 28rpx;
+    padding: 6rpx 18rpx;
+  }
+  
+  /* 记录项 */
+  .record-item {
+    padding: 28rpx 8rpx 28rpx 0;
+  }
+  
+  .record-top {
+    margin-bottom: 14rpx;
+  }
+  
+  .bp-num {
+    font-size: 76rpx;
+  }
+  
+  .bp-divider {
+    font-size: 56rpx;
+    margin: 0 6rpx;
+  }
+  
+  .pulse-display {
+    gap: 6rpx;
+    margin-left: 18rpx;
+  }
+  
+  .pulse-icon {
+    width: 30rpx;
+    height: 30rpx;
+  }
+  
+  .pulse-num {
+    font-size: 36rpx;
+  }
+  
+  .status-badge {
+    padding: 8rpx 20rpx;
+    border-radius: 18rpx;
+  }
+  
+  .badge-text {
+    font-size: 30rpx;
+  }
+  
+  .record-middle {
+    margin-bottom: 12rpx;
+  }
+  
+  .datetime-text {
+    font-size: 32rpx;
+  }
+  
+  .bottom-info-text {
+    font-size: 30rpx;
+  }
+  
+  /* 隐藏备注 */
+  .record-note-row {
+    display: none;
+  }
+  
+  /* 空记录 */
+  .empty-records {
+    padding: 80rpx 48rpx;
+  }
+  
+  .empty-icon {
+    width: 100rpx;
+    height: 100rpx;
+    margin-bottom: 32rpx;
+  }
+  
+  .empty-text {
+    font-size: 42rpx;
+    margin-bottom: 16rpx;
+  }
+  
+  .empty-hint {
+    font-size: 32rpx;
+  }
+  
+  /* 分析中遮罩 */
+  .analyze-content {
+    padding: 72rpx 96rpx;
+    border-radius: 36rpx;
+  }
+  
+  .analyze-text {
+    font-size: 42rpx;
+  }
+  
+  /* 识别结果弹窗 */
+  .result-modal {
+    width: 660rpx;
+    border-radius: 36rpx;
+  }
+  
+  .modal-header {
+    padding: 44rpx;
+  }
+  
+  .modal-title {
+    font-size: 42rpx;
+  }
+  
+  .modal-close {
+    font-size: 56rpx;
+    width: 56rpx;
+    height: 56rpx;
+  }
+  
+  .modal-body {
+    padding: 44rpx;
+  }
+  
+  .result-values {
+    margin-bottom: 44rpx;
+  }
+  
+  .result-number {
+    font-size: 84rpx;
+    margin-bottom: 12rpx;
+  }
+  
+  .result-label {
+    font-size: 32rpx;
+  }
+  
+  .result-separator {
+    font-size: 64rpx;
+    margin: 0 24rpx;
+  }
+  
+  .result-item.pulse {
+    margin-left: 44rpx;
+  }
+  
+  /* 左右手选择 */
+  .hand-selector {
+    margin: 36rpx 0;
+    gap: 28rpx;
+  }
+  
+  .hand-option {
+    font-size: 36rpx;
+    padding: 22rpx 56rpx;
+    border-radius: 36rpx;
+  }
+  
+  /* 隐藏备注输入 */
+  .note-section {
+    display: none;
+  }
+  
+  .modal-actions {
+    gap: 24rpx;
+  }
+  
+  .modal-btn {
+    font-size: 38rpx;
+    height: 100rpx;
+    border-radius: 50rpx;
+  }
+  
+  /* 底部占位 */
+  .bottom-spacer {
+    height: 120rpx;
+  }
+}

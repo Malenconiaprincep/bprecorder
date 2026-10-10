@@ -1,0 +1,429 @@
+.page {
+  min-height: 100vh;
+  background-color: #f0f6ff;
+  padding: 30rpx;
+  padding-bottom: 50rpx;
+}
+
+/* 通用标题图标 */
+.title-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 12rpx;
+  vertical-align: middle;
+}
+
+.modal-action-icon {
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 8rpx;
+}
+
+.pulse-icon {
+  width: 24rpx;
+  height: 24rpx;
+  vertical-align: middle;
+  margin-right: 4rpx;
+}
+
+/* 骨架屏动画 */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-line {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 8rpx;
+}
+
+.skeleton-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-member-name {
+  width: 120rpx;
+  height: 30rpx;
+  margin-right: 12rpx;
+}
+
+.skeleton-role {
+  width: 60rpx;
+  height: 26rpx;
+}
+
+.skeleton-bp {
+  width: 200rpx;
+  height: 36rpx;
+  margin-bottom: 8rpx;
+}
+
+.skeleton-meta {
+  width: 150rpx;
+  height: 24rpx;
+}
+
+.loading {
+  text-align: center;
+  padding: 100rpx;
+  color: #94a3b8;
+  font-size: 28rpx;
+}
+
+/* 区块头部 */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+/* 添加按钮 */
+.add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx;
+}
+
+.add-btn-icon {
+  font-size: 40rpx;
+  color: #94a3b8;
+  font-weight: 300;
+}
+
+/* 邀请弹框 */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 600rpx;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 48rpx;
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: center;
+  display: block;
+  margin-bottom: 32rpx;
+}
+
+.invite-code-box {
+  background: #f1f5f9;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.invite-code-label {
+  font-size: 24rpx;
+  color: #64748b;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.invite-code-value {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #1e293b;
+  letter-spacing: 6rpx;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.modal-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  background: linear-gradient(135deg, #5bb8f5 0%, #4aa8e8 100%);
+  border-radius: 44rpx;
+  padding: 24rpx;
+  border: none;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.modal-action::after {
+  border: none;
+}
+
+.modal-action.share-action {
+  background: #10b981;
+}
+
+.modal-action-icon {
+  font-size: 28rpx;
+}
+
+.modal-action-text {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.modal-close {
+  margin-top: 24rpx;
+  text-align: center;
+  padding: 16rpx;
+}
+
+.close-text {
+  font-size: 28rpx;
+  color: #94a3b8;
+}
+
+/* 区块 */
+.section {
+  margin-bottom: 30rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+}
+
+/* 成员列表 */
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.member-card-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20rpx;
+}
+
+.member-card {
+  display: flex;
+  align-items: center;
+  padding: 28rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.3s ease;
+  touch-action: pan-y;
+}
+
+.member-card.swiped {
+  transform: translateX(-160rpx);
+}
+
+.member-arrow {
+  font-size: 36rpx;
+  color: #cbd5e1;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+}
+
+.member-delete-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 160rpx;
+  background: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.member-delete-btn.show {
+  transform: translateX(0);
+}
+
+.delete-btn-text {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.member-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.member-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.member-name-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.member-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #1e293b;
+  margin-right: 12rpx;
+}
+
+.member-role {
+  font-size: 22rpx;
+  color: #3b82f6;
+  background: #eff6ff;
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+}
+
+.bp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.bp-values {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.bp-num {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.bp-unit {
+  font-size: 22rpx;
+  color: #94a3b8;
+}
+
+.pulse {
+  font-size: 24rpx;
+  color: #64748b;
+  margin-left: 16rpx;
+  display: flex;
+  align-items: center;
+}
+
+.bp-meta {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.status-badge {
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+}
+
+.status-badge.ideal {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.status-badge.low {
+  background: #cffafe;
+  color: #0e7490;
+}
+
+.status-badge.normal {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.status-badge.prehigh {
+  background: #fef3c7;
+  color: #a16207;
+}
+
+.status-badge.high-1 {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.status-badge.high-2 {
+  background: #ffe4e6;
+  color: #be123c;
+}
+
+.status-badge.high-3 {
+  background: #fecdd3;
+  color: #9f1239;
+}
+
+.badge-text {
+  font-size: 20rpx;
+}
+
+.bp-time {
+  font-size: 22rpx;
+  color: #94a3b8;
+}
+
+.no-record {
+  font-size: 26rpx;
+  color: #94a3b8;
+}
+
+/* 危险操作区域 */
+.danger-section {
+  margin-top: 40rpx;
+}
+
+.danger-btn {
+  padding: 32rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+  text-align: center;
+}
+
+.danger-text {
+  font-size: 30rpx;
+  color: #ef4444;
+}

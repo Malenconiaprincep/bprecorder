@@ -35,19 +35,83 @@ create table records (
 
 ### 3. 配置环境变量
 
-复制 `.env.example` 为 `.env.local`：
+#### 3.1 申请 Gemini API Key
+
+1. **访问 Google AI Studio**
+   - 打开：https://aistudio.google.com/
+   - 使用 Google 账号登录
+
+2. **获取 API Key**
+   - 登录后，点击左侧菜单的 **"Get API key"**
+   - 或直接访问：https://aistudio.google.com/app/apikey
+   - 点击 **"Create API key"** 按钮
+   - 选择项目（可以创建新项目或使用现有项目）
+   - 创建成功后，复制 API Key（格式类似：`AIzaSy...`）
+
+3. **注意事项**
+   - 免费额度：通常每分钟 15 次请求（RPM）
+   - 计费：超出免费额度后可能产生费用，建议在 Google Cloud Console 设置预算提醒
+   - 安全：不要将 API Key 提交到代码仓库
+
+#### 3.2 配置环境变量
+
+创建 `.env.local` 文件（如果不存在）：
 
 ```bash
-cp .env.example .env.local
+touch .env.local
 ```
 
 编辑 `.env.local`，填入你的 Key：
 
 ```env
+# AI 识别 - 选择使用的模型: 'gemini' 或 'qwen'（默认: gemini）
+AI_MODEL=gemini
+
+# Gemini API Key（如果使用 Gemini）
 GEMINI_API_KEY=你的_Gemini_API_Key
+
+# 阿里云 DashScope API Key（如果使用 Qwen 或作为备用）
+DASHSCOPE_API_KEY=你的_DashScope_API_Key
+
+# Supabase 数据库
 NEXT_PUBLIC_SUPABASE_URL=你的_Supabase_Project_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY=你的_Supabase_Anon_Key
+SUPABASE_SERVICE_ROLE_KEY=你的_Supabase_Service_Role_Key
+
+# 微信小程序登录
+WX_APPID=你的微信小程序_AppID
+WX_SECRET=你的微信小程序_Secret
+
+# 测量提醒订阅消息（可选，默认已内置模板 ID）
+# WX_SUBSCRIBE_TEMPLATE_ID=n_7gRV7nCOVIiK2TBvOZOfFVxOGqxMqNm1_j1ntEiDU
+# 若模板字段名与默认不一致，用 JSON 覆盖（支持 {reminderTime}、{reminderDateTime}）
+# WX_SUBSCRIBE_TEMPLATE_DATA={"thing2":"自定义文案","time4":"{reminderDateTime}"}
+# Vercel Cron 鉴权（部署提醒定时任务时必填）
+# CRON_SECRET=随机字符串
+
+# ⚠️ 重要：必须是至少 32 个字符的随机字符串，不能使用默认值！
+# 生成方法：node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+JWT_SECRET=生成的随机密钥（至少32个字符）
 ```
+
+**生成 JWT_SECRET 的方法：**
+
+```bash
+# 方法1：使用 Node.js 生成（推荐）
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# 方法2：使用 OpenSSL 生成
+openssl rand -hex 32
+
+# 方法3：使用在线工具（不推荐，安全性较低）
+# 访问 https://generate-secret.vercel.app/32
+```
+
+**⚠️ 安全提示：**
+- `JWT_SECRET` 必须足够长（至少 32 个字符）且随机
+- 不要使用常见的字符串（如 "secret"、"password" 等）
+- 不要将密钥提交到代码仓库
+- 生产环境必须配置，否则应用无法启动
 
 ### 4. 启动开发服务器
 
@@ -63,7 +127,13 @@ npm run dev
 
 1. 将代码推送到 GitHub。
 2. 在 Vercel 导入项目。
-3. 在 Vercel 项目设置中添加上述 3 个环境变量。
+3. 在 Vercel 项目设置中添加所有必需的环境变量：
+   - `AI_MODEL`（可选，默认 gemini）
+   - `GEMINI_API_KEY`（如果使用 Gemini）
+   - `DASHSCOPE_API_KEY`（如果使用 Qwen 或作为备用）
+   - `JWT_SECRET`、`WX_APPID`、`WX_SECRET` 等
+   - `CRON_SECRET`（测量提醒 Cron）
+   - 可选 `WX_SUBSCRIBE_TEMPLATE_ID`、`WX_SUBSCRIBE_TEMPLATE_DATA`
 4. 点击 Deploy。
 
 ## 技术栈
