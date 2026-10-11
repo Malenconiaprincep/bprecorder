@@ -1,0 +1,333 @@
+import Taro from '@tarojs/taro'
+import { API_BASE_URL } from '../utils/api'
+import { getUserInfo } from './auth'
+
+// Supabase 配置
+const SUPABASE_URL = 'https://vaeklnwhlogbvrwtthbe.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhZWtsbndobG9nYnZyd3R0aGJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2MDY3MTksImV4cCI6MjA3OTE4MjcxOX0.oLH3iiEhhPJydhXKdjJwDPTpqcUak44OOkFA9D8K15o'
+
+// REST API 基础路径
+const REST_URL = `${SUPABASE_URL}/rest/v1`
+
+// 通用请求头
+function getHeaders(accessToken?: string) {
+  return {
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation'  // 返回操作后的数据
+  }
+}
+
+// 通用请求方法
+async function request<T = any>(
+  endpoint: string,
+  options: {
+    method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+    data?: any
+    params?: Record<string, string>
+    accessToken?: string
+  } = {}
+): Promise<{ data: T | null; error: string | null }> {
+  const { method = 'GET', data, params, accessToken } = options
+
+  const isBackendRecordRequest = endpoint === '/bp_records' && !(method === 'POST' && Array.isArray(data))
+  let url = isBackendRecordRequest ? `${API_BASE_URL}/api/bp_records` : `${REST_URL}${endpoint}`
+
+  // 添加查询参数
+  if (params) {
+    const queryString = Object.entries(params)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join('&')
+    url += `?${queryString}`
+  }
+
+  try {
+    const res = await Taro.request({
+      url,
+      method,
+      data,
+      header: isBackendRecordRequest
+        ? {
+            'Content-Type': 'application/json',
+            ...(getUserInfo()?.openid ? { 'x-openid': getUserInfo()!.openid } : {}),
+          }
+        : getHeaders(accessToken)
+    })
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return { data: res.data, error: null }
+    } else {
+      const errorMsg = res.data?.message || res.data?.error || `请求失败 (${res.statusCode})`
+      return { data: null, error: errorMsg }
+    }
+  } catch (e: any) {
+    console.error('Supabase request error:', e)
+    return { data: null, error: e.message || '网络请求失败' }
+  }
+}
+
+// ============ 血压记录相关 API ============
+
+export interface BPRecord {
+  id?: number
+  user_id: string
+  systolic: number
+  diastolic: number
+  pulse: number
+  hand?: 'left' | 'right'  // 左右手（可选）
+  note?: string            // 备注（可选）
+  recorded_at: string
+  created_at?: string
+}
+
+/** 首页测量记录列表每页条数（分页接口默认，其它场景可用） */
+export const HOME_LIST_PAGE_SIZE = 10
+
+/** 首页「最近记录」固定条数（单次请求，不做懒加载） */
+export const HOME_RECENT_RECORDS_LIMIT = 7
+
+/**
+ * 获取用户的血压记录（其它页/analysis 等仍用；限制 50 条）
+ */
+export async function getRecords(userId: string): Promise<{ data: BPRecord[] | null; error: string | null }> {
+  return request<BPRecord[]>('/bp_records', {
+    params: {
+      user_id: `eq.${userId}`,
+      order: 'recorded_at.desc',
+      limit: '50'
+    }
+  })
+}
+
+/**
+ * 首页最近记录等：按时间倒序仅取前 limit 条（不多取）
+ */
+export async function getRecordsRecent(
+  userId: string,
+  limit: number
+): Promise<{ data: BPRecord[] | null; error: string | null }> {
+  return request<BPRecord[]>('/bp_records', {
+    params: {
+      user_id: `eq.${userId}`,
+      order: 'recorded_at.desc',
+      limit: String(limit)
+    }
+  })
+}
+
+/**
+ * 分页拉取记录（首页列表）；多取 1 条用于判断 hasMore
+ */
+export async function getRecordsPage(
+  userId: string,
+  offset: number,
+  pageSize: number = HOME_LIST_PAGE_SIZE
+): Promise<{ data: BPRecord[] | null; error: string | null; hasMore: boolean }> {
+  const lim = pageSize
+  const { data, error } = await request<BPRecord[]>('/bp_records', {
+    params: {
+      user_id: `eq.${userId}`,
+      order: 'recorded_at.desc',
+      limit: String(lim + 1),
+      offset: String(offset)
+    }
+  })
+  if (error || !data) {
+    return { data: null, error, hasMore: false }
+  }
+  const hasMore = data.length > lim
+  const slice = hasMore ? data.slice(0, lim) : data
+  return { data: slice, error: null, hasMore }
+}
+
+/** 首页统计用：近 N 天内的记录（本周均值、连续打卡），与列表分页无关 */
+const HOME_STATS_RANGE_DAYS = 7
+
+export async function getRecordsForHomeStats(
+  userId: string
+): Promise<{ data: BPRecord[] | null; error: string | null }> {
+  const end = new Date()
+  const start = new Date(end.getTime() - HOME_STATS_RANGE_DAYS * 24 * 60 * 60 * 1000)
+  return getRecordsInRange(userId, start.toISOString(), end.toISOString())
+}
+
+/**
+ * 按日期范围获取用户的血压记录（用于导出，最多支持约一年数据）
+ * @param userId 用户 openid
+ * @param startDate 开始日期 ISO 字符串（含时间，如 2024-01-01T00:00:00.000Z）
+ * @param endDate 结束日期 ISO 字符串（含时间，如 2024-12-31T23:59:59.999Z）
+ */
+export async function getRecordsInRange(
+  userId: string,
+  startDate: string,
+  endDate: string
+): Promise<{ data: BPRecord[] | null; error: string | null }> {
+  return request<BPRecord[]>('/bp_records', {
+    // 微信小程序的 URLSearchParams polyfill 不完整，不支持 entries()。
+    // 直接使用普通对象，避免首页同时请求周统计时整组 Promise 失败。
+    params: {
+      user_id: `eq.${userId}`,
+      recorded_at_gte: `gte.${startDate}`,
+      recorded_at_lte: `lte.${endDate}`,
+      order: 'recorded_at.asc',
+      limit: '5000',
+    },
+  })
+}
+
+/** 插入成功后异步刷新最近登录时间（不阻塞保存） */
+function touchLastLoginAt(openid: string) {
+  void request('/wx_users', {
+    method: 'PATCH',
+    params: { openid: `eq.${openid}` },
+    data: { last_login_at: new Date().toISOString() },
+  })
+}
+
+/**
+ * 添加血压记录（单个，经后端接口写入）
+ */
+export async function addRecord(record: Omit<BPRecord, 'id' | 'created_at'>): Promise<{ data: BPRecord | null; error: string | null }> {
+  const systolic = Number(record.systolic)
+  const diastolic = Number(record.diastolic)
+  const pulse = Number(record.pulse)
+
+  if (!Number.isFinite(systolic) || !Number.isFinite(diastolic) || !Number.isFinite(pulse)) {
+    return { data: null, error: '缺少有效数值: systolic, diastolic, pulse' }
+  }
+  if (!record.user_id || typeof record.user_id !== 'string') {
+    return { data: null, error: '缺少 user_id 字段' }
+  }
+  if (!record.recorded_at) {
+    return { data: null, error: '缺少 recorded_at 字段' }
+  }
+
+  const row = {
+    user_id: record.user_id,
+    systolic: Math.round(systolic),
+    diastolic: Math.round(diastolic),
+    pulse: Math.round(pulse),
+    recorded_at: record.recorded_at,
+    hand: record.hand === 'left' || record.hand === 'right' ? record.hand : null,
+    note: typeof record.note === 'string' && record.note.trim() ? record.note.trim() : null,
+  }
+
+  const result = await request<BPRecord | BPRecord[]>('/bp_records', {
+    method: 'POST',
+    data: row,
+  })
+
+  if (result.error) {
+    return { data: null, error: result.error }
+  }
+
+  const inserted = result.data
+    ? (Array.isArray(result.data) ? result.data[0] : result.data)
+    : null
+  const openid = getUserInfo()?.openid
+  if (openid && inserted) {
+    touchLastLoginAt(openid)
+  }
+
+  return { data: inserted, error: null }
+}
+
+/**
+ * 更新血压记录
+ */
+export async function updateRecord(
+  id: number,
+  data: Partial<Omit<BPRecord, 'id' | 'user_id' | 'created_at'>>
+): Promise<{ data: BPRecord | null; error: string | null }> {
+  const result = await request<BPRecord | BPRecord[]>(`/bp_records`, {
+    method: 'PATCH',
+    params: {
+      id: `eq.${id}`
+    },
+    data
+  })
+
+  if (result.data) {
+    return { data: Array.isArray(result.data) ? result.data[0] || null : result.data, error: null }
+  }
+  return { data: null, error: result.error }
+}
+
+/**
+ * 删除血压记录
+ */
+export async function deleteRecord(id: number): Promise<{ error: string | null }> {
+  const result = await request(`/bp_records`, {
+    method: 'DELETE',
+    params: {
+      id: `eq.${id}`
+    }
+  })
+  return { error: result.error }
+}
+
+// ============ 用户相关 API ============
+
+export interface WxUser {
+  id?: number
+  openid: string
+  nickname?: string
+  avatar_url?: string
+  created_at?: string
+  last_login_at?: string
+}
+
+/**
+ * 根据 openid 获取或创建用户
+ */
+export async function getOrCreateUser(openid: string): Promise<{ data: WxUser | null; error: string | null }> {
+  // 先查询用户是否存在
+  const { data: existingUsers, error: queryError } = await request<WxUser[]>('/wx_users', {
+    params: {
+      openid: `eq.${openid}`,
+      limit: '1'
+    }
+  })
+
+  if (queryError) {
+    return { data: null, error: queryError }
+  }
+
+  if (existingUsers && existingUsers.length > 0) {
+    return { data: existingUsers[0], error: null }
+  }
+
+  // 用户不存在，创建新用户
+  const { data: newUsers, error: createError } = await request<WxUser[]>('/wx_users', {
+    method: 'POST',
+    data: {
+      openid,
+      created_at: new Date().toISOString()
+    }
+  })
+
+  if (createError) {
+    return { data: null, error: createError }
+  }
+
+  return { data: newUsers?.[0] || null, error: null }
+}
+
+/**
+ * 批量添加血压记录（用于数据导入）
+ */
+export async function addRecordsBatch(records: Array<Omit<BPRecord, 'id' | 'created_at'>>): Promise<{ data: BPRecord[] | null; error: string | null }> {
+  const result = await request<BPRecord[]>('/bp_records', {
+    method: 'POST',
+    data: records
+  })
+
+  return { data: result.data, error: result.error }
+}
+
+// 导出配置（方便调试）
+export const config = {
+  SUPABASE_URL,
+  REST_URL
+}

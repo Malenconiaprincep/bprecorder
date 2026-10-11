@@ -1,0 +1,28 @@
+import { type UserConfigExport } from "@tarojs/cli";
+import { loadBuildSecrets, toDefineConstants } from "./buildSecrets";
+
+const buildSecrets = loadBuildSecrets();
+
+export default {
+  mini: {},
+  h5: {
+    /**
+     * WebpackChain 插件配置
+     * @docs https://github.com/webpack-contrib/webpack-chain
+     */
+    // webpackChain (chain) {
+    //   /**
+    //    * 如果 h5 端编译后体积过大，可以使用 webpack-bundle-analyzer 插件对打包体积进行分析。
+    //    * @docs https://github.com/webpack-contrib/webpack-bundle-analyzer
+    //    */
+    //   chain.plugin('analyzer')
+    //     .use(require('webpack-bundle-analyzer').BundleAnalyzerPlugin, [])
+    // }
+  },
+  defineConstants: {
+    // 生产环境使用线上接口
+    API_BASE_URL: '"https://bprecorder.aikee.xyz"',
+    ...toDefineConstants(buildSecrets),
+  }
+} satisfies UserConfigExport
+

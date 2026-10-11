@@ -1,0 +1,172 @@
+.login-debug-page {
+  min-height: 100vh;
+  background: #f0f6ff;
+  padding: 24rpx 28rpx 48rpx;
+  box-sizing: border-box;
+}
+
+.login-debug-card {
+  background: #ffffff;
+  border: 1rpx solid #bfdbfe;
+  border-radius: 24rpx;
+  padding: 28rpx 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.login-debug-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 8rpx;
+}
+
+.login-debug-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 20rpx;
+}
+
+.login-debug-summary {
+  padding: 20rpx 24rpx;
+  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.login-debug-summary--ok {
+  background: #ecfdf5;
+  border: 1rpx solid #86efac;
+}
+
+.login-debug-summary--fail {
+  background: #fef2f2;
+  border: 1rpx solid #fecaca;
+}
+
+.login-debug-summary-text {
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.login-debug-step {
+  padding: 18rpx 0;
+  border-top: 1rpx solid #e2e8f0;
+}
+
+.login-debug-step:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.login-debug-step-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.login-debug-step-badge {
+  font-size: 22rpx;
+  font-weight: 600;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+}
+
+.login-debug-step-badge--ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.login-debug-step-badge--fail {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.login-debug-step-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.login-debug-step-detail {
+  display: block;
+  font-size: 24rpx;
+  color: #475569;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.login-debug-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.login-debug-btn {
+  padding: 22rpx 24rpx;
+  border-radius: 16rpx;
+  text-align: center;
+}
+
+.login-debug-btn--primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.login-debug-btn--secondary {
+  background: #ffffff;
+  border: 1rpx solid #93c5fd;
+}
+
+.login-debug-btn--ghost {
+  background: #f8fafc;
+  border: 1rpx dashed #cbd5e1;
+}
+
+.login-debug-btn-text {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.login-debug-btn-text--primary {
+  color: #ffffff;
+}
+
+.login-debug-btn-text--secondary {
+  color: #1d4ed8;
+}
+
+.login-debug-btn-text--ghost {
+  color: #64748b;
+}
+
+.login-debug-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0;
+}
+
+.login-debug-loading-text {
+  font-size: 26rpx;
+  color: #64748b;
+}
+
+.login-debug-report-box {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: #f8fafc;
+  border-radius: 12rpx;
+  max-height: 360rpx;
+  overflow: hidden;
+}
+
+.login-debug-report-text {
+  font-size: 22rpx;
+  color: #475569;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
