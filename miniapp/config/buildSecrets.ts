@@ -49,7 +49,7 @@ export function loadBuildSecrets(): BuildSecrets {
   return {
     DASHSCOPE_API_KEY: local.DASHSCOPE_API_KEY?.trim() ?? '',
     QWEN_CHAT_URL: resolveChatUrl(local),
-    QWEN_VL_MODEL: local.QWEN_VL_MODEL?.trim() || 'qwen-vl-max',
+    QWEN_VL_MODEL: local.QWEN_VL_MODEL?.trim() || 'qwen3-vl-plus',
     QWEN_TEXT_MODEL: local.QWEN_TEXT_MODEL?.trim() || 'qwen-plus',
   }
 }

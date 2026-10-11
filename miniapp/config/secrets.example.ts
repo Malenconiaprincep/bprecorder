@@ -10,7 +10,7 @@
 export default {
   DASHSCOPE_API_KEY: '',
   openAiCompatible: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-  /** 可选：MaaS 部署的模型名，默认 qwen-vl-max / qwen-plus */
-  QWEN_VL_MODEL: 'qwen-vl-max',
+  /** 可选：MaaS 部署的模型名，默认 qwen3-vl-plus / qwen-plus */
+  QWEN_VL_MODEL: 'qwen3-vl-plus',
   QWEN_TEXT_MODEL: 'qwen-plus',
 }

@@ -13,7 +13,7 @@ export function getQwenChatUrl(): string {
 
 export function getQwenVlModel(): string {
   const model = typeof QWEN_VL_MODEL === 'string' ? QWEN_VL_MODEL.trim() : ''
-  return model || 'qwen-vl-max'
+  return model || 'qwen3-vl-plus'
 }
 
 export function getQwenTextModel(): string {

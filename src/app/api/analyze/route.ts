@@ -108,7 +108,7 @@ async function analyzeWithQwen(imageBase64: string, mimeType: string, apiKey: st
   const dataUrl = `data:${mimeType};base64,${imageBase64}`;
 
   const response = await openai.chat.completions.create({
-    model: "qwen-vl-max",
+    model: "qwen3-vl-plus",
     messages: [
       {
         role: "user",
