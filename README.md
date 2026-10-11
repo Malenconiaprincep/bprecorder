@@ -72,6 +72,9 @@ GEMINI_API_KEY=你的_Gemini_API_Key
 
 # 阿里云 DashScope API Key（如果使用 Qwen 或作为备用）
 DASHSCOPE_API_KEY=你的_DashScope_API_Key
+# 可选：视觉模型及 MaaS 工作空间兼容接口
+QWEN_VL_MODEL=qwen3-vl-plus
+DASHSCOPE_BASE_URL=https://你的工作空间.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
 
 # Supabase 数据库
 NEXT_PUBLIC_SUPABASE_URL=你的_Supabase_Project_URL
@@ -131,6 +134,8 @@ npm run dev
    - `AI_MODEL`（可选，默认 gemini）
    - `GEMINI_API_KEY`（如果使用 Gemini）
    - `DASHSCOPE_API_KEY`（如果使用 Qwen 或作为备用）
+   - `QWEN_VL_MODEL`（可选，默认 `qwen3-vl-plus`）
+   - `DASHSCOPE_BASE_URL`（使用 MaaS 工作空间密钥时填写）
    - `JWT_SECRET`、`WX_APPID`、`WX_SECRET` 等
    - `CRON_SECRET`（测量提醒 Cron）
    - 可选 `WX_SUBSCRIBE_TEMPLATE_ID`、`WX_SUBSCRIBE_TEMPLATE_DATA`

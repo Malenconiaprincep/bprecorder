@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from "axios";
+import { resolveQwenVlModel } from '@/lib/qwenModel.mjs';
 
 // 获取 Gemini API 密钥列表（支持多个备用密钥）
 const getGeminiApiKeys = (): string[] => {
@@ -108,7 +109,7 @@ async function analyzeWithQwen(imageBase64: string, mimeType: string, apiKey: st
   const dataUrl = `data:${mimeType};base64,${imageBase64}`;
 
   const response = await openai.chat.completions.create({
-    model: "qwen3-vl-plus",
+    model: resolveQwenVlModel(process.env.QWEN_VL_MODEL),
     messages: [
       {
         role: "user",
